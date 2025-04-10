@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873020320068",
+    "project_id": "smartassist-a5d6e",
+    "storage_bucket": "smartassist-a5d6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873020320068:android:c05bc7a62702b518074f11",
+        "android_client_info": {
+          "package_name": "com.example.smart_assist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoyjblEjeYf5Uu6sWRRE7AeAQHiFwaa7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
