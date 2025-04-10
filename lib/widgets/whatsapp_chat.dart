@@ -323,26 +323,6 @@ class WhatsappChat extends StatefulWidget {
 //                     ),
 //                   ),
 //                 ),
-//                 const SizedBox(width: 8),
-//                 Container(
-//                   decoration: const BoxDecoration(
-//                     color: AppColors.colorsBlue,
-//                     shape: BoxShape.circle,
-//                   ),
-//                   child: IconButton(
-//                     icon: const Icon(Icons.send),
-//                     color: Colors.white,
-//                     onPressed: sendMessage,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
 
 class MessageBubble extends StatelessWidget {
   final Message message;
