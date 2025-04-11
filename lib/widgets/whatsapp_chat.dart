@@ -29,9 +29,14 @@ class Message {
       mediaUrl: json['mediaUrl'],
     );
   }
+  
+ 
+  
+ 
 }
 
 class WhatsappChat extends StatefulWidget {
+ 
   final String chatId;
   final String userName;
 
@@ -409,6 +414,8 @@ class MessageBubble extends StatelessWidget {
 
 class _WhatsappChatState extends State<WhatsappChat> {
   List<Message> messages = [];
+ 
+
   final TextEditingController _messageController = TextEditingController();
   late IO.Socket socket;
   bool isConnected = false;
@@ -440,6 +447,10 @@ class _WhatsappChatState extends State<WhatsappChat> {
   }
 
   void initSocket() {
+    // Check if socket is already connected
+    // if (socket != null && socket.connected) {
+    //   socket.disconnect();
+    // }
     socket = IO.io('wss://api.smartassistapp.in', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': true,
@@ -481,26 +492,85 @@ class _WhatsappChatState extends State<WhatsappChat> {
     });
 
     // Listen for new messages
+    // socket.on('new_message', (data) {
+    //   print('New message received: $data');
+    //   if (data != null && mounted) {
+    //     try {
+    //       final newMessage = Message.fromJson(data);
+    //       setState(() {
+    //         messages.add(newMessage);
+    //       });
+
+    //       // Scroll to the bottom when new message arrives
+    //       WidgetsBinding.instance.addPostFrameCallback((_) {
+    //         _scrollToBottom();
+    //       });
+    //     } catch (e) {
+    //       print('Error parsing new message: $e');
+    //     }
+    //   }
+    // });
+
+    // Listen for new messages
+
     socket.on('new_message', (data) {
       print('New message received: $data');
       if (data != null && mounted) {
         try {
-          final newMessage = Message.fromJson(data);
-          setState(() {
-            messages.add(newMessage);
-          });
+          // Extract the message object from the payload
+          final messageData = data['message'];
+          if (messageData != null) {
+            final newMessage = Message.fromJson(messageData);
 
-          // Scroll to the bottom when new message arrives
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToBottom();
-          });
+            // Check if this message belongs to the current chat
+            if (data['chatId'] == widget.chatId) {
+              setState(() {
+                messages.add(newMessage);
+              });
+
+              // Scroll to the bottom when new message arrives
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scrollToBottom();
+              });
+            }
+          }
         } catch (e) {
           print('Error parsing new message: $e');
         }
       }
     });
 
+    // socket.on('new_message', (data) {
+    //   print('New message received: $data');
+    //   if (data != null && mounted) {
+    //     try {
+    //       final messageData = data['message'];
+    //       if (messageData != null) {
+    //         final newMessage = Message.fromJson(messageData);
+
+    //         // Check if this message belongs to the current chat
+    //         if (data['chatId'] == widget.chatId) {
+    //           // Check if message is already in the list to avoid duplicates
+    //           if (!messages.any((m) => m.id == newMessage.id)) {
+    //             setState(() {
+    //               messages.add(newMessage);
+    //             });
+
+    //             // Scroll to bottom
+    //             WidgetsBinding.instance.addPostFrameCallback((_) {
+    //               _scrollToBottom();
+    //             });
+    //           }
+    //         }
+    //       }
+    //     } catch (e) {
+    //       print('Error parsing new message: $e');
+    //     }
+    //   }
+    // });
+
     // Listen for message sent confirmation
+
     socket.on('message_sent', (data) {
       print('Message sent confirmation: $data');
       // Update message status if needed
@@ -526,6 +596,15 @@ class _WhatsappChatState extends State<WhatsappChat> {
         } catch (e) {
           print('Error parsing chat messages: $e');
         }
+      }
+    });
+
+    socket.onDisconnect((_) {
+      print('Socket disconnected');
+      if (mounted) {
+        setState(() {
+          isConnected = false;
+        });
       }
     });
 
@@ -564,6 +643,22 @@ class _WhatsappChatState extends State<WhatsappChat> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Function to handle socket disconnection
+  void disconnectSocket() {
+    print('ttttttttttttttttttttttttttttttttttttttttttttttttttttttttt');
+    // Disconnect the socket
+    socket.disconnect();
+
+    // Optionally update the UI to reflect that the socket is disconnected
+    if (mounted) {
+      setState(() {
+        isConnected = false;
+      });
+    }
+
+    print('Socket manually disconnected');
   }
 
   void sendMessage() {
@@ -611,7 +706,11 @@ class _WhatsappChatState extends State<WhatsappChat> {
         leading: IconButton(
           icon:
               const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          // onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            disconnectSocket();
+            Navigator.pop(context);
+          },
         ),
         title: Row(
           children: [

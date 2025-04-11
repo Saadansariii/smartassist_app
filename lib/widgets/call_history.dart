@@ -583,7 +583,7 @@ class _CallHistoryState extends State<CallHistory> {
                     child: _buildInfoCard1(
                       context,
                       'Total Duration',
-                      '$_totalDuration ',
+                      '$_totalDuration Mins',
                       screenWidth,
                       Colors.black,
                     ),
