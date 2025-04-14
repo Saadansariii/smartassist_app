@@ -11,11 +11,11 @@ import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/button.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';
-import 'package:smart_assist/widgets/passport_varification.dart';
+import 'package:smart_assist/widgets/license_varification.dart';
 
 class TestdriveVerifyotp extends StatefulWidget {
   static const int _otpLength = 6;
-
+  final String eventId;
   final String email;
   final String text;
   final TextStyle? style;
@@ -25,6 +25,7 @@ class TestdriveVerifyotp extends StatefulWidget {
     required this.email,
     required this.text,
     this.style,
+    required this.eventId,
   });
 
   @override
@@ -142,7 +143,7 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Text(
         textAlign: TextAlign.center,
-        'Enter OTP sent to $widget.email to continue',
+        'Enter OTP sent to ${widget.email} to continue',
         style: AppFont.mediumText14(context),
       ),
     );
@@ -239,7 +240,12 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
       padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 8),
       child: ElevatedButton(
         onPressed: () {
-          _handleVerification;
+          // _handleVerification;
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      PassportVarification(eventId: widget.eventId)));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0276FE),
@@ -381,7 +387,7 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PassportVarification(),
+        builder: (context) => PassportVarification(eventId: widget.eventId),
       ),
     );
   }
@@ -390,7 +396,7 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PassportVarification(),
+        builder: (context) => PassportVarification(eventId: widget.eventId),
       ),
     );
   }

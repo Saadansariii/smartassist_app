@@ -1,0 +1,214 @@
+import 'dart:io';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
+
+import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/config/component/font/font.dart';
+import 'package:smart_assist/widgets/start_drive.dart';
+
+class LicencePreview extends StatefulWidget {
+  final File imageFile;
+  final String eventId;
+  const LicencePreview(
+      {super.key, required this.imageFile, required this.eventId});
+
+  @override
+  State<LicencePreview> createState() => _LicencePreviewState();
+}
+
+class _LicencePreviewState extends State<LicencePreview> {
+  bool _isUploading = false;
+
+  Future<String> _uploadImage(File imageFile) async {
+    setState(() {
+      _isUploading = true;
+    });
+
+    final token = await Storage.getToken();
+    final uri =
+        Uri.parse('https://api.smartassistapp.in/api/events/upload-license');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile(
+          'file',
+          imageFile.readAsBytes().asStream(),
+          imageFile.lengthSync(),
+          filename: path.basename(imageFile.path),
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        print("✅ File uploaded successfully.");
+        print("Response: ${response.body}");
+
+        return 'success';
+      } else {
+        print("❌ Upload failed: ${response.statusCode}");
+        print("Response: ${response.body}");
+        return 'error';
+      }
+    } catch (e) {
+      print("❌ Upload error: $e");
+      return 'error';
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
+
+  // Future<void> _uploadImage(File imageFile) async {
+  //   setState(() {
+  //     _isUploading = true;
+  //   });
+
+  //   final token = await Storage.getToken();
+
+  //   final uri =
+  //       Uri.parse('https://api.smartassistapp.in/api/events/upload-license');
+
+  //   final request = http.MultipartRequest('POST', uri)
+  //     ..headers['Authorization'] = 'Bearer $token'
+  //     ..files.add(
+  //       http.MultipartFile(
+  //         'file',
+  //         imageFile.readAsBytes().asStream(),
+  //         imageFile.lengthSync(),
+  //         filename: path.basename(imageFile.path),
+  //         contentType: MediaType('image', 'jpeg'),
+  //       ),
+  //     );
+
+  //   try {
+  //     final streamedResponse = await request.send();
+  //     final response = await http.Response.fromStream(streamedResponse);
+
+  //     if (response.statusCode == 200) {
+  //       print("✅ File uploaded successfully.");
+  //       print("Response: ${response.body}");
+  //       // Navigate or show success
+  //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+  //         content: Text('Image uploaded and drive started!'),
+  //       ));
+  //     } else {
+  //       print("❌ Upload failed: ${response.statusCode}");
+  //       print("Response: ${response.body}");
+  //     }
+  //   } catch (e) {
+  //     print("❌ Upload error: $e");
+  //   } finally {
+  //     setState(() {
+  //       _isUploading = false;
+  //     });
+  //   }
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('', style: AppFont.appbarfontgrey(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, color: AppColors.iconGrey),
+          onPressed: () => Navigator.pop(context, true),
+        ),
+        elevation: 0,
+      ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    widget.imageFile,
+                    height: MediaQuery.sizeOf(context).height * 0.70,
+                    width: MediaQuery.sizeOf(context).width * 0.90,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Retake"),
+                  ),
+                  // ElevatedButton(
+                  //   style: ElevatedButton.styleFrom(
+                  //       backgroundColor: Colors.blue,
+                  //       foregroundColor: Colors.white,
+                  //       shape: RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(5))),
+                  //   onPressed: _isUploading
+                  //       ? null
+                  //       : () async {
+                  //           final result = await _uploadImage(widget.imageFile);
+
+                  //           if (result == 'success') {
+                  //             Navigator.push(
+                  //               context,
+                  //               MaterialPageRoute(
+                  //                 builder: (context) =>
+                  //                     StartDriveMap(), // Replace with your target screen
+                  //               ),
+                  //             );
+                  //           } else {
+                  //             ScaffoldMessenger.of(context).showSnackBar(
+                  //               const SnackBar(
+                  //                   content: Text(
+                  //                       'Upload failed. Please try again.')),
+                  //             );
+                  //           }
+                  //         },
+                  //   child: _isUploading
+                  //       ? const CircularProgressIndicator()
+                  //       : const Text("Start drive"),
+                  // ),
+
+                  TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => StartDriveMap(
+                                      eventId: widget.eventId,
+                                    )));
+                      },
+                      child: Text('start test drive'))
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

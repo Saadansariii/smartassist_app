@@ -64,10 +64,12 @@ class _TestUpcomingState extends State<TestUpcoming> {
   }
 
   void _handleTestDrive(dynamic item) {
+    String email = item['updated_by'] ?? '';
+    String eventId = item['event_id'] ?? '';
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const TestdriveVerifyotp(email: '', text: ''),
+        builder: (context) => TestdriveVerifyotp(email: email, text: '' , eventId : eventId),
       ),
     );
     print("Call action triggered for ${item['name']}");
@@ -109,22 +111,6 @@ class _TestUpcomingState extends State<TestUpcoming> {
     }
   }
 
-  // Future<void> _toggleFavorite(String eventId, int index) async {
-  //   bool newFavoriteStatus =
-  //       !(widget.upcomingTestDrive[index]['favourite'] ?? false);
-
-  //   setState(() {
-  //     widget.upcomingTestDrive[index]['favourite'] = newFavoriteStatus;
-  //   });
-
-  //   if (widget.onFavoriteToggle != null) {
-  //     widget.onFavoriteToggle!(eventId, newFavoriteStatus);
-  //   }
-
-  //   print(
-  //       "Favorite toggled for Task ID: $eventId, New Status: $newFavoriteStatus");
-  // }
-
   @override
   Widget build(BuildContext context) {
     if (widget.upcomingTestDrive.isEmpty) {
@@ -164,7 +150,7 @@ class _TestUpcomingState extends State<TestUpcoming> {
             vehicle: item['PMI'] ?? 'Range Rover Velar',
             subject: item['subject'] ?? 'Meeting',
             date: item['start_date'],
-            // mail: item['start_date'],
+            email: item['updated_by'],
             leadId: item['lead_id'],
             startTime: item['start_time'],
             eventId: item['event_id'],
@@ -261,7 +247,7 @@ class _TestUpcomingState extends State<TestUpcoming> {
 }
 
 class upcomingTestDrivesItem extends StatefulWidget {
-  final String name, date, vehicle, subject, leadId, eventId, startTime;
+  final String name, date, vehicle, subject, leadId, eventId, startTime, email;
   final bool isFavorite;
   final VoidCallback fetchDashboardData;
   final double swipeOffset;
@@ -277,6 +263,7 @@ class upcomingTestDrivesItem extends StatefulWidget {
     required this.startTime,
     required this.subject,
     required this.swipeOffset,
+    required this.email,
   });
 
   @override

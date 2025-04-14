@@ -4,13 +4,13 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
-
 class Message {
   final String body;
   final bool fromMe;
   final int timestamp;
   final String type;
-  final String? mediaUrl; // For images or other media
+  final String? mediaUrl;
+  final String? id; // Add this field
 
   Message({
     required this.body,
@@ -18,25 +18,23 @@ class Message {
     required this.timestamp,
     required this.type,
     this.mediaUrl,
+    this.id, // Add this field
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       body: json['body'] ?? '',
       fromMe: json['fromMe'] ?? false,
-      timestamp: json['timestamp'] ?? 0,
+      timestamp:
+          json['timestamp'] ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000),
       type: json['type'] ?? 'chat',
       mediaUrl: json['mediaUrl'],
+      id: json['id'], // Parse the ID
     );
   }
-  
- 
-  
- 
 }
 
 class WhatsappChat extends StatefulWidget {
- 
   final String chatId;
   final String userName;
 
@@ -49,285 +47,6 @@ class WhatsappChat extends StatefulWidget {
   @override
   State<WhatsappChat> createState() => _WhatsappChatState();
 }
-
-// class _WhatsappChatState extends State<WhatsappChat> {
-//   List<Message> messages = [];
-//   final TextEditingController _messageController = TextEditingController();
-//   late IO.Socket socket;
-//   bool isLoading = true;
-//   bool isConnected = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchMessages();
-//     initSocket();
-//   }
-
-//   void initSocket() {
-//     // Replace with your actual Socket.io server URL
-//     socket.on('new_message', (data) {
-//       print('New message received: $data');
-//       final newMessage = Message.fromJson(data);
-//       setState(() {
-//         messages.add(newMessage);
-//       });
-//     });
-
-//     socket.onConnect((_) {
-//       print('Socket connected');
-//       setState(() {
-//         isConnected = true;
-//       });
-
-//       // Join a specific chat room (optional)
-//       socket.emit('join', widget.chatId);
-//     });
-
-//     socket.onDisconnect((_) {
-//       print('Socket disconnected');
-//       setState(() {
-//         isConnected = false;
-//       });
-//     });
-
-//     // Listen for new messages
-//     socket.on('new_message', (data) {
-//       print('New message received: $data');
-//       final newMessage = Message.fromJson(data);
-//       setState(() {
-//         messages.add(newMessage);
-//       });
-//     });
-//   }
-
-//   Future<void> fetchMessages() async {
-//     setState(() {
-//       isLoading = true;
-//     });
-
-//     try {
-//       // Replace with your actual API endpoint
-//       final response = await http.get(
-//           Uri.parse('https://your-api.com/chats/${widget.chatId}/messages'));
-
-//       if (response.statusCode == 200) {
-//         final List<dynamic> data = json.decode(response.body);
-//         setState(() {
-//           messages = data.map((item) => Message.fromJson(item)).toList();
-
-//           messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-//           isLoading = false;
-//         });
-//       } else {
-//         print('Failed to load messages: ${response.statusCode}');
-//         setState(() {
-//           isLoading = false;
-//         });
-//       }
-//     } catch (e) {
-//       print('Error fetching messages: $e');
-//       setState(() {
-//         isLoading = false;
-//       });
-//     }
-//   }
-
-// void sendMessage() {
-//     if (_messageController.text.trim().isEmpty) return;
-
-//     final message = {
-//       'body': _messageController.text,
-//       'fromMe': true,
-//       'timestamp': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-//       'type': 'chat',
-//     };
-
-//     // Emit the message through Socket.io
-//     socket.emit('send_message', {
-//       'chatId': widget.chatId,
-//       'message': message,
-//     });
-
-//     // Add to local message list (optimistic update)
-//     setState(() {
-//       messages.add(Message.fromJson(message));
-//     });
-
-//     _messageController.clear();
-//   }
-
-//   String formatTimestamp(int timestamp) {
-//     final DateTime dateTime =
-//         DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-//     final now = DateTime.now();
-//     final today = DateTime(now.year, now.month, now.day);
-//     final yesterday = today.subtract(const Duration(days: 1));
-//     final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-
-//     final timeFormat = DateFormat('HH:mm');
-
-//     if (messageDate == today) {
-//       return timeFormat.format(dateTime);
-//     } else if (messageDate == yesterday) {
-//       return 'Yesterday, ${timeFormat.format(dateTime)}';
-//     } else {
-//       return DateFormat('MMM d, HH:mm').format(dateTime);
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     _messageController.dispose();
-//     socket.disconnect();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: AppColors.colorsBlue,
-//         leadingWidth: 40,
-//         leading: IconButton(
-//           icon:
-//               const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         title: Row(
-//           children: [
-//             // CircleAvatar(
-//             //   backgroundColor: Colors.grey[300],
-//             //   child: Text(
-//             //     widget.userName.isNotEmpty ? widget.userName[0] : "?",
-//             //     style: const TextStyle(color: Colors.white),
-//             //   ),
-//             // ),
-//             const SizedBox(width: 10),
-//             Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   widget.userName,
-//                   style: const TextStyle(
-//                     fontSize: 16,
-//                     fontWeight: FontWeight.bold,
-//                     color: Colors.white,
-//                   ),
-//                 ),
-//                 Text(
-//                   isConnected ? 'Online' : 'Offline',
-//                   style: TextStyle(
-//                     fontSize: 12,
-//                     color: Colors.white.withOpacity(0.8),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//         // actions: [
-//         //   IconButton(
-//         //     icon: const Icon(Icons.videocam, color: Colors.white),
-//         //     onPressed: () {},
-//         //   ),
-//         //   IconButton(
-//         //     icon: const Icon(Icons.call, color: Colors.white),
-//         //     onPressed: () {},
-//         //   ),
-//         //   IconButton(
-//         //     icon: const Icon(Icons.more_vert, color: Colors.white),
-//         //     onPressed: () {},
-//         //   ),
-//         // ],
-//       ),
-//       body: Column(
-//         children: [
-//           Expanded(
-//             child: isLoading
-//                 ? const Center(child: CircularProgressIndicator())
-//                 : messages.isEmpty
-//                     ? Center(
-//                         child: Text(
-//                           'No messages yet',
-//                           style: TextStyle(color: Colors.grey[600]),
-//                         ),
-//                       )
-//                     : ListView.builder(
-//                         padding: const EdgeInsets.symmetric(
-//                             vertical: 10, horizontal: 10),
-//                         itemCount: messages.length,
-//                         itemBuilder: (context, index) {
-//                           final message = messages[index];
-//                           final showDate = index == 0 ||
-//                               DateTime.fromMillisecondsSinceEpoch(
-//                                           messages[index].timestamp * 1000)
-//                                       .day !=
-//                                   DateTime.fromMillisecondsSinceEpoch(
-//                                           messages[index - 1].timestamp * 1000)
-//                                       .day;
-
-//                           return Column(
-//                             children: [
-//                               if (showDate)
-//                                 Container(
-//                                   margin:
-//                                       const EdgeInsets.symmetric(vertical: 10),
-//                                   padding: const EdgeInsets.symmetric(
-//                                       horizontal: 15, vertical: 5),
-//                                   decoration: BoxDecoration(
-//                                     color: Colors.grey[300],
-//                                     borderRadius: BorderRadius.circular(10),
-//                                   ),
-//                                   child: Text(
-//                                     DateFormat('EEEE, MMM d').format(
-//                                         DateTime.fromMillisecondsSinceEpoch(
-//                                             message.timestamp * 1000)),
-//                                     style: const TextStyle(
-//                                         fontSize: 12, color: Colors.black54),
-//                                   ),
-//                                 ),
-//                               MessageBubble(
-//                                 message: message,
-//                                 timeString: formatTimestamp(message.timestamp),
-//                               ),
-//                             ],
-//                           );
-//                         },
-//                       ),
-//           ),
-//           Container(
-//             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
-//             color: Colors.white,
-//             child: Row(
-//               children: [
-//                 IconButton(
-//                   icon: const Icon(Icons.emoji_emotions_outlined),
-//                   color: Colors.grey[600],
-//                   onPressed: () {},
-//                 ),
-//                 IconButton(
-//                   icon: const Icon(Icons.attach_file),
-//                   color: Colors.grey[600],
-//                   onPressed: () {},
-//                 ),
-//                 Expanded(
-//                   child: Container(
-//                     padding: const EdgeInsets.symmetric(horizontal: 15),
-//                     decoration: BoxDecoration(
-//                       color: Colors.grey[200],
-//                       borderRadius: BorderRadius.circular(25),
-//                     ),
-//                     child: TextField(
-//                       controller: _messageController,
-//                       decoration: const InputDecoration(
-//                         hintText: 'Type a message',
-//                         border: InputBorder.none,
-//                       ),
-//                       maxLines: null,
-//                     ),
-//                   ),
-//                 ),
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -414,7 +133,6 @@ class MessageBubble extends StatelessWidget {
 
 class _WhatsappChatState extends State<WhatsappChat> {
   List<Message> messages = [];
- 
 
   final TextEditingController _messageController = TextEditingController();
   late IO.Socket socket;
@@ -539,35 +257,37 @@ class _WhatsappChatState extends State<WhatsappChat> {
         }
       }
     });
+    
 
-    // socket.on('new_message', (data) {
-    //   print('New message received: $data');
-    //   if (data != null && mounted) {
-    //     try {
-    //       final messageData = data['message'];
-    //       if (messageData != null) {
-    //         final newMessage = Message.fromJson(messageData);
+    socket.on('new_message', (data) {
+      print('New message received: $data');
+      if (data != null && mounted) {
+        try {
+          final messageData = data['message'];
+          if (messageData != null) {
+            final newMessage = Message.fromJson(messageData);
 
-    //         // Check if this message belongs to the current chat
-    //         if (data['chatId'] == widget.chatId) {
-    //           // Check if message is already in the list to avoid duplicates
-    //           if (!messages.any((m) => m.id == newMessage.id)) {
-    //             setState(() {
-    //               messages.add(newMessage);
-    //             });
 
-    //             // Scroll to bottom
-    //             WidgetsBinding.instance.addPostFrameCallback((_) {
-    //               _scrollToBottom();
-    //             });
-    //           }
-    //         }
-    //       }
-    //     } catch (e) {
-    //       print('Error parsing new message: $e');
-    //     }
-    //   }
-    // });
+            // Check if this message belongs to the current chat
+            if (data['chatId'] == widget.chatId) {
+              // Check if message is already in the list to avoid duplicates
+              if (!messages.any((m) => m.id == newMessage.id)) {
+                setState(() {
+                  messages.add(newMessage);
+                });
+
+                // Scroll to bottom
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollToBottom();
+                });
+              }
+            }
+          }
+        } catch (e) {
+          print('Error parsing new message: $e');
+        }
+      }
+    });
 
     // Listen for message sent confirmation
 
@@ -577,27 +297,27 @@ class _WhatsappChatState extends State<WhatsappChat> {
     });
 
     // Listen for initial messages from the backend
-    socket.on('chat_messages', (data) {
-      print('Received initial messages: $data');
-      if (data != null && mounted) {
-        try {
-          final List<Message> initialMessages = (data['messages'] as List)
-              .map((msg) => Message.fromJson(msg))
-              .toList();
+    // socket.on('chat_messages', (data) {
+    //   print('Received initial messages: $data');
+    //   if (data != null && mounted) {
+    //     try {
+    //       final List<Message> initialMessages = (data['messages'] as List)
+    //           .map((msg) => Message.fromJson(msg))
+    //           .toList();
 
-          setState(() {
-            messages = initialMessages;
-          });
+    //       setState(() {
+    //         messages = initialMessages;
+    //       });
 
-          // Scroll to the bottom after initial messages are loaded
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToBottom();
-          });
-        } catch (e) {
-          print('Error parsing chat messages: $e');
-        }
-      }
-    });
+    //       // Scroll to the bottom after initial messages are loaded
+    //       WidgetsBinding.instance.addPostFrameCallback((_) {
+    //         _scrollToBottom();
+    //       });
+    //     } catch (e) {
+    //       print('Error parsing chat messages: $e');
+    //     }
+    //   }
+    // });
 
     socket.onDisconnect((_) {
       print('Socket disconnected');

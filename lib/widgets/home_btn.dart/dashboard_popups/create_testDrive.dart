@@ -584,12 +584,13 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     filled: true,
+                    contentPadding: EdgeInsets.zero,
                     fillColor: AppColors.containerBg,
                     hintText: selectedLeadsName ?? 'Select',
                     hintStyle: TextStyle(
                       color: selectedLeadsName != null
                           ? Colors.black
-                          : AppColors.iconGrey,
+                          : Colors.grey,
                     ),
                     prefixIcon: const Icon(
                       FontAwesomeIcons.magnifyingGlass,

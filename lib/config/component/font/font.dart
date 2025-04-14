@@ -173,6 +173,20 @@ class AppFont {
     );
   }
 
+  // static TextStyle labelWhite14(
+  //   BuildContext context, {
+  //   double fontSize = 14,
+  //   Color color = Colors.white,
+  //   Color backgroundColor = Colors.red,
+  // }) {
+  //   return GoogleFonts.poppins(
+  //     background: backgroundColor,
+  //     fontSize: scaleFont(context, fontSize),
+  //     color: color,
+  //     fontWeight: FontWeight.w500,
+  //   );
+  // }
+
   static TextStyle dashboardName(
     BuildContext context, {
     double fontSize = 16,
@@ -413,3 +427,5 @@ class AppFont {
     );
   }
 }
+
+ 
