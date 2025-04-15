@@ -222,72 +222,140 @@ class _AllLeadsState extends State<AllLeads> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    child: SizedBox(
-                      width: double.infinity,
-                      // Adjust width as needed
-                      height: MediaQuery.of(context).size.height * .05,
-                      child: TextField(
-                        autofocus: false,
-                        controller: _searchController,
-                        onChanged: (value) => _onSearchChanged(),
-                        textAlignVertical: TextAlignVertical.center,
-                        decoration: InputDecoration(
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
+          : Column(
+              children: [
+                // Search field container (unchanged)
+                Container(
+                  margin: const EdgeInsets.all(10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * .05,
+                    child: TextField(
+                      autofocus: false,
+                      controller: _searchController,
+                      onChanged: (value) => _onSearchChanged(),
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 15), // Reduce padding
+                        filled: true,
+                        fillColor: AppColors.searchBar,
+                        hintText: 'Search',
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300,
+                        ),
+                        prefixIcon: const Padding(
+                          padding:
+                              EdgeInsets.only(right: 8), // Reduce icon padding
+                          child: Icon(
+                            FontAwesomeIcons.magnifyingGlass,
+                            color: AppColors.fontColor,
+                            size: 15,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 15), // Reduce padding
-                          filled: true,
-                          fillColor: AppColors.searchBar,
-                          hintText: 'Search',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w300,
-                          ),
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.only(
-                                right: 8), // Reduce icon padding
-                            child: Icon(
-                              FontAwesomeIcons.magnifyingGlass,
-                              color: AppColors.fontColor,
-                              size: 15,
-                            ),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
                   ),
-                  _query.isNotEmpty
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 10, bottom: 5),
-                              child: Text(
-                                'Showing results for: $_query',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, fontStyle: FontStyle.italic),
-                              ),
-                            ),
-                            _buildTasksList(_searchResults),
-                          ],
-                        )
+                  // Search query indicator - keep this outside the Expanded
+                ),
+                if (_query.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 10,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        textAlign: TextAlign.left,
+                        'Showing results for: $_query',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ),
+
+                // Expanded widget containing the appropriate list
+                Expanded(
+                  child: _query.isNotEmpty
+                      ? _buildTasksList(_searchResults)
                       : _buildTasksList(upcomingTasks),
-                  // _buildTasksList(upcomingTasks),
-                ],
-              ),
+                ),
+              ],
             ),
+      // body: isLoading
+      //     ? const Center(child: CircularProgressIndicator())
+      //     : Column(
+      //         children: [
+      //           Container(
+      //             margin: const EdgeInsets.all(10),
+      //             child: SizedBox(
+      //               width: double.infinity,
+      //               // Adjust width as needed
+      //               height: MediaQuery.of(context).size.height * .05,
+      //               child: TextField(
+      //                 autofocus: false,
+      //                 controller: _searchController,
+      //                 onChanged: (value) => _onSearchChanged(),
+      //                 textAlignVertical: TextAlignVertical.center,
+      //                 decoration: InputDecoration(
+      //                   enabledBorder: OutlineInputBorder(
+      //                     borderRadius: BorderRadius.circular(30),
+      //                     borderSide: BorderSide.none,
+      //                   ),
+      //                   contentPadding: const EdgeInsets.symmetric(
+      //                       horizontal: 15), // Reduce padding
+      //                   filled: true,
+      //                   fillColor: AppColors.searchBar,
+      //                   hintText: 'Search',
+      //                   hintStyle: GoogleFonts.poppins(
+      //                     fontSize: 12,
+      //                     fontWeight: FontWeight.w300,
+      //                   ),
+      //                   prefixIcon: const Padding(
+      //                     padding:
+      //                         EdgeInsets.only(right: 8), // Reduce icon padding
+      //                     child: Icon(
+      //                       FontAwesomeIcons.magnifyingGlass,
+      //                       color: AppColors.fontColor,
+      //                       size: 15,
+      //                     ),
+      //                   ),
+      //                   border: OutlineInputBorder(
+      //                     borderRadius: BorderRadius.circular(30),
+      //                     borderSide: BorderSide.none,
+      //                   ),
+      //                 ),
+      //               ),
+      //             ),
+      //           ),
+      //           _query.isNotEmpty
+      //               ? Column(
+      //                   crossAxisAlignment: CrossAxisAlignment.start,
+      //                   children: [
+      //                     Padding(
+      //                       padding: const EdgeInsets.only(left: 10, bottom: 5),
+      //                       child: Text(
+      //                         'Showing results for: $_query',
+      //                         style: GoogleFonts.poppins(
+      //                             fontSize: 12, fontStyle: FontStyle.italic),
+      //                       ),
+      //                     ),
+      //                     Expanded(child: _buildTasksList(_searchResults)),
+      //                   ],
+      //                 )
+      //               : Expanded(child: _buildTasksList(upcomingTasks)),
+      //           // _buildTasksList(upcomingTasks),
+      //         ],
+      //       ),
     );
   }
 
@@ -297,7 +365,7 @@ class _AllLeadsState extends State<AllLeads> {
     }
 
     return ListView.builder(
-      shrinkWrap: true,
+      // shrinkWrap: true,
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: tasks.length,
       itemBuilder: (context, index) {

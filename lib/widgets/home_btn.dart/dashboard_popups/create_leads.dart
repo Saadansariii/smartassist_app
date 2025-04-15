@@ -314,15 +314,15 @@ class _CreateLeadsState extends State<CreateLeads> {
     bool isValid = true;
 
     // Example checks — replace with your actual fields
-    if (selectedExteriorColor == null || selectedExteriorColor!.isEmpty) {
-      isValid = false;
-      _errors['exteriorColor'] = 'select ';
-    }
+    // if (selectedExteriorColor == null || selectedExteriorColor!.isEmpty) {
+    //   isValid = false;
+    //   _errors['exteriorColor'] = 'select ';
+    // }
 
-    if (selectedInteriorColor == null || selectedInteriorColor!.isEmpty) {
-      isValid = false;
-      _errors['interiorColor'] = 'select';
-    }
+    // if (selectedInteriorColor == null || selectedInteriorColor!.isEmpty) {
+    //   isValid = false;
+    //   _errors['interiorColor'] = 'select';
+    // }
 
     // You can add more field checks here if needed
 
@@ -756,12 +756,12 @@ class _CreateLeadsState extends State<CreateLeads> {
                       _buildNumberWidget(
                           label: 'Pin Code',
                           controller: pinController,
-                          errorText: _errors['PIN Code'],
+                          // errorText: _errors['PIN Code'],
                           hintText: '11220',
                           onChanged: (value) {
                             if (_errors.containsKey('pin')) {
                               setState(() {
-                                _errors.remove('pin');
+                                // _errors.remove('pin');
                               });
                             }
                             print("pin : $value");
@@ -2178,6 +2178,7 @@ class _CreateLeadsState extends State<CreateLeads> {
 
       if (response != null) {
         print("Response received: $response"); // ✅ Print full response
+        print(leadData);
 
         if (response.containsKey('data')) {
           String leadId = response['data']['lead_id'];

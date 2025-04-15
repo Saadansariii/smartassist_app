@@ -16,6 +16,7 @@ import 'package:smart_assist/widgets/license_varification.dart';
 class TestdriveVerifyotp extends StatefulWidget {
   static const int _otpLength = 6;
   final String eventId;
+  final String leadId;
   final String email;
   final String text;
   final TextStyle? style;
@@ -26,6 +27,7 @@ class TestdriveVerifyotp extends StatefulWidget {
     required this.text,
     this.style,
     required this.eventId,
+    required this.leadId,
   });
 
   @override
@@ -244,8 +246,8 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) =>
-                      PassportVarification(eventId: widget.eventId)));
+                  builder: (context) => LicenseVarification(
+                      eventId: widget.eventId, leadId: widget.leadId)));
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0276FE),
@@ -383,21 +385,21 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
   //   }
   // }
 
-  _handleVerification() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PassportVarification(eventId: widget.eventId),
-      ),
-    );
-  }
+  // _handleVerification() {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => PassportVarification(eventId: widget.eventId),
+  //     ),
+  //   );
+  // }
 
-  void _navigateToPasswordScreen() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PassportVarification(eventId: widget.eventId),
-      ),
-    );
-  }
+  // void _navigateToPasswordScreen() {
+  //   Navigator.pushReplacement(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => PassportVarification(eventId: widget.eventId),
+  //     ),
+  //   );
+  // }
 }

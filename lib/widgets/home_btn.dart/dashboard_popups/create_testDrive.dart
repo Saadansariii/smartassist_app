@@ -871,7 +871,7 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
       'start_date': formattedStartDate,
       'end_date': formattedEndDate,
       'start_time': formattedStartTime,
-      // 'end_time': formattedEndTime,
+      'end_time': formattedEndTime,
       'PMI': selectedVehicleName,
       'sp_id': spId,
     };

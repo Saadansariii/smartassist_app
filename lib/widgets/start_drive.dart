@@ -1,15 +1,22 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/feedback.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:geolocator/geolocator.dart';
+// Remove permission_handler import since we're going to use only Geolocator's permission system
 
 class StartDriveMap extends StatefulWidget {
   final String eventId;
-
-  const StartDriveMap({super.key, required this.eventId});
+final String leadId;
+  const StartDriveMap({super.key, required this.eventId, required this.leadId});
 
   @override
   State<StartDriveMap> createState() => _StartDriveMapState();
@@ -22,17 +29,20 @@ class _StartDriveMapState extends State<StartDriveMap> {
   Marker? endMarker;
   late Polyline routePolyline;
   List<LatLng> routePoints = [];
-  IO.Socket? socket; // Made nullable to handle initialization errors
+  IO.Socket? socket;
   bool isDriveEnded = false;
   bool isLoading = true;
   String error = '';
   double totalDistance = 0;
   int driveDuration = 0;
+  StreamSubscription<Position>? positionStreamSubscription;
+  DateTime? startTime;
 
   @override
   void initState() {
     super.initState();
-    _determinePosition(); // Use Geolocator's permission handling directly
+    startTime = DateTime.now(); // Track when drive started
+    _determinePosition();
 
     routePolyline = Polyline(
       polylineId: const PolylineId('route'),
@@ -42,9 +52,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
     );
   }
 
-  /// Determine the current position of the device.
-  /// When the location services are not enabled or permissions
-  /// are denied the `Future` will return an error.
   Future<void> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -52,7 +59,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
     // Test if location services are enabled.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled
       setState(() {
         error =
             'Location services are disabled. Please enable location services in your device settings.';
@@ -65,7 +71,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied
         setState(() {
           error =
               'Location permissions are denied. Please allow access to your location.';
@@ -76,7 +81,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Permissions are permanently denied
       setState(() {
         error =
             'Location permissions are permanently denied. Please enable them in app settings.';
@@ -85,7 +89,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
       return;
     }
 
-    // When we reach here, permissions are granted
     try {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
@@ -125,12 +128,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
         routePoints.add(currentLocation);
 
         // Update the polyline
-        routePolyline = Polyline(
-          polylineId: const PolylineId('route'),
-          points: routePoints,
-          color: Colors.blue,
-          width: 5,
-        );
+        _updatePolyline();
 
         isLoading = false;
       });
@@ -141,6 +139,22 @@ class _StartDriveMapState extends State<StartDriveMap> {
     }
   }
 
+  void _updatePolyline() {
+    routePolyline = Polyline(
+      polylineId: const PolylineId('route'),
+      points: routePoints,
+      color: Colors.blue,
+      width: 5,
+    );
+  }
+
+  // Calculate distance between two points
+  double _calculateDistance(LatLng point1, LatLng point2) {
+    return Geolocator.distanceBetween(point1.latitude, point1.longitude,
+            point2.latitude, point2.longitude) /
+        1000; // Convert to km
+  }
+
   // Initialize the Socket.IO connection
   void _initializeSocket() {
     try {
@@ -148,6 +162,8 @@ class _StartDriveMapState extends State<StartDriveMap> {
         'transports': ['websocket'],
         'autoConnect': true,
         'reconnection': true,
+        'reconnectionAttempts': 5,
+        'reconnectionDelay': 1000,
       });
 
       socket!.onConnect((_) {
@@ -157,57 +173,89 @@ class _StartDriveMapState extends State<StartDriveMap> {
 
       socket!.onConnectError((data) {
         print('Connection error: $data');
+        // Try reconnecting if socket fails
+        if (socket != null && !socket!.connected) {
+          socket!.connect();
+        }
       });
 
       socket!.onError((data) {
         print('Socket error: $data');
       });
 
+      socket!.on('disconnect', (_) {
+        print('Socket disconnected');
+        // Try reconnecting if not already ended
+        if (!isDriveEnded && socket != null) {
+          socket!.connect();
+        }
+      });
+
       // Listen for live location updates from backend
       socket!.on('locationUpdated', (data) {
         if (mounted) {
-          setState(() {
-            LatLng newCoordinates = LatLng(data['newCoordinates']['latitude'],
-                data['newCoordinates']['longitude']);
+          if (data == null || data['newCoordinates'] == null) {
+            print('Received invalid location update data');
+            return;
+          }
 
-            userMarker = Marker(
-              markerId: const MarkerId('user'),
-              position: newCoordinates,
-              infoWindow: const InfoWindow(title: 'User'),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueAzure),
-            );
+          try {
+            setState(() {
+              LatLng newCoordinates = LatLng(
+                data['newCoordinates']['latitude'],
+                data['newCoordinates']['longitude'],
+              );
 
-            routePoints.add(newCoordinates);
-            routePolyline = Polyline(
-              polylineId: const PolylineId('route'),
-              points: routePoints,
-              color: Colors.blue,
-              width: 5,
-            );
+              // Update user marker
+              userMarker = Marker(
+                markerId: const MarkerId('user'),
+                position: newCoordinates,
+                infoWindow: const InfoWindow(title: 'User'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueAzure),
+              );
 
-            // Update total distance if provided
-            if (data['totalDistance'] != null) {
-              totalDistance = data['totalDistance'].toDouble();
-            }
+              // Calculate distance for this segment
+              if (routePoints.isNotEmpty) {
+                LatLng lastPoint = routePoints.last;
+                double segmentDistance =
+                    _calculateDistance(lastPoint, newCoordinates);
+                totalDistance += segmentDistance;
+              }
 
-            // Move camera to follow user if controller is available
-            if (this.mapController != null) {
-              mapController
-                  .animateCamera(CameraUpdate.newLatLng(newCoordinates));
-            }
-          });
+              // Add point to route
+              routePoints.add(newCoordinates);
+              _updatePolyline();
+
+              // Update total distance if provided by server
+              if (data['totalDistance'] != null) {
+                totalDistance = data['totalDistance'].toDouble();
+              }
+
+              // Move camera to follow user
+              if (mapController != null) {
+                mapController
+                    .animateCamera(CameraUpdate.newLatLng(newCoordinates));
+              }
+            });
+          } catch (e) {
+            print('Error processing location update: $e');
+          }
         }
       });
 
       // Listen for test drive ended event
       socket!.on('testDriveEnded', (data) {
         if (mounted) {
-          _handleDriveEnded(
-              data['totalDistance'] != null
-                  ? data['totalDistance'].toDouble()
-                  : totalDistance,
-              data['duration'] != null ? data['duration'] : driveDuration);
+          double finalDistance = data['totalDistance'] != null
+              ? data['totalDistance'].toDouble()
+              : totalDistance;
+
+          int finalDuration = data['duration'] != null
+              ? data['duration']
+              : _calculateDuration();
+
+          _handleDriveEnded(finalDistance, finalDuration);
         }
       });
 
@@ -220,6 +268,14 @@ class _StartDriveMapState extends State<StartDriveMap> {
         });
       }
     }
+  }
+
+  int _calculateDuration() {
+    if (startTime == null) return 0;
+
+    final now = DateTime.now();
+    final difference = now.difference(startTime!);
+    return (difference.inSeconds / 60).round(); // Convert to minutes
   }
 
   // Make the API call to start the test drive with dynamic coordinates
@@ -243,7 +299,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
         }),
       );
 
-      print('this is the api for the test drive latitide and longitude');
+      print('Starting test drive for event: ${widget.eventId}');
 
       if (response.statusCode == 200) {
         print('Test drive started successfully');
@@ -275,10 +331,39 @@ class _StartDriveMapState extends State<StartDriveMap> {
         distanceFilter: 10, // Update location every 10 meters
       );
 
-      Geolocator.getPositionStream(locationSettings: locationSettings)
-          .listen((Position position) {
+      positionStreamSubscription =
+          Geolocator.getPositionStream(locationSettings: locationSettings)
+              .listen((Position position) {
         final LatLng newLocation =
             LatLng(position.latitude, position.longitude);
+
+        // Update locally first
+        if (mounted && userMarker != null) {
+          setState(() {
+            // Update user marker position
+            userMarker = Marker(
+              markerId: const MarkerId('user'),
+              position: newLocation,
+              infoWindow: const InfoWindow(title: 'User'),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueAzure),
+            );
+
+            // Calculate distance for this segment
+            if (routePoints.isNotEmpty) {
+              LatLng lastPoint = routePoints.last;
+              double segmentDistance =
+                  _calculateDistance(lastPoint, newLocation);
+              totalDistance += segmentDistance;
+            }
+
+            // Add new point to route
+            routePoints.add(newLocation);
+            _updatePolyline();
+          });
+        }
+
+        // Then send to server
         _sendLocationUpdate(newLocation);
       });
     } catch (e) {
@@ -294,56 +379,71 @@ class _StartDriveMapState extends State<StartDriveMap> {
         'newCoordinates': {
           'latitude': location.latitude,
           'longitude': location.longitude,
-        }
+        },
+        'totalDistance': totalDistance // Also send current calculated distance
       });
+    } else {
+      print('Socket not connected, trying to reconnect...');
+      if (socket != null) {
+        socket!.connect();
+      }
     }
   }
 
   // Handle when drive ends
   void _handleDriveEnded(double distance, int duration) {
-    if (userMarker != null && mounted) {
+    if (mounted) {
       setState(() {
-        endMarker = Marker(
-          markerId: const MarkerId('end'),
-          position: userMarker!.position,
-          infoWindow: const InfoWindow(title: 'End'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        );
+        if (userMarker != null) {
+          endMarker = Marker(
+            markerId: const MarkerId('end'),
+            position: userMarker!.position,
+            infoWindow: const InfoWindow(title: 'End'),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          );
+        }
+
         isDriveEnded = true;
-        totalDistance = distance;
-        driveDuration = duration;
+        totalDistance = distance > 0 ? distance : totalDistance;
+        driveDuration = duration > 0 ? duration : _calculateDuration();
+
+        // Ensure we clean up location tracking
+        if (positionStreamSubscription != null) {
+          positionStreamSubscription!.cancel();
+        }
       });
 
       // Show summary dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Drive Summary'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Total Distance: ${distance.toStringAsFixed(2)} km'),
-              Text('Duration: $duration minutes'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {},
-              // onPressed: () {
-              //   Navigator.pop(context); // Close dialog
-              //   Navigator.of(context).push(
-              //     MaterialPageRoute(
-              //       builder: (context) =>
-              //           FeedbackScreen(eventId: widget.eventId),
-              //     ),
-              //   );
-              // },
-              child: const Text('Submit Feedback'),
-            ),
-          ],
-        ),
-      );
+      // showDialog(
+      //   context: context,
+      //   barrierDismissible: false,
+      //   builder: (context) => AlertDialog(
+      //     title: const Text('Drive Summary'),
+      //     content: Column(
+      //       mainAxisSize: MainAxisSize.min,
+      //       children: [
+      //         Text('Total Distance: ${totalDistance.toStringAsFixed(2)} km'),
+      //         Text('Duration: $driveDuration minutes'),
+      //       ],
+      //     ),
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () {
+      //           Navigator.pop(context); // Close dialog
+      //           Navigator.of(context).push(
+      //             MaterialPageRoute(
+      //               builder: (context) =>
+      //                   FeedbackScreen(eventId: widget.eventId),
+      //             ),
+      //           );
+      //         },
+      //         child: const Text('Submit Feedback'),
+      //       ),
+      //     ],
+      //   ),
+      // );
+    
     }
   }
 
@@ -352,18 +452,93 @@ class _StartDriveMapState extends State<StartDriveMap> {
     mapController = controller;
   }
 
+  // End the test drive with API call
+  Future<void> _endTestDrive() async {
+    try {
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/events/${widget.eventId}/end-drive');
+      final token = await Storage.getToken();
+
+      // Send current calculated distance and duration
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'totalDistance': totalDistance,
+          'duration': _calculateDuration(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Test drive ended successfully');
+        // Handle successful end of drive
+        _handleDriveEnded(totalDistance, _calculateDuration());
+         Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Feedbackscreen(leadId : widget.leadId),
+          ),
+        );
+        // Navigator.push(context, MaterialPageRoute(builder: ))
+      } else {
+        print('Failed to end drive: ${response.statusCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to end drive: ${response.statusCode}')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error ending drive: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error ending drive: $e')),
+        );
+      }
+    } finally {
+      // Clean up resources even if API call fails
+      if (socket != null) {
+        socket!.disconnect();
+      }
+
+      if (positionStreamSubscription != null) {
+        positionStreamSubscription!.cancel();
+      }
+    }
+  }
+
   @override
   void dispose() {
+    // Clean up resources
     if (socket != null && socket!.connected) {
       socket!.disconnect();
     }
+
+    if (positionStreamSubscription != null) {
+      positionStreamSubscription!.cancel();
+    }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Test Drive Map')),
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundLightGrey,
+        title: Text('Test Drive', style: AppFont.appbarfontgrey(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_outlined,
+              color: AppColors.iconGrey),
+          onPressed: () {
+            Navigator.pop(context, true);
+          },
+        ),
+        elevation: 0,
+      ),
       body: isLoading
           ? const Center(
               child: Column(
@@ -403,142 +578,697 @@ class _StartDriveMapState extends State<StartDriveMap> {
                 )
               : Stack(
                   children: [
-                    SizedBox(
-                      height: 400,
-                      width: 400,
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: GoogleMap(
-                          onMapCreated: _onMapCreated,
-                          initialCameraPosition: CameraPosition(
-                            target: startMarker?.position ?? const LatLng(0, 0),
-                            zoom: 16,
+                    Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration:
+                          BoxDecoration(color: AppColors.backgroundLightGrey),
+                      child: SafeArea(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: SizedBox(
+                                    height: 400,
+                                    width: 400,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: GoogleMap(
+                                        onMapCreated: _onMapCreated,
+                                        initialCameraPosition: CameraPosition(
+                                          target: startMarker?.position ??
+                                              const LatLng(0, 0),
+                                          zoom: 16,
+                                        ),
+                                        myLocationEnabled: true,
+                                        myLocationButtonEnabled: true,
+                                        zoomControlsEnabled: true,
+                                        markers: {
+                                          if (startMarker != null) startMarker!,
+                                          if (userMarker != null) userMarker!,
+                                          if (isDriveEnded && endMarker != null)
+                                            endMarker!,
+                                        },
+                                        polylines: {routePolyline},
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (!isDriveEnded)
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'Distance: ${totalDistance.toStringAsFixed(2)} km',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Duration: ${_calculateDuration()} mins',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                const SizedBox(height: 10),
+                                if (!isDriveEnded)
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: _endTestDrive,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      child: Text('End Drive & Submit Feedback',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white)),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          myLocationEnabled: true,
-                          myLocationButtonEnabled: true,
-                          zoomControlsEnabled: true,
-                          markers: {
-                            if (startMarker != null) startMarker!,
-                            if (userMarker != null) userMarker!,
-                            if (isDriveEnded && endMarker != null) endMarker!,
-                          },
-                          polylines: {routePolyline},
                         ),
                       ),
                     ),
-                    if (!isDriveEnded)
-                      Positioned(
-                        bottom: 20,
-                        left: 20,
-                        right: 20,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5)),
-                            backgroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          child: const Text('End Drive & Submit Feedback',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white)),
-                        ),
-                      ),
                   ],
                 ),
     );
   }
 }
 
- 
+// Feedback screen placeholder
+// class FeedbackScreen extends StatelessWidget {
+//   final String eventId;
 
+//   const FeedbackScreen({super.key, required this.eventId});
 
-// import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:smart_assist/config/component/color/colors.dart';
-// import 'package:smart_assist/config/component/font/font.dart';
-
-// class Startdrive extends StatefulWidget {
-//   const Startdrive({super.key});
-
-//   @override
-//   State<Startdrive> createState() => _StartdriveState();
-// }
-
-// class _StartdriveState extends State<Startdrive> {
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
-//         appBar: AppBar(
-//           backgroundColor: AppColors.backgroundLightGrey,
-//           title: Text('Test Drive', style: AppFont.appbarfontgrey(context)),
-//           leading: IconButton(
-//             icon: const Icon(Icons.arrow_back_ios_new_outlined,
-//                 color: AppColors.iconGrey),
-//             onPressed: () {
-//               Navigator.pop(context, true);
-//             },
-//           ),
-//           elevation: 0,
-//         ),
-//         // body: ,
-//         body: Stack(children: [
-//           Scaffold(
-//             body: Container(
-//               width: double.infinity, // ✅ Ensures full width
-//               height: double.infinity,
-//               decoration: BoxDecoration(
-//                 color: AppColors.backgroundLightGrey,
-//               ),
-//               child: SafeArea(
-//                 child: SingleChildScrollView(
-//                   child: Padding(
-//                     padding: const EdgeInsets.all(10.0),
-//                     child: Column(
-//                       children: [
-//                         // Main Container with Flexbox Layout
-//                         Container(
-//                           padding: const EdgeInsets.all(15),
-//                           decoration: BoxDecoration(
-//                             color: Colors.white,
-//                             borderRadius: BorderRadius.circular(10),
-//                           ),
-//                           child: Row(
-//                             children: [],
-//                           ),
-//                         ),
+//       appBar: AppBar(title: const Text('Submit Feedback')),
+//       body: const Center(child: Text('Feedback form will be implemented here')),
+//     );
+//   }
+// }
 
-//                         TextButton(
-//                             onPressed: () {},
-//                             child: Text(
-//                               textAlign: TextAlign.center,
-//                               'End drive & submit feedback',
-//                               style: GoogleFonts.poppins(
-//                                   backgroundColor: Colors.red,
-//                                   color: Colors.white,
-//                                   fontSize: 14,
-//                                   fontWeight: FontWeight.w500),
-//                             )),
-//                         TextButton(
-//                             onPressed: () {},
-//                             child: Text(
-//                               textAlign: TextAlign.center,
-//                               'End drive & Send feedback form to customer',
-//                               style: GoogleFonts.poppins(
-//                                   backgroundColor: Colors.red,
-//                                   color: Colors.white,
-//                                   fontSize: 14,
-//                                   fontWeight: FontWeight.w500),
-//                             ))
+// class StartDriveMap extends StatefulWidget {
+//   final String eventId;
+
+//   const StartDriveMap({super.key, required this.eventId});
+
+//   @override
+//   State<StartDriveMap> createState() => _StartDriveMapState();
+// }
+
+// class _StartDriveMapState extends State<StartDriveMap> {
+//   late GoogleMapController mapController;
+//   Marker? startMarker;
+//   Marker? userMarker;
+//   Marker? endMarker;
+//   late Polyline routePolyline;
+//   List<LatLng> routePoints = [];
+//   IO.Socket? socket; // Made nullable to handle initialization errors
+//   bool isDriveEnded = false;
+//   bool isLoading = true;
+//   String error = '';
+//   double totalDistance = 0;
+//   int driveDuration = 0;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _determinePosition(); // Use Geolocator's permission handling directly
+
+//     routePolyline = Polyline(
+//       polylineId: const PolylineId('route'),
+//       points: routePoints,
+//       color: Colors.blue,
+//       width: 5,
+//     );
+//   }
+
+//   /// Determine the current position of the device.
+//   /// When the location services are not enabled or permissions
+//   /// are denied the `Future` will return an error.
+//   Future<void> _determinePosition() async {
+//     bool serviceEnabled;
+//     LocationPermission permission;
+
+//     // Test if location services are enabled.
+//     serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//     if (!serviceEnabled) {
+//       // Location services are not enabled
+//       setState(() {
+//         error =
+//             'Location services are disabled. Please enable location services in your device settings.';
+//         isLoading = false;
+//       });
+//       return;
+//     }
+
+//     permission = await Geolocator.checkPermission();
+//     if (permission == LocationPermission.denied) {
+//       permission = await Geolocator.requestPermission();
+//       if (permission == LocationPermission.denied) {
+//         // Permissions are denied
+//         setState(() {
+//           error =
+//               'Location permissions are denied. Please allow access to your location.';
+//           isLoading = false;
+//         });
+//         return;
+//       }
+//     }
+
+//     if (permission == LocationPermission.deniedForever) {
+//       // Permissions are permanently denied
+//       setState(() {
+//         error =
+//             'Location permissions are permanently denied. Please enable them in app settings.';
+//         isLoading = false;
+//       });
+//       return;
+//     }
+
+//     // When we reach here, permissions are granted
+//     try {
+//       Position position = await Geolocator.getCurrentPosition(
+//           desiredAccuracy: LocationAccuracy.high);
+
+//       _handleLocationObtained(position);
+//     } catch (e) {
+//       setState(() {
+//         error = 'Error getting location: $e';
+//         isLoading = false;
+//       });
+//     }
+//   }
+
+//   void _handleLocationObtained(Position position) {
+//     final LatLng currentLocation =
+//         LatLng(position.latitude, position.longitude);
+
+//     if (mounted) {
+//       setState(() {
+//         // Initialize start marker at current location
+//         startMarker = Marker(
+//           markerId: const MarkerId('start'),
+//           position: currentLocation,
+//           infoWindow: const InfoWindow(title: 'Start'),
+//         );
+
+//         // Initialize user marker at current location
+//         userMarker = Marker(
+//           markerId: const MarkerId('user'),
+//           position: currentLocation,
+//           infoWindow: const InfoWindow(title: 'User'),
+//           icon:
+//               BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+//         );
+
+//         // Add the first point to route
+//         routePoints.add(currentLocation);
+
+//         // Update the polyline
+//         routePolyline = Polyline(
+//           polylineId: const PolylineId('route'),
+//           points: routePoints,
+//           color: Colors.blue,
+//           width: 5,
+//         );
+
+//         isLoading = false;
+//       });
+
+//       // Now that we have location, initialize socket and start the drive
+//       _initializeSocket();
+//       _startTestDrive(currentLocation);
+//     }
+//   }
+
+//   // Initialize the Socket.IO connection
+//   void _initializeSocket() {
+//     try {
+//       socket = IO.io('wss://api.smartassistapp.in', <String, dynamic>{
+//         'transports': ['websocket'],
+//         'autoConnect': true,
+//         'reconnection': true,
+//       });
+
+//       socket!.onConnect((_) {
+//         print('Connected to socket');
+//         socket!.emit('joinTestDrive', {'eventId': widget.eventId});
+//       });
+
+//       socket!.onConnectError((data) {
+//         print('Connection error: $data');
+//       });
+
+//       socket!.onError((data) {
+//         print('Socket error: $data');
+//       });
+
+//       // Listen for live location updates from backend
+//       socket!.on('locationUpdated', (data) {
+//         if (mounted) {
+//           setState(() {
+//             LatLng newCoordinates = LatLng(data['newCoordinates']['latitude'],
+//                 data['newCoordinates']['longitude']);
+
+//             userMarker = Marker(
+//               markerId: const MarkerId('user'),
+//               position: newCoordinates,
+//               infoWindow: const InfoWindow(title: 'User'),
+//               icon: BitmapDescriptor.defaultMarkerWithHue(
+//                   BitmapDescriptor.hueAzure),
+//             );
+
+//             routePoints.add(newCoordinates);
+//             routePolyline = Polyline(
+//               polylineId: const PolylineId('route'),
+//               points: routePoints,
+//               color: Colors.blue,
+//               width: 5,
+//             );
+
+//             // Update total distance if provided
+//             if (data['totalDistance'] != null) {
+//               totalDistance = data['totalDistance'].toDouble();
+//             }
+
+//             // Move camera to follow user if controller is available
+//             if (this.mapController != null) {
+//               mapController
+//                   .animateCamera(CameraUpdate.newLatLng(newCoordinates));
+//             }
+//           });
+//         }
+//       });
+
+//       // Listen for test drive ended event
+//       socket!.on('testDriveEnded', (data) {
+//         if (mounted) {
+//           _handleDriveEnded(
+//               data['totalDistance'] != null
+//                   ? data['totalDistance'].toDouble()
+//                   : totalDistance,
+//               data['duration'] != null ? data['duration'] : driveDuration);
+//         }
+//       });
+
+//       socket!.connect();
+//     } catch (e) {
+//       print('Socket initialization error: $e');
+//       if (mounted) {
+//         setState(() {
+//           error = 'Error connecting to server: $e';
+//         });
+//       }
+//     }
+//   }
+
+//   // Make the API call to start the test drive with dynamic coordinates
+//   Future<void> _startTestDrive(LatLng currentLocation) async {
+//     try {
+//       final url = Uri.parse(
+//           'https://api.smartassistapp.in/api/events/${widget.eventId}/start-drive');
+//       final token = await Storage.getToken();
+
+//       final response = await http.post(
+//         url,
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': 'Bearer $token',
+//         },
+//         body: json.encode({
+//           'startCoordinates': {
+//             'latitude': currentLocation.latitude,
+//             'longitude': currentLocation.longitude,
+//           },
+//         }),
+//       );
+
+//       print('this is the api for the test drive latitide and longitude');
+//       print(widget.eventId);
+
+//       if (response.statusCode == 200) {
+//         print('Test drive started successfully');
+//         // Start location tracking
+//         _startLocationTracking();
+//       } else {
+//         print('Failed to start test drive: ${response.statusCode}');
+//         if (mounted) {
+//           setState(() {
+//             error = 'Failed to start test drive: ${response.statusCode}';
+//           });
+//         }
+//       }
+//     } catch (e) {
+//       print('Error starting test drive: $e');
+//       if (mounted) {
+//         setState(() {
+//           error = 'Error starting test drive: $e';
+//         });
+//       }
+//     }
+//   }
+
+//   // Listen for location changes and update backend
+//   void _startLocationTracking() {
+//     try {
+//       const LocationSettings locationSettings = LocationSettings(
+//         accuracy: LocationAccuracy.high,
+//         distanceFilter: 10, // Update location every 10 meters
+//       );
+
+//       Geolocator.getPositionStream(locationSettings: locationSettings)
+//           .listen((Position position) {
+//         final LatLng newLocation =
+//             LatLng(position.latitude, position.longitude);
+//         _sendLocationUpdate(newLocation);
+//       });
+//     } catch (e) {
+//       print('Error starting location tracking: $e');
+//     }
+//   }
+
+//   // Update location to backend
+//   void _sendLocationUpdate(LatLng location) {
+//     if (socket != null && socket!.connected) {
+//       socket!.emit('updateLocation', {
+//         'eventId': widget.eventId,
+//         'newCoordinates': {
+//           'latitude': location.latitude,
+//           'longitude': location.longitude,
+//         }
+//       });
+//     }
+//   }
+
+//   // Handle when drive ends
+//   void _handleDriveEnded(double distance, int duration) {
+//     if (userMarker != null && mounted) {
+//       setState(() {
+//         endMarker = Marker(
+//           markerId: const MarkerId('end'),
+//           position: userMarker!.position,
+//           infoWindow: const InfoWindow(title: 'End'),
+//           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+//         );
+//         isDriveEnded = true;
+//         totalDistance = distance;
+//         driveDuration = duration;
+//       });
+
+//       // Show summary dialog
+//       showDialog(
+//         context: context,
+//         barrierDismissible: false,
+//         builder: (context) => AlertDialog(
+//           title: const Text('Drive Summary'),
+//           content: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               Text('Total Distance: ${distance.toStringAsFixed(2)} km'),
+//               Text('Duration: $duration minutes'),
+//             ],
+//           ),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.pop(context); // Close dialog
+//                 Navigator.of(context).push(
+//                   MaterialPageRoute(
+//                     builder: (context) =>
+//                         FeedbackScreen(eventId: widget.eventId),
+//                   ),
+//                 );
+//               },
+//               child: const Text('Submit Feedback'),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+//   }
+
+//   // Handle Google Map creation
+//   void _onMapCreated(GoogleMapController controller) {
+//     mapController = controller;
+//   }
+
+//   // End the test drive with API call
+//   Future<void> _endTestDrive() async {
+//     try {
+//       final url = Uri.parse(
+//           'https://api.smartassistapp.in/api/events/${widget.eventId}/end-drive');
+//       final token = await Storage.getToken();
+
+//       final response = await http.post(
+//         url,
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': 'Bearer $token',
+//         },
+//       );
+
+//       if (response.statusCode != 200) {
+//         print('this is eventId');
+//         print(widget.eventId);
+//         if (mounted) {
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             SnackBar(
+//                 content: Text('Failed to end drive: ${response.statusCode}')),
+//           );
+//           print(response.statusCode);
+//         }
+//       }
+//     } catch (e) {
+//       if (mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Error ending drive: $e')),
+//         );
+//       }
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     if (socket != null && socket!.connected) {
+//       socket!.disconnect();
+//     }
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         backgroundColor: AppColors.backgroundLightGrey,
+//         title: Text('Test Drive', style: AppFont.appbarfontgrey(context)),
+//         leading: IconButton(
+//           icon: const Icon(Icons.arrow_back_ios_new_outlined,
+//               color: AppColors.iconGrey),
+//           onPressed: () {
+//             Navigator.pop(context, true);
+//           },
+//         ),
+//         elevation: 0,
+//       ),
+//       body: isLoading
+//           ? const Center(
+//               child: Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   CircularProgressIndicator(),
+//                   SizedBox(height: 16),
+//                   Text('Getting your location...',
+//                       style: TextStyle(fontSize: 16)),
+//                 ],
+//               ),
+//             )
+//           : error.isNotEmpty
+//               ? Center(
+//                   child: Padding(
+//                     padding: const EdgeInsets.all(20),
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         const Icon(Icons.error_outline,
+//                             color: Colors.red, size: 48),
+//                         const SizedBox(height: 16),
+//                         Text(
+//                           error,
+//                           style:
+//                               const TextStyle(color: Colors.red, fontSize: 16),
+//                           textAlign: TextAlign.center,
+//                         ),
+//                         const SizedBox(height: 24),
+//                         ElevatedButton(
+//                           onPressed: _determinePosition,
+//                           child: const Text('Try Again'),
+//                         ),
 //                       ],
 //                     ),
 //                   ),
+//                 )
+//               : Stack(
+//                   children: [
+//                     Container(
+//                       width: double.infinity,
+//                       height: double.infinity,
+//                       decoration:
+//                           BoxDecoration(color: AppColors.backgroundLightGrey),
+//                       child: SafeArea(
+//                         child: SingleChildScrollView(
+//                           child: Padding(
+//                             padding: const EdgeInsets.all(10.0),
+//                             child: Column(
+//                               children: [
+//                                 Container(
+//                                   padding: const EdgeInsets.all(15),
+//                                   decoration: BoxDecoration(
+//                                     color: Colors.white,
+//                                     borderRadius: BorderRadius.circular(10),
+//                                   ),
+//                                   child: SizedBox(
+//                                     height: 400,
+//                                     width: 400,
+//                                     child: Container(
+//                                       decoration: BoxDecoration(
+//                                           color: Colors.black,
+//                                           borderRadius:
+//                                               BorderRadius.circular(10)),
+//                                       child: GoogleMap(
+//                                         onMapCreated: _onMapCreated,
+//                                         initialCameraPosition: CameraPosition(
+//                                           target: startMarker?.position ??
+//                                               const LatLng(0, 0),
+//                                           zoom: 16,
+//                                         ),
+//                                         myLocationEnabled: true,
+//                                         myLocationButtonEnabled: true,
+//                                         zoomControlsEnabled: true,
+//                                         markers: {
+//                                           if (startMarker != null) startMarker!,
+//                                           if (userMarker != null) userMarker!,
+//                                           if (isDriveEnded && endMarker != null)
+//                                             endMarker!,
+//                                         },
+//                                         polylines: {routePolyline},
+//                                       ),
+//                                     ),
+//                                   ),
+//                                 ),
+//                                 const SizedBox(
+//                                   height: 10,
+//                                 ),
+//                                 if (!isDriveEnded)
+//                                   SizedBox(
+//                                     width: double.infinity,
+//                                     child: ElevatedButton(
+//                                       onPressed: _endTestDrive,
+//                                       style: ElevatedButton.styleFrom(
+//                                         padding: const EdgeInsets.symmetric(
+//                                             vertical: 10),
+//                                         shape: RoundedRectangleBorder(
+//                                             borderRadius:
+//                                                 BorderRadius.circular(10)),
+//                                         backgroundColor: Colors.red,
+//                                       ),
+//                                       child: Text('End Drive & Submit Feedback',
+//                                           style: GoogleFonts.poppins(
+//                                               fontSize: 14,
+//                                               fontWeight: FontWeight.w500,
+//                                               color: Colors.white)),
+//                                     ),
+//                                   ),
+//                                 const SizedBox(
+//                                   height: 10,
+//                                 ),
+//                                 SizedBox(
+//                                   width: double.infinity,
+//                                   child: ElevatedButton(
+//                                     onPressed: _endTestDrive,
+//                                     style: ElevatedButton.styleFrom(
+//                                       padding: const EdgeInsets.symmetric(
+//                                           vertical: 10),
+//                                       shape: RoundedRectangleBorder(
+//                                           borderRadius:
+//                                               BorderRadius.circular(10)),
+//                                       backgroundColor: Colors.red,
+//                                     ),
+//                                     child: Padding(
+//                                       padding: const EdgeInsets.symmetric(
+//                                           horizontal: 10.0),
+//                                       child: Text(
+//                                           textAlign: TextAlign.center,
+//                                           'End Drive & Submit Feedback form to customer',
+//                                           maxLines: 4,
+//                                           style: GoogleFonts.poppins(
+//                                               fontSize: 14,
+//                                               fontWeight: FontWeight.w500,
+//                                               color: Colors.white)),
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ],
 //                 ),
-//               ),
-//             ),
-//           )
-//         ]));
+//     );
 //   }
-// } 
+// }
+
+// // Feedback screen placeholder
+// class FeedbackScreen extends StatelessWidget {
+//   final String eventId;
+
+//   const FeedbackScreen({super.key, required this.eventId});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: const Text('Submit Feedback')),
+//       body: const Center(child: Text('Feedback form will be implemented here')),
+//     );
+//   }
+// }

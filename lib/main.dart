@@ -7,8 +7,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:smart_assist/config/route/route.dart';
 import 'package:smart_assist/config/route/route_name.dart';
-import 'package:hive_flutter/hive_flutter.dart'; 
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
+import 'package:smart_assist/widgets/feedback.dart';
+import 'package:smart_assist/widgets/feedback.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812), 
+      designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
@@ -40,11 +42,11 @@ class MyApp extends StatelessWidget {
           builder: (context, widget) {
             return MediaQuery(
               data: MediaQuery.of(context)
-                  .copyWith(textScaler:const TextScaler.linear(1.0)),  
+                  .copyWith(textScaler: const TextScaler.linear(1.0)),
               child: widget!,
             );
           },
-          initialRoute: RoutesName.splashScreen,
+          initialRoute: RoutesName.splashScreen, 
           onGenerateRoute: Routes.generateRoute,
           theme: ThemeData(
             scaffoldBackgroundColor: const Color(0xFFFFFFFF),

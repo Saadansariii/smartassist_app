@@ -317,6 +317,18 @@ class AppFont {
     );
   }
 
+  static TextStyle popupTitleBlack16(
+    BuildContext context, {
+    double fontSize = 18,
+    Color color = AppColors.fontBlack,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w500,
+    );
+  }
+
   static TextStyle popupTitleWhite(
     BuildContext context, {
     double fontSize = 20,
@@ -427,5 +439,3 @@ class AppFont {
     );
   }
 }
-
- 

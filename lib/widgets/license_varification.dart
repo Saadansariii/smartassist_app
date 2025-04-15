@@ -1,5 +1,3 @@
- 
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -13,15 +11,17 @@ import 'package:http_parser/http_parser.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/license_preview.dart';
 
-class PassportVarification extends StatefulWidget {
+class LicenseVarification extends StatefulWidget {
   final String eventId;
-  const PassportVarification({super.key, required this.eventId});
+  final String leadId;
+  const LicenseVarification(
+      {super.key, required this.eventId, required this.leadId});
 
   @override
-  State<PassportVarification> createState() => _PassportVarificationState();
+  State<LicenseVarification> createState() => _LicenseVarificationState();
 }
 
-class _PassportVarificationState extends State<PassportVarification> {
+class _LicenseVarificationState extends State<LicenseVarification> {
   List<CameraDescription> cameras = [];
   CameraController? cameraController;
   File? _capturedImage;
@@ -46,7 +46,6 @@ class _PassportVarificationState extends State<PassportVarification> {
     }
   }
 
-  
   Future<void> _captureImage() async {
     if (!(cameraController?.value.isInitialized ?? false)) return;
 
@@ -63,12 +62,14 @@ class _PassportVarificationState extends State<PassportVarification> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LicencePreview(imageFile: newImage , eventId: widget.eventId,),
+        builder: (context) => LicencePreview(
+          imageFile: newImage,
+          eventId: widget.eventId,
+          leadId: widget.leadId,
+        ),
       ),
     );
   }
-
- 
 
   @override
   void dispose() {
@@ -79,19 +80,18 @@ class _PassportVarificationState extends State<PassportVarification> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Passport Verification")),
+      backgroundColor: Colors.black,
+      // appBar: AppBar(title: const Text("License Verification")),
       body: _isCameraInitialized
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // SizedBox(
-                  //     height: MediaQuery.sizeOf(context).height * 0.30,
-                  //     width: MediaQuery.sizeOf(context).width * 0.90,
-                  //     child: CameraPreview(cameraController!)),
                   SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.30,
-                    width: MediaQuery.sizeOf(context).width * 0.90,
+                    height: MediaQuery.sizeOf(context).height * 0.06,
+                  ),
+
+                  SizedBox(
                     child: FittedBox(
                       fit: BoxFit
                           .cover, // Try BoxFit.fill if cover doesn't work as expected
@@ -103,13 +103,24 @@ class _PassportVarificationState extends State<PassportVarification> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _isUploading ? null : _captureImage,
-                    child: _isUploading
-                        ? const CircularProgressIndicator()
-                        : const Text("Capture & Upload"),
-                  ),
+                  const SizedBox(height: 10),
+                  // ElevatedButton(
+                  //   onPressed: _isUploading ? null : _captureImage,
+                  //   child: _isUploading
+                  //       ? const CircularProgressIndicator()
+                  //       : const Icon(Icons.camera),
+                  // ),
+
+                  IconButton(
+                      onPressed: () {
+                        _isUploading ? null : {_captureImage()};
+                        // _isUploading;
+                      },
+                      icon: Icon(
+                        Icons.camera,
+                        size: MediaQuery.sizeOf(context).height * 0.07,
+                        color: Colors.white,
+                      ))
                 ],
               ),
             )

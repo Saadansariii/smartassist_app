@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/services/leads_srv.dart';
+import 'package:smart_assist/utils/bottom_navigation.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/call_history.dart';
 import 'package:smart_assist/widgets/home_btn.dart/single_ids_popup/appointment_ids.dart';
@@ -455,7 +456,9 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
           icon: const Icon(Icons.arrow_back_ios_new_outlined,
               color: AppColors.iconGrey),
           onPressed: () {
-            Navigator.pop(context, true);
+            // Navigator.pop(context, true);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => BottomNavigation()));
           },
         ),
         elevation: 0,
@@ -689,18 +692,32 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildToggleSwitch(),
-                                TextButton(
+                                // TextButton(
+                                //   onPressed: () {
+                                //     setState(() {
+                                //       _isHidden = !_isHidden;
+                                //     });
+                                //   },
+                                //   child: Text(
+                                //     _isHidden ? 'Show' : 'Hide',
+                                //     style: GoogleFonts.poppins(
+                                //         fontSize: 15,
+                                //         fontWeight: FontWeight.w500,
+                                //         color: Colors.black),
+                                //   ),
+                                // ),
+                                IconButton(
                                   onPressed: () {
                                     setState(() {
                                       _isHidden = !_isHidden;
                                     });
                                   },
-                                  child: Text(
-                                    _isHidden ? 'Show' : 'Hide',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black),
+                                  icon: Icon(
+                                    _isHidden
+                                        ? Icons.keyboard_arrow_down_rounded
+                                        : Icons.keyboard_arrow_up_rounded,
+                                    size: 35,
+                                    color: AppColors.iconGrey,
                                   ),
                                 ),
                               ],
@@ -773,18 +790,33 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   ],
                                 ),
 
-                                TextButton(
+                                // TextButton(
+                                //   onPressed: () {
+                                //     setState(() {
+                                //       _isHiddenMiddle = !_isHiddenMiddle;
+                                //     });
+                                //   },
+                                //   child: Text(
+                                //     _isHiddenMiddle ? 'Show' : 'Hide',
+                                //     style: GoogleFonts.poppins(
+                                //         fontSize: 15,
+                                //         fontWeight: FontWeight.w500,
+                                //         color: Colors.black),
+                                //   ),
+                                // ),
+
+                                IconButton(
                                   onPressed: () {
                                     setState(() {
                                       _isHiddenMiddle = !_isHiddenMiddle;
                                     });
                                   },
-                                  child: Text(
-                                    _isHiddenMiddle ? 'Show' : 'Hide',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black),
+                                  icon: Icon(
+                                    _isHiddenMiddle
+                                        ? Icons.keyboard_arrow_down_rounded
+                                        : Icons.keyboard_arrow_up_rounded,
+                                    size: 35,
+                                    color: AppColors.iconGrey,
                                   ),
                                 ),
                               ],

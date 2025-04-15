@@ -14,8 +14,9 @@ import 'package:smart_assist/widgets/start_drive.dart';
 class LicencePreview extends StatefulWidget {
   final File imageFile;
   final String eventId;
+  final String leadId;
   const LicencePreview(
-      {super.key, required this.imageFile, required this.eventId});
+      {super.key, required this.imageFile, required this.eventId, required this.leadId});
 
   @override
   State<LicencePreview> createState() => _LicencePreviewState();
@@ -118,34 +119,28 @@ class _LicencePreviewState extends State<LicencePreview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('', style: AppFont.appbarfontgrey(context)),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.iconGrey),
-          onPressed: () => Navigator.pop(context, true),
-        ),
-        elevation: 0,
-      ),
+      // appBar: AppBar(
+      //   title: Text('', style: AppFont.appbarfontgrey(context)),
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.close_rounded, color: AppColors.iconGrey),
+      //     onPressed: () => Navigator.pop(context, true),
+      //   ),
+      //   elevation: 0,
+      // ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    widget.imageFile,
-                    height: MediaQuery.sizeOf(context).height * 0.70,
-                    width: MediaQuery.sizeOf(context).width * 0.90,
-                    fit: BoxFit.cover,
-                  ),
+              ClipRRect(
+                // borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  widget.imageFile,
+                  height: MediaQuery.sizeOf(context).height * 0.80,
+                  // width: MediaQuery.sizeOf(context).width * 0.90,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(height: 24),
@@ -154,55 +149,61 @@ class _LicencePreviewState extends State<LicencePreview> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black,
+                        // padding: EdgeInsets.zero,
+                        backgroundColor: const Color.fromRGBO(217, 217, 217, 1),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5))),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Retake"),
+                    child: Text("Retake",
+                        textAlign: TextAlign.center,
+                        style: AppFont.buttons(context)),
                   ),
-                  // ElevatedButton(
-                  //   style: ElevatedButton.styleFrom(
-                  //       backgroundColor: Colors.blue,
-                  //       foregroundColor: Colors.white,
-                  //       shape: RoundedRectangleBorder(
-                  //           borderRadius: BorderRadius.circular(5))),
-                  //   onPressed: _isUploading
-                  //       ? null
-                  //       : () async {
-                  //           final result = await _uploadImage(widget.imageFile);
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        // padding: EdgeInsets.zero,
+                        backgroundColor: AppColors.colorsBlue,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    onPressed: _isUploading
+                        ? null
+                        : () async {
+                            final result = await _uploadImage(widget.imageFile);
 
-                  //           if (result == 'success') {
-                  //             Navigator.push(
-                  //               context,
-                  //               MaterialPageRoute(
-                  //                 builder: (context) =>
-                  //                     StartDriveMap(), // Replace with your target screen
-                  //               ),
-                  //             );
-                  //           } else {
-                  //             ScaffoldMessenger.of(context).showSnackBar(
-                  //               const SnackBar(
-                  //                   content: Text(
-                  //                       'Upload failed. Please try again.')),
-                  //             );
-                  //           }
-                  //         },
-                  //   child: _isUploading
-                  //       ? const CircularProgressIndicator()
-                  //       : const Text("Start drive"),
-                  // ),
+                            if (result == 'success') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StartDriveMap(
+                                    eventId: widget.eventId,
+                                    leadId : widget.leadId
+                                  ), // Replace with your target screen
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Upload failed. Please try again.')),
+                              );
+                            }
+                          },
+                          
+                    child: _isUploading
+                        ? const CircularProgressIndicator()
+                        : Text("Start drive", style: AppFont.buttons(context)),
+                  ),
 
-                  TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => StartDriveMap(
-                                      eventId: widget.eventId,
-                                    )));
-                      },
-                      child: Text('start test drive'))
+                  // TextButton(
+                  //     onPressed: () {
+                  //       Navigator.push(
+                  //           context,
+                  //           MaterialPageRoute(
+                  //               builder: (context) => StartDriveMap(
+                  //                     eventId: widget.eventId,
+                  //                   )));
+                  //     },
+                  //     child: Text('start test drive'))
                 ],
               )
             ],

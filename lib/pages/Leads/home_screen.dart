@@ -495,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               leading: const Icon(
                                                   Icons.star_border_rounded,
                                                   size: 28),
-                                              title: Text('Favorites',
+                                              title: Text('Favourite',
                                                   style: GoogleFonts.poppins(
                                                       fontSize: 18)),
                                               onTap: () => Get.to(() =>
