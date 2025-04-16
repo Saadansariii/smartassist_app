@@ -478,7 +478,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
         _handleDriveEnded(totalDistance, _calculateDuration());
          Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => Feedbackscreen(leadId : widget.leadId),
+            builder: (context) => Feedbackscreen(leadId : widget.leadId, eventId: widget.eventId,),
           ),
         );
         // Navigator.push(context, MaterialPageRoute(builder: ))

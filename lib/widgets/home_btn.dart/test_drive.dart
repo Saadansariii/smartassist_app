@@ -68,7 +68,7 @@ class _TestDriveState extends State<TestDrive> {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 230,
+            height: 280,
             child: PageView(
               controller: _pageController,
               children: [
@@ -115,7 +115,8 @@ class _TestDriveState extends State<TestDrive> {
                     Expanded(
                       child: _buildInfoCard(
                         context,
-                        'Unique Test Drives',
+                        'You have given',
+                        'Unique test drives',
                         '${selectedData['totalTestDrives'] ?? 0}',
                         screenWidth,
                         Colors.green,
@@ -125,7 +126,8 @@ class _TestDriveState extends State<TestDrive> {
                     Expanded(
                       child: _buildInfoCard(
                         context,
-                        'More to achive your target',
+                        'Give',
+                        'More test drive to achive your target',
                         '${selectedData['remainingTestDrives'] ?? 0}',
                         screenWidth,
                         Colors.blue,
@@ -143,7 +145,8 @@ class _TestDriveState extends State<TestDrive> {
                 child: _buildInfoCard2(
                   context,
                   '${selectedData['TestDrivesAvg'] ?? 0} days',
-                  'Average Test Drive To Order Time ',
+                  'On an average, you take',
+                  'to convert a test drive to an order ',
                   screenWidth,
                 ),
               ),
@@ -182,7 +185,7 @@ class _TestDriveState extends State<TestDrive> {
                 child: _buildInfoCard3(
                   context,
                   '29%',
-                  'Enquiry to test drive ratio',
+                  'Enquiry to Test Drive Ratio',
                   screenWidth,
                 ),
               ),
@@ -238,8 +241,8 @@ class _TestDriveState extends State<TestDrive> {
   }
 
   // Small Info Cards
-  Widget _buildInfoCard(BuildContext context, String title, String value,
-      double screenWidth, Color valueColor) {
+  Widget _buildInfoCard(BuildContext context, String title, String title1,
+      String value, double screenWidth, Color valueColor) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.04),
@@ -250,32 +253,49 @@ class _TestDriveState extends State<TestDrive> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Container(
+            decoration: BoxDecoration(color: Colors.transparent),
+            child: Expanded(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w400),
+              ),
+            ),
+          ),
           Text(
             value,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
                 fontSize: 30, fontWeight: FontWeight.w700, color: valueColor),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 4,
-              style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w400),
+          Container(
+            decoration: BoxDecoration(color: Colors.transparent),
+            child: Expanded(
+              child: Text(
+                title1,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w400),
+              ),
             ),
           ),
+          // const SizedBox(width: 10),
         ],
       ),
     );
   }
 
   // Large Info Card
-  Widget _buildInfoCard2(
-      BuildContext context, String title, String value, double screenWidth) {
+  Widget _buildInfoCard2(BuildContext context, String title, String value,
+      String value1, double screenWidth) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.04),
@@ -287,16 +307,25 @@ class _TestDriveState extends State<TestDrive> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            decoration: BoxDecoration(color: Colors.transparent),
+            child: Expanded(
+              child: Text(
+                value,
+                style: AppFont.dropDowmLabel(context),
+              ),
+            ),
+          ),
           Text(
             title,
             style: GoogleFonts.inter(
                 fontSize: 30, fontWeight: FontWeight.w700, color: Colors.red),
           ),
-          // const SizedBox(height: 2),
           Text(
-            value,
+            value1,
             style: AppFont.dropDowmLabel(context),
           ),
+          // const SizedBox(height: 2),
           // const SizedBox(
           //   height: 5,
           // ),

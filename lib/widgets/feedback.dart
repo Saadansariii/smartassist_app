@@ -167,19 +167,25 @@
 //   }
 // }
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
+import 'package:smart_assist/utils/storage.dart';
+import 'package:http/http.dart' as http;
 
 class Feedbackscreen extends StatefulWidget {
-  // final String eventId;
+  final String eventId;
   final String leadId;
-  const Feedbackscreen({super.key, required this.leadId});
+  const Feedbackscreen(
+      {super.key, required this.leadId, required this.eventId});
 
   @override
   State<Feedbackscreen> createState() => _FeedbackscreenState();
@@ -197,6 +203,81 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
     'Dynamics': 0,
     'Driving Experience': 0,
   };
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> submitFeedback() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? spId = prefs.getString('user_id');
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/events/${widget.eventId}/update');
+      final token = await Storage.getToken();
+
+      // Create the request body
+      final requestBody = {
+        'sp_id': spId,
+        'ambience': ratings['Overall Ambience'],
+        'features': ratings['Features'],
+        'ride_comfort': ratings['Ride and comfort'],
+        'quality': ratings['Quality'],
+        'dynamics': ratings['Dynamics'],
+        'driving_experience': ratings['Driving Experience'],
+        'purchase_potential': _selectedType,
+      };
+
+      // Print the data to console for debugging
+      print('Submitting feedback data:');
+      print(requestBody);
+
+      final response = await http.put(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode(requestBody));
+
+      // Print the response
+      print('API Response status: ${response.statusCode}');
+      print('API Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Success handling
+        print('Feedback submitted successfully');
+        Get.snackbar(
+          'Success',
+          'Feedback submitted successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FollowupsDetails(leadId: widget.leadId)));
+      } else {
+        // Error handling
+        print('Failed to submit feedback');
+        Get.snackbar(
+          'Error',
+          'Failed to submit feedback',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      // Exception handling
+      print('Exception occurred: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'An error occurred: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -293,12 +374,13 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5))),
                       onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    // SingleLeadsById(leadId: widget.leadId)
-                                    FollowupsDetails(leadId: widget.leadId)));
+                        submitFeedback();
+                        // Navigator.push(
+                        //     context,
+                        //     MaterialPageRoute(
+                        //         builder: (context) =>
+                        //             // SingleLeadsById(leadId: widget.leadId)
+                        //             FollowupsDetails(leadId: widget.leadId)));
                       },
                       child: Text("Submit", style: AppFont.buttons(context)),
                     ),

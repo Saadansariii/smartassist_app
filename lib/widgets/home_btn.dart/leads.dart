@@ -152,7 +152,7 @@ class _LeadsState extends State<Leads> {
                   Expanded(
                     child: _buildInfoCard1(
                       context,
-                      'Current month new enquiries',
+                      'Enquiries you have',
                       '${selectedData['totalEnquiries'] ?? 0}',
                       screenWidth,
                       Colors.green,
@@ -175,6 +175,7 @@ class _LeadsState extends State<Leads> {
             Expanded(
               child: _buildRightInfoCard(
                 context,
+                'You must pursue',
                 'More enquiries to achieve your target',
                 '${selectedData['remainingEnquiries'] ?? 0}',
                 screenWidth,
@@ -225,7 +226,8 @@ class _LeadsState extends State<Leads> {
           Expanded(
             child: _buildRightInfoCard2(
               context,
-              'Average Enquiry to order time',
+              'On an average, to take',
+              'to convert an enquiry to order',
               '${selectedData['avgEnquiry'] ?? 0} days',
               screenWidth,
             ),
@@ -331,6 +333,24 @@ class _LeadsState extends State<Leads> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Container(
+              decoration:
+                  BoxDecoration(border: Border.all(color: Colors.transparent)),
+              child: Expanded(
+                child: Text(
+                  title,
+                  softWrap: true,
+                  // textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 4,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey[700]),
+                ),
+              ),
+            ),
+            // const SizedBox(height: 5),
             Text(
               softWrap: true,
               overflow: TextOverflow.ellipsis,
@@ -340,20 +360,6 @@ class _LeadsState extends State<Leads> {
               style: GoogleFonts.poppins(
                   fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
             ),
-            const SizedBox(height: 5),
-            Expanded(
-              child: Text(
-                title,
-                softWrap: true,
-                // textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 4,
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey[700]),
-              ),
-            ),
           ],
         ),
       ),
@@ -361,8 +367,8 @@ class _LeadsState extends State<Leads> {
   }
 
   // Right Info Card
-  Widget _buildRightInfoCard(
-      BuildContext context, String title, String value, double screenWidth) {
+  Widget _buildRightInfoCard(BuildContext context, String title, String head,
+      String value, double screenWidth) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.04),
@@ -374,6 +380,14 @@ class _LeadsState extends State<Leads> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 5),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[700]),
+          ),
           Text(
             value,
             style: GoogleFonts.inter(
@@ -381,7 +395,7 @@ class _LeadsState extends State<Leads> {
           ),
           const SizedBox(height: 5),
           Text(
-            title,
+            head,
             style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -400,8 +414,8 @@ class _LeadsState extends State<Leads> {
     );
   }
 
-  Widget _buildRightInfoCard2(
-      BuildContext context, String title, String value, double screenWidth) {
+  Widget _buildRightInfoCard2(BuildContext context, String title, String head,
+      String value, double screenWidth) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.04),
@@ -414,13 +428,21 @@ class _LeadsState extends State<Leads> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
+            title,
+            style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 5),
+          Text(
             value,
             style: GoogleFonts.inter(
                 fontSize: 28, fontWeight: FontWeight.w700, color: Colors.blue),
           ),
           const SizedBox(height: 5),
           Text(
-            title,
+            head,
             style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
