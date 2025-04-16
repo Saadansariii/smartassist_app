@@ -19,6 +19,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
   final LocalAuthentication auth = LocalAuthentication();
   bool isAuthenticating = false;
   String _authStatus = 'Not Authenticated';
+  bool _mounted = true;
 
   @override
   void initState() {
@@ -27,8 +28,16 @@ class _BiometricScreenState extends State<BiometricScreen> {
     checkTokenAndAuthenticate();
   }
 
+  @override
+  void dispose() {
+    _mounted = false; // Set mounted flag to false when disposed
+    super.dispose();
+  }
+
   Future<void> checkTokenAndAuthenticate() async {
     bool isValid = await TokenManager.isTokenValid();
+
+    if (!_mounted) return; // Check if still mounted before proceeding
 
     if (isValid) {
       // Token is valid, now check biometrics
@@ -36,27 +45,35 @@ class _BiometricScreenState extends State<BiometricScreen> {
     } else {
       // Clear any invalid tokens and navigate to login
       await TokenManager.clearAuthData();
-      Get.offAll(() => LoginPage(
-            email: '',
-            onLoginSuccess: () {},
-          ));
+      if (_mounted) {
+        // Check again before navigation
+        Get.offAll(() => LoginPage(
+              email: '',
+              onLoginSuccess: () {},
+            ));
+      }
     }
   }
 
   Future<void> _checkBiometrics() async {
+    if (!_mounted) return; // Check if still mounted
+
     bool canCheckBiometrics;
     try {
       canCheckBiometrics = await auth.canCheckBiometrics;
+
+      if (!_mounted) return; // Check again after async operation
+
       if (canCheckBiometrics) {
         _authenticate();
       } else {
         setState(() {
           _authStatus = 'Device does not support biometrics or device security';
         });
-        // Even if biometrics aren't available, you might want to have some fallback
-        // Or prevent access altogether
       }
     } catch (e) {
+      if (!_mounted) return;
+
       setState(() {
         _authStatus = 'Error checking biometrics: $e';
       });
@@ -64,6 +81,8 @@ class _BiometricScreenState extends State<BiometricScreen> {
   }
 
   Future<void> _authenticate() async {
+    if (!_mounted) return;
+
     setState(() {
       isAuthenticating = true;
       _authStatus = 'Authenticating...';
@@ -75,12 +94,14 @@ class _BiometricScreenState extends State<BiometricScreen> {
         localizedReason: 'Please authenticate to access the app',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: false, // Allow any device authentication method
+          biometricOnly: false,
         ),
       );
 
+      if (!_mounted) return; // Check if still mounted after authentication
+
       if (authenticated) {
-        // Only proceed to home screen after successful biometric authentication
+        // Initialize notifications and navigate to home
         await NotificationService.instance.initialize();
         Get.offAll(() => BottomNavigation());
       } else {
@@ -90,6 +111,8 @@ class _BiometricScreenState extends State<BiometricScreen> {
         });
       }
     } catch (e) {
+      if (!_mounted) return;
+
       setState(() {
         isAuthenticating = false;
         if (e.toString().contains(auth_error.notAvailable)) {
@@ -101,12 +124,6 @@ class _BiometricScreenState extends State<BiometricScreen> {
         }
       });
     }
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
   }
 
   @override
