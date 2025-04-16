@@ -151,10 +151,14 @@
 //   }
 // }
 
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/route/route_name.dart';
+import 'package:smart_assist/pages/login_steps/login_page.dart';
+import 'package:smart_assist/services/notifacation_srv.dart';
+import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/token_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -234,10 +238,35 @@ class _SplashScreenState extends State<SplashScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 3000), () {
-        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+        Navigator.of(context).pushReplacementNamed(RoutesName.biometricScreen);
+        // Navigator.of(context).pushReplacementNamed(RoutesName.login);
       });
     });
+
+    // checkAuthentication();
   }
+
+  // Future<void> checkAuthentication() async {
+  //   // Add a short delay to show splash screen
+  //   await Future.delayed(const Duration(seconds: 1));
+
+  //   bool isValid = await TokenManager.isTokenValid();
+
+  //   if (isValid) {
+  //     // Initialize notifications if token is valid
+  //     await NotificationService.instance.initialize();
+
+  //     // Navigate to home screen
+  //     Get.offAll(() => BottomNavigation());
+  //   } else {
+  //     // Clear any invalid tokens and navigate to login
+  //     await TokenManager.clearAuthData();
+  //     Get.offAll(() => LoginPage(
+  //           email: '',
+  //           onLoginSuccess: () {},
+  //         ));
+  //   }
+  // }
 
   @override
   void dispose() {
