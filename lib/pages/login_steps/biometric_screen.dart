@@ -24,8 +24,8 @@ class _BiometricScreenState extends State<BiometricScreen> {
   @override
   void initState() {
     super.initState();
-    _checkBiometrics();
-    checkTokenAndAuthenticate();
+    // _checkBiometrics();  uncooment
+    checkTokenAndAuthenticate(); 
   }
 
   @override

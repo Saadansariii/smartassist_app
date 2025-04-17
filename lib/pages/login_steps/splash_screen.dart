@@ -238,7 +238,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 3000), () {
-        Navigator.of(context).pushReplacementNamed(RoutesName.biometricScreen);
+        Navigator.of(context).pushReplacementNamed(RoutesName.home);
         // Navigator.of(context).pushReplacementNamed(RoutesName.login);
       });
     });

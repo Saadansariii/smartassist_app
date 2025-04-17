@@ -26,6 +26,7 @@ import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_testD
 import 'package:smart_assist/widgets/home_btn.dart/threeBtn_second_leads.dart';
 import 'package:smart_assist/widgets/home_btn.dart/threebtn.dart';
 import 'package:http/http.dart' as http;
+import 'package:smart_assist/widgets/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String greeting;
@@ -430,7 +431,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               title: Text('Profile',
                                                   style: GoogleFonts.poppins(
                                                       fontSize: 18)),
-                                              onTap: () => Get.back(),
+                                              onTap: () =>
+                                                  Get.to(() =>const ProfileScreen()),
                                             ),
                                             ListTile(
                                               leading: const Icon(
