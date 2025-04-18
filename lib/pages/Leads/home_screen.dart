@@ -431,8 +431,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               title: Text('Profile',
                                                   style: GoogleFonts.poppins(
                                                       fontSize: 18)),
-                                              onTap: () =>
-                                                  Get.to(() =>const ProfileScreen()),
+                                              onTap: () => Get.to(
+                                                  () => const ProfileScreen()),
                                             ),
                                             ListTile(
                                               leading: const Icon(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -354,11 +355,17 @@ class _CreateLeadsState extends State<CreateLeads> {
         );
         setState(() => _currentStep++);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please correct the errors before continuing'),
-            backgroundColor: Colors.red,
-          ),
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //     content: Text('Please correct the errors before continuing'),
+        //     backgroundColor: Colors.red,
+        //   ),
+        // );
+        Get.snackbar(
+          'Error',
+          'Error from first screen',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     } else if (_currentStep == 1) {
@@ -369,22 +376,22 @@ class _CreateLeadsState extends State<CreateLeads> {
         );
         setState(() => _currentStep++);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please complete all required fields 222'),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'Error',
+          'Error from second screen',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     } else {
       if (_validatePage3()) {
         _submitForm(); // ✅ API will hit now
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please complete all required fields 23223'),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'Error',
+          'Error from third screen',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     }
@@ -2193,32 +2200,54 @@ class _CreateLeadsState extends State<CreateLeads> {
             );
           }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Form Submit Successful.')),
+          String errorMsg = response['message'];
+
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(content: Text('Form Submit Successful.')),
+          // );
+          Get.snackbar(
+            'Success',
+            errorMsg.toString(),
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
           );
           widget.onFormSubmit();
-        } else if (response.containsKey('error')) {
+        } else if (response.containsKey('message')) {
           String errorMsg = response['error'];
           print("API Error: $errorMsg"); // ✅ Log API error
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+          // );
+
+          Get.snackbar(
+            'Error',
+            'An error occurred: ${errorMsg.toString()}',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
           );
         }
       } else {
         print("Error: API response is null"); // ✅ Log null response
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Failed to submit lead. Please try again.')),
+        String errorMsg = response?['message'];
+        // ScaffoldMessenger.of(context).showSnackBar(
+        Get.snackbar(
+          'Error',
+          'An error occurred: ${errorMsg.toString()}',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
+        // );
       }
     } catch (e, stackTrace) {
       print("Exception Occurred: $e"); // ✅ Log any unexpected exceptions
       print("Stack Trace: $stackTrace"); // ✅ Print stack trace for debugging
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('An unexpected error occurred. Please try again.')),
+      Get.snackbar(
+        'Error',
+        'An error occurred: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
