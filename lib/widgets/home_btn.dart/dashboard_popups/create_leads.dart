@@ -29,6 +29,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   List<Map<String, String>> dropdownItems = [];
   // final _formKey = GlobalKey<FormState>();
   bool isLoading = true;
+  bool _isLoading = true;
   int _currentStep = 0;
   List<dynamic> vehicleList = [];
   List<String> uniqueVehicleNames = [];
@@ -50,6 +51,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   String _selectedFuel = '';
   String _selectedPurchaseType = '';
   String _selectedEnquiryType = '';
+  Map<String, dynamic>? _existingLeadData;
 
   // Define constants
   final double _minValue = 4000000; // 40 lakhs
@@ -69,6 +71,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   TextEditingController pinController = TextEditingController();
   TextEditingController modelInterestController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
+  bool consentValue = false;
   String _query = '';
   @override
   void initState() {
@@ -191,6 +194,69 @@ class _CreateLeadsState extends State<CreateLeads> {
       }
     } catch (e) {
       print('Error fetching colors: $e');
+    }
+  }
+
+  // Method to check if lead exists
+  Future<void> _checkExistingLead(String mobileNumber) async {
+    // if (_isLoading) return;
+
+    // setState(() {
+    //   _isLoading = true;
+    // });
+
+    final token = await Storage.getToken();
+
+    // Add the country code before making the API call
+    if (!mobileNumber.startsWith('+91')) {
+      mobileNumber = '+91' + mobileNumber;
+      print('Adding country code: $mobileNumber');
+    }
+
+    // URL encode the phone number to handle the + symbol
+    final encodedMobile = Uri.encodeComponent(mobileNumber);
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://api.smartassistapp.in/api/leads/existing-check?mobile=$encodedMobile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('this is body');
+        print(response.body);
+
+        // Check if lead exists based on the API response structure
+        if (data['status'] == 200 && data['data'] != null) {
+          setState(() {
+            _existingLeadData = {
+              'name': data['data']['lead_name'] ?? 'Unknown',
+              'mobile': data['data']['mobile'] ?? mobileNumber,
+              'PMI': data['data']['brand'] ?? 'Unknown',
+            };
+          });
+          print("Existing lead found: ${_existingLeadData}");
+        } else {
+          setState(() {
+            _existingLeadData = null;
+          });
+          print("No existing lead found");
+        }
+      }
+    } catch (e) {
+      print('Error checking existing lead: $e');
+      setState(() {
+        _existingLeadData = null;
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -587,7 +653,7 @@ class _CreateLeadsState extends State<CreateLeads> {
               height: 10,
             ),
             SizedBox(
-              height: height * .6,
+              height: height * .7,
               child: PageView(
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
@@ -645,19 +711,35 @@ class _CreateLeadsState extends State<CreateLeads> {
                             }
                             print("email : $value");
                           }),
+                      // _buildNumberWidget(
+                      //   label: 'Mobile No',
+                      //   controller: mobileController,
+                      //   errorText: _errors['mobile'],
+                      //   hintText: '+91',
+                      //   onChanged: (value) {
+                      //     if (_errors.containsKey('mobile')) {
+                      //       setState(() {
+                      //         _errors.remove('mobile');
+                      //       });
+                      //     }
+                      //     print("mobile : $value");
+                      //   },
+                      // ),
+
                       _buildNumberWidget(
-                          label: 'Mobile No',
-                          controller: mobileController,
-                          errorText: _errors['mobile'],
-                          hintText: '+91',
-                          onChanged: (value) {
-                            if (_errors.containsKey('mobile')) {
-                              setState(() {
-                                _errors.remove('mobile');
-                              });
-                            }
-                            print("mobile : $value");
-                          }),
+                        label: 'Mobile No',
+                        controller: mobileController,
+                        errorText: _errors['mobile'],
+                        hintText: '+91',
+                        onChanged: (value) {
+                          if (_errors.containsKey('mobile')) {
+                            setState(() {
+                              _errors.remove('mobile');
+                            });
+                          }
+                          print("mobile: $value");
+                        },
+                      ),
                       const SizedBox(
                         height: 5,
                       ),
@@ -830,249 +912,96 @@ class _CreateLeadsState extends State<CreateLeads> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSearchField(),
-
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Exterior Color',
+                              style: AppFont.dropDowmLabel(context),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          // Wrap your button widget here
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.containerBg,
+                            ),
+                            child: _buildButtons1(
+                              options: {
+                                'Brown': 'Brown',
+                                'Black': 'Black',
+                                'White': 'White',
+                                'Grey': 'Grey',
+                              },
+                              groupValue: selectedExteriorColor ?? 'Select',
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedExteriorColor = value;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Interior Color',
+                              style: AppFont.dropDowmLabel(context),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.containerBg,
+                            ),
+                            child: _buildButtons1(
+                              options: {
+                                'Brown': 'Brown',
+                                'Black': 'Black',
+                              },
+                              groupValue: selectedInteriorColor ?? 'Select',
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedInteriorColor = value;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                       if (selectedVehicleName != null &&
                           (exteriorOptions.isNotEmpty ||
                               interiorOptions.isNotEmpty)) ...[
                         const SizedBox(height: 15),
-                        // This is the corrected code for the exterior color section
-                        Container(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  'Exterior Color',
-                                  style: AppFont.dropDowmLabel(context),
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              // Wrap your button widget here
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: AppColors.containerBg,
-                                ),
-                                child: _buildButtons1(
-                                  options: {
-                                    'Brown': 'Brown',
-                                    'Black': 'Black',
-                                    'White': 'White',
-                                    'Grey': 'Grey',
-                                  },
-                                  groupValue: selectedExteriorColor ?? 'Select',
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedExteriorColor = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 10,
-                        ),
-
-                        Container(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  'Interior Color',
-                                  style: AppFont.dropDowmLabel(context),
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: AppColors.containerBg,
-                                ),
-                                child: _buildButtons1(
-                                  options: {
-                                    'Brown': 'Brown',
-                                    'Black': 'Black',
-                                  },
-                                  groupValue: selectedInteriorColor ?? 'Select',
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedInteriorColor = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Expanded(
-                        //   child: Column(
-                        //     crossAxisAlignment: CrossAxisAlignment.start,
-                        //     children: [
-                        //       Align(
-                        //         alignment: Alignment.centerLeft,
-                        //         child: Text(
-                        //           'Exterior Color',
-                        //           style: AppFont.dropDowmLabel(context),
-                        //         ),
-                        //       ),
-                        //       const SizedBox(height: 5),
-                        //       Container(
-                        //         width: double.infinity,
-                        //         decoration: BoxDecoration(
-                        //           borderRadius: BorderRadius.circular(8),
-                        //           color: AppColors.containerBg,
-                        //         ),
-                        //         child: DropdownButton<String>(
-                        //           value: selectedExteriorColor,
-                        //           hint: Padding(
-                        //             padding:
-                        //                 const EdgeInsets.only(left: 10),
-                        //             child: Text(
-                        //               "Select",
-                        //               style: AppFont.dropDown(context),
-                        //             ),
-                        //           ),
-                        //           icon: const Padding(
-                        //             padding: EdgeInsets.only(right: 15.0),
-                        //             child: Icon(Icons.keyboard_arrow_down,
-                        //                 color: Colors.grey, size: 20),
-                        //           ),
-                        //           isExpanded: true,
-                        //           underline: const SizedBox.shrink(),
-                        //           items:
-                        //               interiorOptions.map((String color) {
-                        //             return DropdownMenuItem<String>(
-                        //               value: color,
-                        //               child: Padding(
-                        //                 padding: const EdgeInsets.only(
-                        //                     left: 10.0),
-                        //                 child: Text(color,
-                        //                     style: AppFont.dropDowmLabel(
-                        //                         context)),
-                        //               ),
-                        //             );
-                        //           }).toList(),
-                        //           onChanged: (value) {
-                        //             setState(() {
-                        //               selectedExteriorColor = value;
-                        //             });
-                        //           },
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
-
-                        // const SizedBox(width: 10), // Add space between columns
-                        // Expanded(
-                        //   child: Column(
-                        //     crossAxisAlignment: CrossAxisAlignment.start,
-                        //     children: [
-                        //       Align(
-                        //         alignment: Alignment.centerLeft,
-                        //         child: Text(
-                        //           'Interior Color',
-                        //           style: AppFont.dropDowmLabel(context),
-                        //         ),
-                        //       ),
-                        //       const SizedBox(height: 5),
-                        //       Container(
-                        //         width: double.infinity,
-                        //         decoration: BoxDecoration(
-                        //           borderRadius: BorderRadius.circular(8),
-                        //           color: AppColors.containerBg,
-                        //         ),
-                        //         child: DropdownButton<String>(
-                        //           value: selectedInteriorColor,
-                        //           hint: Padding(
-                        //             padding: const EdgeInsets.only(left: 10),
-                        //             child: Text(
-                        //               "Select",
-                        //               style: AppFont.dropDown(context),
-                        //             ),
-                        //           ),
-                        //           icon: const Padding(
-                        //             padding: EdgeInsets.only(right: 15.0),
-                        //             child: Icon(Icons.keyboard_arrow_down,
-                        //                 color: Colors.grey, size: 20),
-                        //           ),
-                        //           isExpanded: true,
-                        //           underline: const SizedBox.shrink(),
-                        //           items: interiorOptions.map((String color) {
-                        //             return DropdownMenuItem<String>(
-                        //               value: color,
-                        //               child: Padding(
-                        //                 padding:
-                        //                     const EdgeInsets.only(left: 10.0),
-                        //                 child: Text(color,
-                        //                     style:
-                        //                         AppFont.dropDowmLabel(context)),
-                        //               ),
-                        //             );
-                        //           }).toList(),
-                        //           onChanged: (value) {
-                        //             setState(() {
-                        //               selectedInteriorColor = value;
-                        //             });
-                        //           },
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
                       ],
-
-                      // Align(
-                      //   alignment: Alignment.centerLeft,
-                      //   child: Padding(
-                      //     padding: const EdgeInsets.symmetric(vertical: 5.0),
-                      //     child: Text('Primary Model Intrest',
-                      //         style: AppFont.dropDowmLabel(context)),
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 5),
-                      // SizedBox(
-                      //   height: 45,
-                      //   child: TextField(
-                      //     textAlignVertical: TextAlignVertical.center,
-                      //     decoration: InputDecoration(
-                      //       enabledBorder: OutlineInputBorder(
-                      //         borderRadius: BorderRadius.circular(
-                      //             5), // Keep border radius small
-                      //         borderSide: BorderSide.none,
-                      //       ),
-                      //       focusedBorder: OutlineInputBorder(
-                      //         borderRadius: BorderRadius.circular(
-                      //             5), // Match with enabledBorder
-                      //         borderSide: BorderSide.none,
-                      //       ),
-                      //       contentPadding: const EdgeInsets.symmetric(
-                      //           horizontal: 10, vertical: 10),
-                      //       filled: true,
-                      //       fillColor: AppColors.containerBg,
-                      //       hintText: 'Type',
-                      //       hintStyle: AppFont.dropDown(context),
-                      //       prefixIcon: const Icon(
-                      //         FontAwesomeIcons.magnifyingGlass,
-                      //         color: AppColors.fontColor,
-                      //         size: 15,
-                      //       ),
-                      //       // suffixIcon: const Icon(
-                      //       //   FontAwesomeIcons.microphone,
-                      //       //   color: AppColors.fontColor,
-                      //       //   size: 15,
-                      //       // ),
-                      //     ),
-                      //   ),
-                      // ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      _consentTick(
+                        text: "Agreed with these terms",
+                        value: consentValue,
+                        onChanged: (newValue) {
+                          setState(() {
+                            consentValue = newValue;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -1256,9 +1185,7 @@ class _CreateLeadsState extends State<CreateLeads> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(
-          height: 5,
-        ),
+        const SizedBox(height: 5),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
           child: RichText(
@@ -1266,7 +1193,7 @@ class _CreateLeadsState extends State<CreateLeads> {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.fontBlack,
+                color: Colors.black87,
               ),
               children: [
                 TextSpan(text: label),
@@ -1279,9 +1206,7 @@ class _CreateLeadsState extends State<CreateLeads> {
             ),
           ),
         ),
-        const SizedBox(
-          height: 5,
-        ),
+        const SizedBox(height: 5),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -1294,20 +1219,280 @@ class _CreateLeadsState extends State<CreateLeads> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: TextField(
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              controller: controller,
-              style: AppFont.dropDowmLabel(context),
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle:
-                    GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                border: InputBorder.none,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                controller: controller,
+                style: AppFont.dropDowmLabel(context),
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  hintStyle:
+                      GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  border: InputBorder.none,
+                ),
+                // onChanged: (value) {
+                //   onChanged(value);
+
+                //   // Clear existing lead data if input length is not 10
+                //   if (value.length != 10) {
+                //     setState(() {
+                //       _existingLeadData = null;
+                //       _isLoading = false;
+                //     });
+                //   }
+
+                //   // Check for existing lead only when mobile number is exactly 10 digits
+                //   if (value.length == 10) {
+                //     _checkExistingLead(value);
+                //   }
+                // },
+                onChanged: (value) {
+                  onChanged(value);
+
+                  // For debugging
+                  print(
+                      "Current mobile input: $value, length: ${value.length}");
+
+                  // Clear existing lead data if input length is not 10
+                  if (value.length != 10) {
+                    setState(() {
+                      _existingLeadData = null;
+                      _isLoading = false;
+                    });
+                  }
+
+                  // Check for existing lead only when mobile number is exactly 10 digits
+                  if (value.length == 10) {
+                    print("Checking for existing lead with number: $value");
+                    _checkExistingLead(value);
+                  }
+                }),
+          ),
+        ),
+
+        // Show loader only when API is being called
+        // if (_isLoading)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 8.0),
+        //     child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        //   ),
+
+        // Show this only if an existing lead is found
+        if (_existingLeadData != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red[100],
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  'Lead already exists',
+                  style: GoogleFonts.poppins(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-              onChanged: onChanged,
-            ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '${_existingLeadData!['name']}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              height: 15,
+                              width: 0.1,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                    right:
+                                        BorderSide(color: AppColors.fontColor)),
+                              ),
+                            ),
+                            // const SizedBox(
+                            //   width: 5,
+                            // ),
+                            Text('${_existingLeadData!['PMI']}',
+                                style: AppFont.smallText(context)),
+                          ],
+                        ),
+                        Text(
+                          '${_existingLeadData!['mobile']}',
+                          style: GoogleFonts.poppins(
+                            color: Colors.black54,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  // Widget _buildNumberWidget({
+  //   required TextEditingController controller,
+  //   required String hintText,
+  //   required String label,
+  //   required ValueChanged<String> onChanged,
+  //   bool isRequired = false,
+  //   String? errorText,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const SizedBox(
+  //         height: 5,
+  //       ),
+  //       Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
+  //         child: RichText(
+  //           text: TextSpan(
+  //             style: GoogleFonts.poppins(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w500,
+  //               color: AppColors.fontBlack,
+  //             ),
+  //             children: [
+  //               TextSpan(text: label),
+  //               if (isRequired)
+  //                 const TextSpan(
+  //                   text: " *",
+  //                   style: TextStyle(color: Colors.red),
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(
+  //         height: 5,
+  //       ),
+  //       Container(
+  //         width: double.infinity,
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(5),
+  //           color: const Color.fromARGB(255, 248, 247, 247),
+  //           border: errorText != null
+  //               ? Border.all(color: Colors.red, width: 1.0)
+  //               : null,
+  //         ),
+  //         child: Align(
+  //           alignment: Alignment.centerLeft,
+  //           child: TextField(
+  //             keyboardType: TextInputType.number,
+  //             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+  //             controller: controller,
+  //             style: AppFont.dropDowmLabel(context),
+  //             decoration: InputDecoration(
+  //               hintText: hintText,
+  //               hintStyle:
+  //                   GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+  //               contentPadding:
+  //                   const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+  //               border: InputBorder.none,
+  //             ),
+  //             onChanged: onChanged,
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  Widget _consentTick({
+    required String text,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    Color? checkboxFillColor,
+    Color? borderColor,
+  }) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Consent',
+            style: AppFont.dropDowmLabel(context),
+          ),
+        ),
+        const SizedBox(
+          height: 10,
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: const Color.fromARGB(255, 248, 247, 247),
+            border: borderColor != null
+                ? Border.all(color: borderColor, width: 1.0)
+                : null,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: value,
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      onChanged(newValue);
+                    }
+                  },
+                  fillColor: MaterialStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(MaterialState.selected)) {
+                      return checkboxFillColor ?? Colors.blue;
+                    }
+                    return Colors.transparent;
+                  }),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
