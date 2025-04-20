@@ -178,6 +178,76 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _iPositionAnimation;
   bool _mounted = true;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   _controller = AnimationController(
+  //     duration: const Duration(milliseconds: 2000),
+  //     vsync: this,
+  //   );
+
+  //   // AI fade in animation
+  //   _aiFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.0, 0.2, curve: Curves.easeIn),
+  //     ),
+  //   );
+
+  //   // AI size animation (starts big, gets smaller)
+  //   _aiSizeAnimation = Tween<double>(begin: 80, end: 40).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
+  //     ),
+  //   );
+
+  //   // 'a' position animation (moves from center to left side of 'assist')
+  //   _aPositionAnimation = Tween<Offset>(
+  //     begin: const Offset(-0.2, 0), // Start at center
+  //     end: const Offset(-1.65, 0), // Move left
+  //   ).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.4, 0.6, curve: Curves.easeInOut),
+  //     ),
+  //   );
+
+  //   // 'i' position animation (moves from center to right position within 'assist')
+  //   _iPositionAnimation = Tween<Offset>(
+  //     begin: const Offset(1, 0), // Start at center
+  //     end: const Offset(1.50, 0), // Move right
+  //   ).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.4, 0.6, curve: Curves.easeInOut),
+  //     ),
+  //   );
+
+  //   // Rest of text fade-in animation (after AI is positioned)
+  //   _assistAndSmartFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
+  //     ),
+  //   );
+
+  //   // Start animation after a delay
+  //   Future.delayed(const Duration(milliseconds: 500), () {
+  //     _controller.forward();
+  //   });
+
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     Future.delayed(const Duration(milliseconds: 3000), () {
+  //       Navigator.of(context).pushReplacementNamed(RoutesName.home);
+  //       // Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //     });
+  //   });
+
+  //   // checkAuthStatus();
+  // }
+
   @override
   void initState() {
     super.initState();
@@ -235,17 +305,17 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Start animation after a delay
     Future.delayed(const Duration(milliseconds: 500), () {
-      _controller.forward();
+      if (_mounted) {
+        _controller.forward();
+      }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 3000), () {
-        Navigator.of(context).pushReplacementNamed(RoutesName.home);
-        // Navigator.of(context).pushReplacementNamed(RoutesName.login);
-      });
+    // Start the authentication check after animations complete
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        checkAuthStatus();
+      }
     });
-
-    checkAuthStatus();
   }
 
   @override
@@ -256,31 +326,33 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
 
-   Future<void> checkAuthStatus() async {
-    // Add a small delay for splash screen visibility if needed
-    await Future.delayed(const Duration(seconds: 2));
+  Future<void> checkAuthStatus() async {
     if (!_mounted) return;
 
-    // Check if user has a valid token
-    bool isTokenValid = await TokenManager.isTokenValid();
-    
-    if (!_mounted) return;
-
-    if (isTokenValid) {
-      // If token exists and is valid, go to biometric screen
-      Get.offAll(() =>const BiometricScreen());
-    } else {
-      // If no token or invalid token, go to login screen
-      await TokenManager.clearAuthData();
-      if (!_mounted) return;
+    try {
+      // Check if user has a valid token
+      bool isTokenValid = await TokenManager.isTokenValid();
       
-      Get.offAll(() => LoginPage(
-        email: '',
-        onLoginSuccess: () {},
-      ));
+      if (!_mounted) return;
+
+      if (isTokenValid) {
+        // If token exists and is valid, go to biometric screen
+        Navigator.of(context).pushReplacementNamed(RoutesName.biometricScreen);
+      } else {
+        // If no token or invalid token, go to login screen
+        await TokenManager.clearAuthData();
+        if (!_mounted) return;
+        
+        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+      }
+    } catch (e) {
+      // If there's any error in token checking, default to login
+      if (_mounted) {
+        print("Error checking auth status: $e");
+        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+      }
     }
   }
-
   // Future<void> checkAuthentication() async {
   //   // Add a short delay to show splash screen
   //   await Future.delayed(const Duration(seconds: 1));

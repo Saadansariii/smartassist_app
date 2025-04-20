@@ -19,7 +19,7 @@ class Routes {
           builder: (context) => const BiometricScreen(),
         );
 //comment this
-      case RoutesName.home1:
+      case RoutesName.home:
         return MaterialPageRoute(
           builder: (context) => BottomNavigation(),
         );

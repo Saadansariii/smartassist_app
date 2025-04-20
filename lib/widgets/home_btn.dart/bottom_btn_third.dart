@@ -353,7 +353,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
   @override
   void initState() {
     super.initState();
-    // _fetchDashboardData(); uncomment this 
+    _fetchDashboardData(); //uncomment this
   }
 
   Future<void> _fetchDashboardData() async {
@@ -390,8 +390,6 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       _loadMockData();
     }
   }
-
-  
 
   void _loadMockData() {
     // This is a fallback in case the API call fails

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:local_auth/error_codes.dart' as auth_error; 
+import 'package:local_auth/error_codes.dart' as auth_error;
+import 'package:smart_assist/config/route/route_name.dart';
 import 'package:smart_assist/pages/login_steps/login_page.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
@@ -16,7 +17,7 @@ class BiometricScreen extends StatefulWidget {
 }
 
 class _BiometricScreenState extends State<BiometricScreen> {
- final LocalAuthentication auth = LocalAuthentication();
+  final LocalAuthentication auth = LocalAuthentication();
   bool isAuthenticating = false;
   String _authStatus = 'Verifying your identity';
   bool _mounted = true;
@@ -25,8 +26,12 @@ class _BiometricScreenState extends State<BiometricScreen> {
   void initState() {
     super.initState();
     // _checkBiometrics();  //uncooment
-    // checkTokenAndAuthenticate(); 
-    _authenticate();
+    // checkTokenAndAuthenticate();
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (_mounted) {
+        _authenticate();
+      }
+    });
   }
 
   @override
@@ -35,18 +40,18 @@ class _BiometricScreenState extends State<BiometricScreen> {
     super.dispose();
   }
 
-   Future<void> _authenticate() async {
+  Future<void> _authenticate() async {
     if (!_mounted) return;
-    
+
     setState(() {
       isAuthenticating = true;
     });
-    
+
     bool canCheckBiometrics;
     try {
       canCheckBiometrics = await auth.canCheckBiometrics;
       if (!_mounted) return;
-      
+
       if (!canCheckBiometrics) {
         setState(() {
           _authStatus = 'Device does not support biometrics';
@@ -57,7 +62,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
         _proceedToHome();
         return;
       }
-      
+
       bool authenticated = await auth.authenticate(
         localizedReason: 'Please authenticate to access the app',
         options: const AuthenticationOptions(
@@ -65,9 +70,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
           biometricOnly: false,
         ),
       );
-      
+
       if (!_mounted) return;
-      
+
       if (authenticated) {
         _proceedToHome();
       } else {
@@ -75,22 +80,21 @@ class _BiometricScreenState extends State<BiometricScreen> {
           _authStatus = 'Authentication failed. Please try again.';
           isAuthenticating = false;
         });
-        // Add a retry button in the UI
       }
     } catch (e) {
       if (!_mounted) return;
+
+      print("Biometric error: $e");
       setState(() {
         isAuthenticating = false;
-        
-        if (e.toString().contains(auth_error.notAvailable)) {
+
+        if (e.toString().contains('NotAvailable')) {
           _authStatus = 'Biometrics not available';
-          // Proceed to home after showing the message briefly
           Future.delayed(const Duration(seconds: 2), () {
             if (_mounted) _proceedToHome();
           });
-        } else if (e.toString().contains(auth_error.notEnrolled)) {
+        } else if (e.toString().contains('NotEnrolled')) {
           _authStatus = 'No biometrics enrolled on this device';
-          // Proceed to home after showing the message briefly
           Future.delayed(const Duration(seconds: 2), () {
             if (_mounted) _proceedToHome();
           });
@@ -100,10 +104,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
       });
     }
   }
-  
+
+  // void _proceedToHome() async {
+  //   await NotificationService.instance.initialize();
+  //   Get.offAll(() => BottomNavigation());
+  // }
+
   void _proceedToHome() async {
-    await NotificationService.instance.initialize();
-    Get.offAll(() => BottomNavigation());
+    try {
+      await NotificationService.instance.initialize();
+    } catch (e) {
+      print("Error initializing notifications: $e");
+    }
+
+    if (_mounted) {
+      Navigator.of(context).pushReplacementNamed(RoutesName.home);
+    }
   }
 
   // Future<void> checkTokenAndAuthenticate() async {

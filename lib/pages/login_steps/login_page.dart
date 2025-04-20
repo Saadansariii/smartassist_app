@@ -319,66 +319,66 @@ class _LoginPageState extends State<LoginPage>
   }
 
   // Update the login page's submitBtn method to handle successful login
-Future<void> submitBtn() async {
-  if (!mounted) return;
-  final email = newEmailController.text.trim();
-  final pwd = newPwdController.text.trim();
-  
-  if (email.isEmpty || pwd.isEmpty) {
-    showErrorMessage(context, message: 'Email and Password cannot be empty.');
-    return;
-  }
-  
-  setState(() => isLoading = true);
-  
-  try {
-    final deviceToken = await FirebaseMessaging.instance.getToken();
-    if (deviceToken == null) {
-      throw Exception('Failed to retrieve device token.');
-    }
-    
-    final response = await LeadsSrv.onLogin({
-      "email": email,
-      "password": pwd,
-      "device_token": deviceToken,
-    });
-    
+  Future<void> submitBtn() async {
     if (!mounted) return;
-    
-    if (response['isSuccess'] == true && response['user'] != null) {
-      final user = response['user'];
-      final userId = user['user_id'];
-      final teamRole = user['team_role'];
-      final authToken = response['token'];
-      
-      if (userId != null && authToken != null) {
-        // Save authentication data
-        await TokenManager.saveAuthData(authToken, userId, teamRole);
-        
-        showSuccessMessage(context, message: 'Login Successful!');
-        
-        // Initialize FCM after successful login
-        await NotificationService.instance.initialize();
-        
-        // Navigate directly to home page, no biometric needed on first login
-        Get.offAll(() => BottomNavigation());
-        widget.onLoginSuccess?.call();
-      } else {
-        throw Exception('Invalid user data or token received');
-      }
-    } else {
-      throw Exception(response['message'] ?? 'Login failed: Unknown error');
-    }
-  } catch (error) {
-    if (!mounted) return;
-    showErrorMessage(context, message: error.toString());
-  } finally {
-    if (mounted) {
-      setState(() => isLoading = false);
-    }
-  }
-}
+    final email = newEmailController.text.trim();
+    final pwd = newPwdController.text.trim();
 
+    if (email.isEmpty || pwd.isEmpty) {
+      showErrorMessage(context, message: 'Email and Password cannot be empty.');
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final deviceToken = await FirebaseMessaging.instance.getToken();
+      if (deviceToken == null) {
+        throw Exception('Failed to retrieve device token.');
+      }
+
+      final response = await LeadsSrv.onLogin({
+        "email": email,
+        "password": pwd,
+        "device_token": deviceToken,
+      });
+
+      if (!mounted) return;
+
+      if (response['isSuccess'] == true && response['user'] != null) {
+        final user = response['user'];
+        final userId = user['user_id'];
+        final teamRole = user['team_role'];
+        final authToken = response['token'];
+
+        if (userId != null && authToken != null) {
+          // Save authentication data
+          await TokenManager.saveAuthData(authToken, userId, teamRole);
+
+          showSuccessMessage(context, message: 'Login Successful!');
+
+          // Initialize FCM after successful login
+          await NotificationService.instance.initialize();
+
+          // Navigate directly to home page, no biometric needed on first login
+          Get.offAll(() => BottomNavigation());
+          widget.onLoginSuccess?.call();
+        } else {
+          throw Exception('Invalid user data or token received');
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Login failed: Unknown error');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      print('error');
+      showErrorMessage(context, message: error.toString());
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
 
   // Future<void> submitBtn() async {
   //   if (!mounted) return;

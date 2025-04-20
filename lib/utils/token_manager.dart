@@ -101,7 +101,7 @@ class TokenManager {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(TOKEN_KEY, token);
     await prefs.setString(USER_ID_KEY, userId);
-    await prefs.setString(USER_ROLE, teamRole); // Using constant here
+    await prefs.setString('USER_ROLE', teamRole); // Using constant here
 
     // Verify it was saved
     print("Saved role: ${prefs.getString(USER_ROLE)}");

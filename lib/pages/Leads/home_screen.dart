@@ -387,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(16),
                                         // Adjust height based on whether "My Team" is shown
-                                        height: teamRole == "Owner" ? 400 : 370,
+                                        height: teamRole == "Owner" ? 440 : 370,
                                         decoration: const BoxDecoration(
                                           color: Colors.white,
                                           borderRadius: BorderRadius.vertical(
@@ -415,6 +415,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                               onTap: () => Get.to(
                                                   () => const CallLogs()),
                                             ),
+                                            if (teamRole == "Owner")
+                                              ListTile(
+                                                leading: const Icon(Icons.group,
+                                                    size: 28),
+                                                title: Text('My Team ',
+                                                    style: GoogleFonts.poppins(
+                                                        fontSize: 18)),
+                                                onTap: () => Get.to(
+                                                    () => const MyTeams()),
+                                              ),
                                             ListTile(
                                               leading: const Icon(
                                                   Icons.star_border_rounded,
@@ -446,16 +456,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                               onTap: () => Get.to(
                                                   () => const AppSetting()),
                                             ),
-                                            if (teamRole == "Owner")
-                                              ListTile(
-                                                leading: const Icon(Icons.group,
-                                                    size: 28),
-                                                title: Text('My Team ',
-                                                    style: GoogleFonts.poppins(
-                                                        fontSize: 18)),
-                                                onTap: () => Get.to(
-                                                    () => const MyTeams()),
-                                              ),
                                             ListTile(
                                               leading: const Icon(
                                                   Icons.logout_outlined,
