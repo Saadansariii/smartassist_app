@@ -155,6 +155,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/route/route_name.dart';
+import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
 import 'package:smart_assist/pages/login_steps/login_page.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
@@ -175,6 +176,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _aiSizeAnimation;
   late Animation<Offset> _aPositionAnimation;
   late Animation<Offset> _iPositionAnimation;
+  bool _mounted = true;
 
   @override
   void initState() {
@@ -243,7 +245,40 @@ class _SplashScreenState extends State<SplashScreen>
       });
     });
 
-    // checkAuthentication();
+    checkAuthStatus();
+  }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    _controller.dispose();
+    super.dispose();
+  }
+
+
+   Future<void> checkAuthStatus() async {
+    // Add a small delay for splash screen visibility if needed
+    await Future.delayed(const Duration(seconds: 2));
+    if (!_mounted) return;
+
+    // Check if user has a valid token
+    bool isTokenValid = await TokenManager.isTokenValid();
+    
+    if (!_mounted) return;
+
+    if (isTokenValid) {
+      // If token exists and is valid, go to biometric screen
+      Get.offAll(() =>const BiometricScreen());
+    } else {
+      // If no token or invalid token, go to login screen
+      await TokenManager.clearAuthData();
+      if (!_mounted) return;
+      
+      Get.offAll(() => LoginPage(
+        email: '',
+        onLoginSuccess: () {},
+      ));
+    }
   }
 
   // Future<void> checkAuthentication() async {
@@ -268,11 +303,11 @@ class _SplashScreenState extends State<SplashScreen>
   //   }
   // }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _controller.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

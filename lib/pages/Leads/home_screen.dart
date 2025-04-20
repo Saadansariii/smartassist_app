@@ -157,7 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // }
       });
     } catch (e) {
-      showErrorMessage(context, message: e.toString());
+      print(e);
+      // showErrorMessage(context, message: e.toString());
     } finally {
       setState(() {
         isDashboardLoading = false;
@@ -195,7 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      showErrorMessage(context, message: 'Something went wrong..!');
+      // showErrorMessage(context, message: 'Something went wrong..!');
+      print(e);
     } finally {
       setState(() {
         _isLoadingSearch = false;
@@ -686,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // ✅ FAB positioned above the overlay
           Positioned(
             bottom: 26,
-            right: 18,  
+            right: 18,
             child: _buildFloatingActionButton(context),
           ),
         ],
@@ -764,7 +766,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
 
 // ✅ Function to Show `CreateFollowupsPopups` on "Lead"
 // void _showFollowupPopup(BuildContext context) {
