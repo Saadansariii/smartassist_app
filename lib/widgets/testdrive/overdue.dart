@@ -6,6 +6,7 @@ import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/testdrive_verifyotp.dart';
 
 class TestOverdue extends StatefulWidget {
   final List<dynamic> overdueTestDrive;
@@ -51,7 +52,7 @@ class _TestOverdueState extends State<TestOverdue> {
       _toggleFavorite(eventId, index);
     } else if (swipeOffset < -100) {
       // Left Swipe (Call)
-      _handleCall(item);
+      _handleTestDrive(item);
     }
 
     // Reset animation
@@ -60,9 +61,18 @@ class _TestOverdueState extends State<TestOverdue> {
     });
   }
 
-  void _handleCall(dynamic item) {
+  void _handleTestDrive(dynamic item) {
+    String email = item['updated_by'] ?? '';
+    String eventId = item['event_id'] ?? '';
+    String leadId = item['lead_id'] ?? '';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TestdriveVerifyotp(
+            email: email, text: '', leadId: leadId, eventId: eventId),
+      ),
+    );
     print("Call action triggered for ${item['name']}");
-    // Implement actual call functionality here
   }
 
   Future<void> _toggleFavorite(String eventId, int index) async {
@@ -105,7 +115,7 @@ class _TestOverdueState extends State<TestOverdue> {
     if (widget.overdueTestDrive.isEmpty) {
       return const SizedBox(
         height: 240,
-        child: Center(child: Text('No upcoming TestDrive available')),
+        child: Center(child: Text('No Overdue TestDrive available')),
       );
     }
 
@@ -198,12 +208,12 @@ class _TestOverdueState extends State<TestOverdue> {
       itemBuilder: (context, index) {
         var item = widget.overdueTestDrive[index];
 
-        if (!(item.containsKey('assigned_to') &&
-            item.containsKey('start_date') &&
-            item.containsKey('lead_id') &&
-            item.containsKey('event_id'))) {
-          return ListTile(title: Text('Invalid data at index $index'));
-        }
+        // if (!(item.containsKey('assigned_to') &&
+        //     item.containsKey('start_date') &&
+        //     item.containsKey('lead_id') &&
+        //     item.containsKey('event_id'))) {
+        //   return ListTile(title: Text('Invalid data at index $index'));
+        // }
 
         String eventId = item['event_id'];
         double swipeOffset = _swipeOffsets[eventId] ?? 0;
@@ -284,7 +294,7 @@ class _upcomingTestDrivesItemState extends State<upcomingTestDrivesItem> {
         );
       } else if (isCallSwipe) {
         return LinearGradient(
-          colors: [Colors.blue.withOpacity(0.2), Colors.blue.withOpacity(0.8)],
+          colors: [Colors.blue.withOpacity(0.2), Colors.blue.withOpacity(0.2)],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
         );
@@ -384,8 +394,8 @@ class _upcomingTestDrivesItemState extends State<upcomingTestDrivesItem> {
                 width: 8.0,
                 color: widget.isFavorite
                     ? (isCallSwipe
-                        ? AppColors.sideRed
-                            .withOpacity(0.9) // Green when swiping for a call
+                        ? Colors.blue
+                            .withOpacity(0.2) // Green when swiping for a call
                         : Colors.yellow.withOpacity(isFavoriteSwipe
                             ? 0.1
                             : 0.9)) // Keep yellow when favorite

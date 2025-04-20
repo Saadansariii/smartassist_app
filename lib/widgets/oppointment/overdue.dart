@@ -6,6 +6,7 @@ import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 // ---------------- appointment UPCOMING LIST ----------------
 class OppOverdue extends StatefulWidget {
@@ -65,10 +66,35 @@ class _OppOverdueState extends State<OppOverdue> {
     });
   }
 
-  void _handleCall(dynamic item) {
+   void _handleCall(dynamic item) {
     print("Call action triggered for ${item['name']}");
-    // Implement actual call functionality here
+
+    String mobile = item['mobile'] ?? '';
+
+    if (mobile.isNotEmpty) {
+      try {
+        // Simple approach without canLaunchUrl check
+        final phoneNumber = 'tel:$mobile';
+        launchUrl(Uri.parse(phoneNumber),
+            mode: LaunchMode.externalNonBrowserApplication);
+      } catch (e) {
+        print('Error launching phone app: $e');
+        // Show error message to user
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No phone number available')),
+        );
+      }
+    }
   }
+
 
   Future<void> _toggleFavorite(String eventId, int index) async {
     final token = await Storage.getToken();
@@ -261,7 +287,7 @@ class _overdueeOppItemState extends State<overdueeOppItem> {
         return LinearGradient(
           colors: [
             Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.8)
+            Colors.green.withOpacity(0.2)
           ],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
@@ -319,10 +345,10 @@ class _overdueeOppItemState extends State<overdueeOppItem> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient:const LinearGradient(
                   colors: [
-                    Colors.green.withOpacity(0.2),
-                    Colors.green.withOpacity(0.8)
+                    Colors.green,
+                    Colors.green
                   ],
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
@@ -370,7 +396,7 @@ class _overdueeOppItemState extends State<overdueeOppItem> {
                     : (isFavoriteSwipe
                         ? Colors.yellow.withOpacity(0.1)
                         : (isCallSwipe
-                            ? AppColors.sideRed.withOpacity(0.5)
+                            ? Colors.green
                             : AppColors.sideRed)),
               ),
             ),

@@ -225,7 +225,7 @@ class UpcomingFollowupItem extends StatelessWidget {
         return LinearGradient(
           colors: [
             Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.8)
+            Colors.green.withOpacity(0.2)
           ],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
@@ -283,11 +283,8 @@ class UpcomingFollowupItem extends StatelessWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.withOpacity(0.2),
-                    Colors.green.withOpacity(0.8)
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Colors.green, Colors.green],
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                 ),
@@ -333,9 +330,7 @@ class UpcomingFollowupItem extends StatelessWidget {
                             : 0.9)) // Keep yellow when favorite
                     : (isFavoriteSwipe
                         ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe
-                            ? Colors.green.withOpacity(0.1)
-                            : AppColors.sideGreen)),
+                        : (isCallSwipe ? Colors.green : AppColors.sideGreen)),
               ),
             ),
           ),
@@ -413,9 +408,19 @@ class UpcomingFollowupItem extends StatelessWidget {
     );
   }
 
+  // Widget _buildUserDetails(BuildContext context) {
+  //   return Text(name,
+  //       textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+  // }
+
   Widget _buildUserDetails(BuildContext context) {
-    return Text(name,
-        textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: AppFont.dashboardName(context)),
+        // const SizedBox(height: 5),
+      ],
+    );
   }
 
   Widget _buildSubjectDetails(BuildContext context) {

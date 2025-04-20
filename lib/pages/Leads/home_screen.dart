@@ -590,7 +590,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             Positioned(
-              bottom: 36,
+              bottom: 26,
               right: 18,
               child: _buildFloatingActionButton(context),
             ),
@@ -686,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // ✅ FAB positioned above the overlay
           Positioned(
             bottom: 26,
-            right: 18,
+            right: 18,  
             child: _buildFloatingActionButton(context),
           ),
         ],
@@ -765,7 +765,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-// ✅ Function to Show `CreateFollowupsPopups` on "Lead"
 
 // ✅ Function to Show `CreateFollowupsPopups` on "Lead"
 // void _showFollowupPopup(BuildContext context) {

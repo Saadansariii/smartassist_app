@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/home_btn.dart/lead_old_popup/leads_third.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OverdueFollowup extends StatefulWidget {
   final bool isNested;
@@ -64,7 +65,31 @@ class _OverdueFollowupState extends State<OverdueFollowup> {
 
   void _handleCall(dynamic item) {
     print("Call action triggered for ${item['name']}");
-    // Implement actual call functionality here
+
+    String mobile = item['mobile'] ?? '';
+
+    if (mobile.isNotEmpty) {
+      try {
+        // Simple approach without canLaunchUrl check
+        final phoneNumber = 'tel:$mobile';
+        launchUrl(Uri.parse(phoneNumber),
+            mode: LaunchMode.externalNonBrowserApplication);
+      } catch (e) {
+        print('Error launching phone app: $e');
+        // Show error message to user
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No phone number available')),
+        );
+      }
+    }
   }
 
   Future<void> _toggleFavorite(String taskId, int index) async {
@@ -204,7 +229,7 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
         return LinearGradient(
           colors: [
             Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.8)
+            Colors.green.withOpacity(0.2)
           ],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
@@ -262,11 +287,8 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.withOpacity(0.2),
-                    Colors.green.withOpacity(0.8)
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Colors.green, Colors.green],
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                 ),
@@ -296,7 +318,7 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
 
         // Main Container
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
           decoration: BoxDecoration(
             gradient: _buildSwipeGradient(),
             borderRadius: BorderRadius.circular(5),
@@ -307,14 +329,11 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
                     ? (isCallSwipe
                         ? Colors.green
                             .withOpacity(0.9) // Green when swiping for a call
-                        : Colors.yellow.withOpacity(isFavoriteSwipe
-                            ? 0.1 
-                            : 0.9))  
+                        : Colors.yellow
+                            .withOpacity(isFavoriteSwipe ? 0.1 : 0.9))
                     : (isFavoriteSwipe
                         ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe
-                            ? AppColors.sideRed.withOpacity(0.5)
-                            : AppColors.sideRed)),
+                        : (isCallSwipe ? Colors.green : AppColors.sideRed)),
               ),
             ),
           ),

@@ -122,6 +122,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
   List<dynamic> _searchResults = [];
   bool _isLoadingSearch = false;
   String _query = '';
+  bool _isErrorShowing = false;
 
   @override
   void initState() {
@@ -160,12 +161,31 @@ class _GlobalSearchState extends State<GlobalSearch> {
       );
 
       final Map<String, dynamic> data = json.decode(response.body);
+
       if (response.statusCode == 200) {
         setState(() {
           _searchResults = data['data']['suggestions'] ?? [];
+          _isErrorShowing = false;
         });
       } else {
-        showErrorMessage(context, message: data['message']);
+        // showErrorMessage(context, message: data['message']);
+        // Get.snackbar('Error', data['message'].toString());
+        if (!_isErrorShowing) {
+          setState(() {
+            _isErrorShowing = true;
+          });
+          Get.snackbar(
+            'Error',
+            data['message'].toString(),
+            duration: Duration(seconds: 3),
+            onTap: (_) {
+              setState(() {
+                _isErrorShowing = false;
+              });
+            },
+            isDismissible: true,
+          );
+        }
       }
     } catch (e) {
       showErrorMessage(context, message: 'Something went wrong..!');
@@ -181,65 +201,36 @@ class _GlobalSearchState extends State<GlobalSearch> {
     if (newQuery == _query) return;
 
     _query = newQuery;
-    Future.delayed(const Duration(milliseconds: 500), () {
+
+    // Also clear error status when user changes search text
+    if (_isErrorShowing) {
+      setState(() {
+        _isErrorShowing = false;
+      });
+    }
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
       if (_query == _searchController.text.trim()) {
         _fetchSearchResults(_query);
       }
     });
   }
 
+  // void _onSearchChanged() {
+  //   final newQuery = _searchController.text.trim();
+  //   if (newQuery == _query) return;
+
+  //   _query = newQuery;
+  //   Future.delayed(const Duration(milliseconds: 1500), () {
+  //     if (_query == _searchController.text.trim()) {
+  //       _fetchSearchResults(_query);
+  //     }
+  //   });
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: SizedBox(
-      //     width: MediaQuery.of(context).size.width * 1.2,
-      //     height: MediaQuery.of(context).size.height * .05,
-      //     child: Container(
-      //       decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-      //       child: TextField(
-      //         autofocus: true,
-      //         controller: _searchController,
-      //         textAlignVertical: TextAlignVertical.center,
-      //         decoration: InputDecoration(
-      //           enabledBorder: OutlineInputBorder(
-      //             borderRadius: BorderRadius.circular(30),
-      //             borderSide: BorderSide.none,
-      //           ),
-      //           contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-      //           filled: true,
-      //           fillColor: AppColors.searchBar,
-      //           hintText: 'Search',
-      //           hintStyle: GoogleFonts.poppins(
-      //             fontSize: 12,
-      //             fontWeight: FontWeight.w300,
-      //           ),
-      //           suffixIcon: const Icon(
-      //             FontAwesomeIcons.magnifyingGlass,
-      //             color: AppColors.fontColor,
-      //             size: 15,
-      //           ),
-      //           border: OutlineInputBorder(
-      //             borderRadius: BorderRadius.circular(30),
-      //             borderSide: BorderSide.none,
-      //           ),
-      //         ),
-      //       ),
-      //     ),
-      //   ),
-      //   leading: Container(
-      //     decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-      //     child: Padding(
-      //       padding: const EdgeInsets.only(left: 10.0),
-      //       child: IconButton(
-      //         icon: const Icon(
-      //           Icons.arrow_back_ios_new_rounded,
-      //         ),
-      //         onPressed: () => Get.back(),
-      //       ),
-      //     ),
-      //   ),
-      // ),
       appBar: AppBar(
         titleSpacing: 10, // Removes default space between leading and title
         leadingWidth: 40, // Reduce width of leading to keep it compact
@@ -299,14 +290,13 @@ class _GlobalSearchState extends State<GlobalSearch> {
           ],
         ),
       ),
-
       body: _isLoadingSearch
           ? const Center(child: CircularProgressIndicator())
           : _searchResults.isEmpty
               ? GestureDetector(
                   onTap: () => FocusScope.of(context).unfocus(),
                   child: Center(
-                      child: Text("Type Something....",
+                      child: Text("No Matching Record found...!",
                           style: AppFont.dropDowmLabel(context))),
                 )
               : ListView.builder(
@@ -354,8 +344,8 @@ class _GlobalSearchState extends State<GlobalSearch> {
                               borderRadius:
                                   BorderRadius.all(Radius.circular(30))),
                           child: const Padding(
-                            padding: const EdgeInsets.all(5),
-                            child: const Icon(
+                            padding: EdgeInsets.all(5),
+                            child: Icon(
                               Icons.trending_up,
                               color: AppColors.iconGrey,
                             ),
