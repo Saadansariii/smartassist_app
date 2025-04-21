@@ -1,13 +1,10 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+ import 'package:flutter/material.dart'; 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-import 'package:http/http.dart' as http;
-import 'package:smart_assist/pages/login_steps/second_screen.dart';
+import 'package:http/http.dart' as http; 
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/testdrive_verifyotp.dart';
 

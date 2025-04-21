@@ -26,6 +26,7 @@ import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_testD
 import 'package:smart_assist/widgets/home_btn.dart/threeBtn_second_leads.dart';
 import 'package:smart_assist/widgets/home_btn.dart/threebtn.dart';
 import 'package:http/http.dart' as http;
+import 'package:smart_assist/widgets/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String greeting;
@@ -156,7 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // }
       });
     } catch (e) {
-      showErrorMessage(context, message: e.toString());
+      print(e);
+      // showErrorMessage(context, message: e.toString());
     } finally {
       setState(() {
         isDashboardLoading = false;
@@ -194,7 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      showErrorMessage(context, message: 'Something went wrong..!');
+      // showErrorMessage(context, message: 'Something went wrong..!');
+      print(e);
     } finally {
       setState(() {
         _isLoadingSearch = false;
@@ -369,85 +372,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             /// ✅ Row with Menu, Search Bar, and Microphone
                             Row(
                               children: [
-                                // IconButton(
-                                //   icon: const Icon(Icons.menu,
-                                //       color: AppColors.fontColor),
-                                //   onPressed: () {
-                                //     Get.bottomSheet(Container(
-                                //       padding: const EdgeInsets.all(16),
-                                //       height: 320,
-                                //       decoration: const BoxDecoration(
-                                //         color: Colors.white,
-                                //         borderRadius: BorderRadius.vertical(
-                                //             top: Radius.circular(30)),
-                                //       ),
-                                //       child: Column(
-                                //         children: [
-                                //           ListTile(
-                                //             leading: const Icon(Icons.search,
-                                //                 size: 28),
-                                //             title: Text('Leads',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () =>
-                                //                 Get.to(() => const AllLeads()),
-                                //           ),
-                                //           ListTile(
-                                //             leading: const Icon(
-                                //                 Icons.star_border_outlined,
-                                //                 size: 28),
-                                //             title: Text('Favorites',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () => Get.to(() =>
-                                //                 const FavoritePage(leadId: '')),
-                                //           ),
-                                //           ListTile(
-                                //             leading: const Icon(
-                                //                 Icons.person_outline,
-                                //                 size: 28),
-                                //             title: Text('Profile',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () => Get.back(),
-                                //           ),
-                                //           ListTile(
-                                //             leading: const Icon(
-                                //                 Icons.settings_outlined,
-                                //                 size: 28),
-                                //             title: Text('App Settings',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () => Get.to(
-                                //                 () => const AppSetting()),
-                                //           ),
-                                //           ListTile(
-                                //             leading: const Icon(
-                                //                 Icons.logout_outlined,
-                                //                 size: 28),
-                                //             title: Text('My Team ',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () =>
-                                //                 Get.to(() => const MyTeams()),
-                                //           ),
-                                //           ListTile(
-                                //             leading: const Icon(
-                                //                 Icons.logout_outlined,
-                                //                 size: 28),
-                                //             title: Text('Logout',
-                                //                 style: GoogleFonts.poppins(
-                                //                     fontSize: 18)),
-                                //             onTap: () => Get.to(
-                                //                 () => const LogoutPage()),
-                                //           ),
-                                //         ],
-                                //       ),
-                                //     ));
-                                //   },
-                                // ),
-                                // First, you need to get the team role from SharedPreferences
-
                                 // Then in your bottom sheet code:
                                 IconButton(
                                   icon: const Icon(Icons.menu,
@@ -463,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(16),
                                         // Adjust height based on whether "My Team" is shown
-                                        height: teamRole == "Owner" ? 400 : 370,
+                                        height: teamRole == "Owner" ? 440 : 370,
                                         decoration: const BoxDecoration(
                                           color: Colors.white,
                                           borderRadius: BorderRadius.vertical(
@@ -491,6 +415,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                               onTap: () => Get.to(
                                                   () => const CallLogs()),
                                             ),
+                                            if (teamRole == "Owner")
+                                              ListTile(
+                                                leading: const Icon(Icons.group,
+                                                    size: 28),
+                                                title: Text('My Team ',
+                                                    style: GoogleFonts.poppins(
+                                                        fontSize: 18)),
+                                                onTap: () => Get.to(
+                                                    () => const MyTeams()),
+                                              ),
                                             ListTile(
                                               leading: const Icon(
                                                   Icons.star_border_rounded,
@@ -509,7 +443,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               title: Text('Profile',
                                                   style: GoogleFonts.poppins(
                                                       fontSize: 18)),
-                                              onTap: () => Get.back(),
+                                              onTap: () => Get.to(
+                                                  () => const ProfileScreen()),
                                             ),
                                             ListTile(
                                               leading: const Icon(
@@ -521,16 +456,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                               onTap: () => Get.to(
                                                   () => const AppSetting()),
                                             ),
-                                            if (teamRole == "Owner")
-                                              ListTile(
-                                                leading: const Icon(Icons.group,
-                                                    size: 28),
-                                                title: Text('My Team ',
-                                                    style: GoogleFonts.poppins(
-                                                        fontSize: 18)),
-                                                onTap: () => Get.to(
-                                                    () => const MyTeams()),
-                                              ),
                                             ListTile(
                                               leading: const Icon(
                                                   Icons.logout_outlined,
@@ -667,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             Positioned(
-              bottom: 36,
+              bottom: 26,
               right: 18,
               child: _buildFloatingActionButton(context),
             ),
@@ -713,86 +638,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget _buildFloatingActionButton(BuildContext context) {
-  //   return Obx(
-  //     () => GestureDetector(
-  //       onTap: fabController.toggleFab,
-  //       child: AnimatedContainer(
-  //         duration: const Duration(milliseconds: 300),
-  //         width: MediaQuery.of(context).size.width * .15,
-  //         height: MediaQuery.of(context).size.height * .08,
-  //         decoration: BoxDecoration(
-  //           color: fabController.isFabExpanded.value
-  //               ? Colors.red
-  //               : AppColors.colorsBlue,
-  //           shape: BoxShape.circle,
-  //         ),
-  //         child: Center(
-  //           child: AnimatedRotation(
-  //             turns: fabController.isFabExpanded.value ? 0.25 : 0.0,
-  //             duration: const Duration(milliseconds: 300),
-  //             child: Icon(
-  //               fabController.isFabExpanded.value ? Icons.close : Icons.add,
-  //               color: Colors.white,
-  //               size: 30,
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Popup Menu Builder
-  // Widget _buildPopupMenu(BuildContext context) {
-  //   return GestureDetector(
-  //     onTap: fabController.closeFab,
-  //     child: Stack(
-  //       children: [
-  //         // Background overlay
-  //         Positioned.fill(
-  //           child: Container(
-  //             color: Colors.black.withOpacity(0.7),
-  //           ),
-  //         ),
-
-  //         // Popup Items (Similar to your existing implementation)
-  //         Positioned(
-  //           bottom: 90,
-  //           left: MediaQuery.of(context).size.width / 2 - 150,
-  //           width: 300,
-  //           height: 300,
-  //           child: Stack(
-  //             alignment: Alignment.center,
-  //             clipBehavior: Clip.none,
-  //             children: [
-  //               _buildPopupItem(
-  //                   Icons.calendar_month_outlined, "Appointment", -5, -32,
-  //                   onTap: () {
-  //                 fabController.closeFab();
-  //                 _showAppointmentPopup(context);
-  //               }),
-  //               _buildPopupItem(Icons.people_alt_rounded, "Lead", 70, -93,
-  //                   onTap: () {
-  //                 fabController.closeFab();
-  //                 _showLeadPopup(context);
-  //               }),
-  //               _buildPopupItem(Icons.call, "Followup", 30, 35, onTap: () {
-  //                 fabController.closeFab();
-  //                 _showFollowupPopup(context);
-  //               }),
-  //               _buildPopupItem(Icons.directions_car, "Test Drive", 20, 100,
-  //                   onTap: () {
-  //                 fabController.closeFab();
-  //                 _showTestdrivePopup(context);
-  //               }),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
   Widget _buildPopupMenu(BuildContext context) {
     return GestureDetector(
       onTap: fabController.closeFab,
@@ -921,8 +766,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-// ✅ Function to Show `CreateFollowupsPopups` on "Lead"
 
 // ✅ Function to Show `CreateFollowupsPopups` on "Lead"
 // void _showFollowupPopup(BuildContext context) {

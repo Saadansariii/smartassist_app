@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/config/component/font/font.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
-class TimelineSevenWid extends StatelessWidget {
+class TimelineCompleted extends StatelessWidget {
   final List<Map<String, dynamic>> events;
   final List<Map<String, dynamic>> completedEvents;
-  const TimelineSevenWid(
+  const TimelineCompleted(
       {super.key, required this.events, required this.completedEvents});
 
   String _formatDate(String date) {
@@ -25,6 +26,18 @@ class TimelineSevenWid extends StatelessWidget {
     // Reverse the events and completedEvents list to show from bottom to top
     final reversedEvents = events.reversed.toList();
     final reversedCompletedEvents = completedEvents.reversed.toList();
+
+    if (reversedEvents.isEmpty && reversedCompletedEvents.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'No Completed Task Available',
+            style: AppFont.mediumText14(context),
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: [

@@ -6,6 +6,7 @@ import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FollowupsUpcoming extends StatefulWidget {
   final List<dynamic> upcomingFollowups;
@@ -90,7 +91,31 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
 
   void _handleCall(dynamic item) {
     print("Call action triggered for ${item['name']}");
-    // Implement actual call functionality here
+
+    String mobile = item['mobile'] ?? '';
+
+    if (mobile.isNotEmpty) {
+      try {
+        // Simple approach without canLaunchUrl check
+        final phoneNumber = 'tel:$mobile';
+        launchUrl(Uri.parse(phoneNumber),
+            mode: LaunchMode.externalNonBrowserApplication);
+      } catch (e) {
+        print('Error launching phone app: $e');
+        // Show error message to user
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No phone number available')),
+        );
+      }
+    }
   }
 
   @override
@@ -135,6 +160,7 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
             key: ValueKey(item['task_id']),
             name: item['name'],
             date: item['due_date'],
+            mobile: item['mobile'],
             subject: item['subject'] ?? '',
             vehicle: item['PMI'] ?? 'Range Rover Velar',
             leadId: item['lead_id'],
@@ -151,7 +177,7 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
 }
 
 class UpcomingFollowupItem extends StatelessWidget {
-  final String name, date, vehicle, leadId, taskId, subject;
+  final String name, date, vehicle, leadId, taskId, subject, mobile;
   final bool isFavorite;
   final double swipeOffset;
   final VoidCallback fetchDashboardData;
@@ -167,6 +193,7 @@ class UpcomingFollowupItem extends StatelessWidget {
     required this.swipeOffset,
     required this.fetchDashboardData,
     required this.subject,
+    required this.mobile,
   });
 
   @override
@@ -198,7 +225,7 @@ class UpcomingFollowupItem extends StatelessWidget {
         return LinearGradient(
           colors: [
             Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.8)
+            Colors.green.withOpacity(0.2)
           ],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
@@ -256,11 +283,8 @@ class UpcomingFollowupItem extends StatelessWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.withOpacity(0.2),
-                    Colors.green.withOpacity(0.8)
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Colors.green, Colors.green],
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                 ),
@@ -306,9 +330,7 @@ class UpcomingFollowupItem extends StatelessWidget {
                             : 0.9)) // Keep yellow when favorite
                     : (isFavoriteSwipe
                         ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe
-                            ? Colors.green.withOpacity(0.1)
-                            : AppColors.sideGreen)),
+                        : (isCallSwipe ? Colors.green : AppColors.sideGreen)),
               ),
             ),
           ),
@@ -386,9 +408,19 @@ class UpcomingFollowupItem extends StatelessWidget {
     );
   }
 
+  // Widget _buildUserDetails(BuildContext context) {
+  //   return Text(name,
+  //       textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+  // }
+
   Widget _buildUserDetails(BuildContext context) {
-    return Text(name,
-        textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: AppFont.dashboardName(context)),
+        // const SizedBox(height: 5),
+      ],
+    );
   }
 
   Widget _buildSubjectDetails(BuildContext context) {

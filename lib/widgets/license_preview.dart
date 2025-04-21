@@ -16,7 +16,10 @@ class LicencePreview extends StatefulWidget {
   final String eventId;
   final String leadId;
   const LicencePreview(
-      {super.key, required this.imageFile, required this.eventId, required this.leadId});
+      {super.key,
+      required this.imageFile,
+      required this.eventId,
+      required this.leadId});
 
   @override
   State<LicencePreview> createState() => _LicencePreviewState();
@@ -31,8 +34,8 @@ class _LicencePreviewState extends State<LicencePreview> {
     });
 
     final token = await Storage.getToken();
-    final uri =
-        Uri.parse('https://api.smartassistapp.in/api/events/upload-license');
+    final uri = Uri.parse(
+        'https://api.smartassistapp.in/api/events/${widget.eventId}/upload-license');
 
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
@@ -175,9 +178,9 @@ class _LicencePreviewState extends State<LicencePreview> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => StartDriveMap(
-                                    eventId: widget.eventId,
-                                    leadId : widget.leadId
-                                  ), // Replace with your target screen
+                                      eventId: widget.eventId,
+                                      leadId: widget
+                                          .leadId), // Replace with your target screen
                                 ),
                               );
                             } else {
@@ -188,7 +191,6 @@ class _LicencePreviewState extends State<LicencePreview> {
                               );
                             }
                           },
-                          
                     child: _isUploading
                         ? const CircularProgressIndicator()
                         : Text("Start drive", style: AppFont.buttons(context)),

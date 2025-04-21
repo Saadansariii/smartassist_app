@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:smart_assist/config/component/color/colors.dart';
-import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_assist/config/component/color/colors.dart';
 
-class TimelineUpcoming extends StatelessWidget {
+import 'package:timeline_tile/timeline_tile.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class timelineOverdue extends StatelessWidget {
   final List<Map<String, dynamic>> tasks;
-  final List<Map<String, dynamic>> upcomingEvents;
-  const TimelineUpcoming(
-      {super.key, required this.tasks, required this.upcomingEvents});
+  final List<Map<String, dynamic>> overdueEvents;
+  const timelineOverdue(
+      {super.key, required this.tasks, required this.overdueEvents});
 
   String _formatDate(String date) {
     try {
@@ -26,13 +27,13 @@ class TimelineUpcoming extends StatelessWidget {
     final reversedTasks = tasks.reversed.toList();
 
     // Reverse the upcomingEvents list to show from bottom to top
-    final reversedUpcomingEvents = upcomingEvents.reversed.toList();
+    final reversedUpcomingEvents = overdueEvents.reversed.toList();
 
     if (reversedTasks.isEmpty && reversedUpcomingEvents.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 20),
-          child: Text("No Upcoming task available"),
+          child: Text("No Overdue task available"),
         ),
       );
     }
@@ -57,7 +58,7 @@ class TimelineUpcoming extends StatelessWidget {
               padding: const EdgeInsets.only(left: 5),
               width: 30,
               height: 30,
-              color: AppColors.sideGreen,
+              color: AppColors.sideRed,
               iconStyle: IconStyle(
                 iconData: Icons.call,
                 color: Colors.white,
@@ -157,7 +158,7 @@ class TimelineUpcoming extends StatelessWidget {
               padding: const EdgeInsets.only(left: 5),
               width: 30,
               height: 30,
-              color: AppColors.sideGreen, // Green for upcoming events
+              color: AppColors.sideRed, // Green for upcoming events
               iconStyle: IconStyle(
                 iconData: Icons.event_available,
                 color: Colors.white,

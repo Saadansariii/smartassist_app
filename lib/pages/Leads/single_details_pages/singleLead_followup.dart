@@ -17,8 +17,9 @@ import 'package:smart_assist/widgets/home_btn.dart/single_ids_popup/followups_id
 import 'package:smart_assist/widgets/home_btn.dart/single_ids_popup/testdrive_ids.dart';
 import 'package:smart_assist/widgets/leads_details_popup/create_appointment.dart';
 import 'package:smart_assist/widgets/leads_details_popup/create_followups.dart';
+import 'package:smart_assist/widgets/timeline/timeline_overdue.dart';
 import 'package:smart_assist/widgets/timeline/timeline_tasks.dart';
-import 'package:smart_assist/widgets/timeline/timeline_events.dart';
+import 'package:smart_assist/widgets/timeline/timeline_completed.dart';
 import 'package:smart_assist/widgets/whatsapp_chat.dart';
 
 class FollowupsDetails extends StatefulWidget {
@@ -59,6 +60,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   // fetchevent data
 
   List<Map<String, dynamic>> upcomingTasks = [];
+  List<Map<String, dynamic>> overdueTasks = [];
+  List<Map<String, dynamic>> overdueEvents = [];
   List<Map<String, dynamic>> upcomingEvents = [];
   List<Map<String, dynamic>> completedEvents = [];
   List<Map<String, dynamic>> completedTasks = [];
@@ -89,9 +92,14 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     });
 
     // Initially, set the selected widget
-    _selectedTaskWidget = TimelineEightWid(
+    _selectedTaskWidget = TimelineUpcoming(
       tasks: upcomingTasks,
       upcomingEvents: upcomingEvents,
+    );
+
+    _selectedTaskWidget = timelineOverdue(
+      tasks: overdueTasks,
+      overdueEvents: overdueEvents,
     );
 
     // _callLogsWidget = TimelineEightWid(tasks: upcomingTasks, upcomingEvents: upcomingEvents);
@@ -188,6 +196,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
 
       setState(() {
         // Ensure that upcomingTasks and completedTasks are correctly cast to List<Map<String, dynamic>>.
+        overdueTasks = List<Map<String, dynamic>>.from(data['overdueTasks']);
+        overdueEvents = List<Map<String, dynamic>>.from(data['overdueEvents']);
         upcomingTasks = List<Map<String, dynamic>>.from(data['upcomingTasks']);
         upcomingEvents =
             List<Map<String, dynamic>>.from(data['upcomingEvents']);
@@ -197,7 +207,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             List<Map<String, dynamic>>.from(data['completedEvents']);
 
         // Now you can safely pass the upcomingTasks and completedTasks to the widgets.
-        _selectedTaskWidget = TimelineEightWid(
+        _selectedTaskWidget = TimelineUpcoming(
           tasks: upcomingTasks,
           upcomingEvents: upcomingEvents,
         );
@@ -215,12 +225,14 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
 
       if (index == 0) {
         // Show upcoming tasks
-        _selectedTaskWidget = TimelineEightWid(
+        _selectedTaskWidget = TimelineUpcoming(
             tasks: upcomingTasks, upcomingEvents: upcomingEvents);
-      } else {
-        // Show completed tasks
-        _selectedTaskWidget = TimelineSevenWid(
+      } else if (index == 1) {
+        _selectedTaskWidget = TimelineCompleted(
             events: completedTasks, completedEvents: completedEvents);
+      } else {
+        _selectedTaskWidget =
+            timelineOverdue(tasks: overdueTasks, overdueEvents: overdueEvents);
       }
     });
   }
@@ -249,6 +261,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         _buildToggleOption(0, 'Upcoming'),
         const SizedBox(width: 10),
         _buildToggleOption(1, 'Completed'),
+        const SizedBox(width: 10),
+        _buildToggleOption(2, 'Overdue'),
       ],
     );
   }

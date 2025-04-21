@@ -151,10 +151,15 @@
 //   }
 // }
 
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/route/route_name.dart';
+import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
+import 'package:smart_assist/pages/login_steps/login_page.dart';
+import 'package:smart_assist/services/notifacation_srv.dart';
+import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/token_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -171,6 +176,77 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _aiSizeAnimation;
   late Animation<Offset> _aPositionAnimation;
   late Animation<Offset> _iPositionAnimation;
+  bool _mounted = true;
+
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   _controller = AnimationController(
+  //     duration: const Duration(milliseconds: 2000),
+  //     vsync: this,
+  //   );
+
+  //   // AI fade in animation
+  //   _aiFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.0, 0.2, curve: Curves.easeIn),
+  //     ),
+  //   );
+
+  //   // AI size animation (starts big, gets smaller)
+  //   _aiSizeAnimation = Tween<double>(begin: 80, end: 40).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
+  //     ),
+  //   );
+
+  //   // 'a' position animation (moves from center to left side of 'assist')
+  //   _aPositionAnimation = Tween<Offset>(
+  //     begin: const Offset(-0.2, 0), // Start at center
+  //     end: const Offset(-1.65, 0), // Move left
+  //   ).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.4, 0.6, curve: Curves.easeInOut),
+  //     ),
+  //   );
+
+  //   // 'i' position animation (moves from center to right position within 'assist')
+  //   _iPositionAnimation = Tween<Offset>(
+  //     begin: const Offset(1, 0), // Start at center
+  //     end: const Offset(1.50, 0), // Move right
+  //   ).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.4, 0.6, curve: Curves.easeInOut),
+  //     ),
+  //   );
+
+  //   // Rest of text fade-in animation (after AI is positioned)
+  //   _assistAndSmartFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+  //     CurvedAnimation(
+  //       parent: _controller,
+  //       curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
+  //     ),
+  //   );
+
+  //   // Start animation after a delay
+  //   Future.delayed(const Duration(milliseconds: 500), () {
+  //     _controller.forward();
+  //   });
+
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     Future.delayed(const Duration(milliseconds: 3000), () {
+  //       Navigator.of(context).pushReplacementNamed(RoutesName.home);
+  //       // Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //     });
+  //   });
+
+  //   // checkAuthStatus();
+  // }
 
   @override
   void initState() {
@@ -229,21 +305,81 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Start animation after a delay
     Future.delayed(const Duration(milliseconds: 500), () {
-      _controller.forward();
+      if (_mounted) {
+        _controller.forward();
+      }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 3000), () {
-        Navigator.of(context).pushReplacementNamed(RoutesName.login);
-      });
+    // Start the authentication check after animations complete
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        checkAuthStatus();
+      }
     });
   }
 
   @override
   void dispose() {
+    _mounted = false;
     _controller.dispose();
     super.dispose();
   }
+
+
+  Future<void> checkAuthStatus() async {
+    if (!_mounted) return;
+
+    try {
+      // Check if user has a valid token
+      bool isTokenValid = await TokenManager.isTokenValid();
+      
+      if (!_mounted) return;
+
+      if (isTokenValid) {
+        // If token exists and is valid, go to biometric screen
+        Navigator.of(context).pushReplacementNamed(RoutesName.biometricScreen);
+      } else {
+        // If no token or invalid token, go to login screen
+        await TokenManager.clearAuthData();
+        if (!_mounted) return;
+        
+        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+      }
+    } catch (e) {
+      // If there's any error in token checking, default to login
+      if (_mounted) {
+        print("Error checking auth status: $e");
+        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+      }
+    }
+  }
+  // Future<void> checkAuthentication() async {
+  //   // Add a short delay to show splash screen
+  //   await Future.delayed(const Duration(seconds: 1));
+
+  //   bool isValid = await TokenManager.isTokenValid();
+
+  //   if (isValid) {
+  //     // Initialize notifications if token is valid
+  //     await NotificationService.instance.initialize();
+
+  //     // Navigate to home screen
+  //     Get.offAll(() => BottomNavigation());
+  //   } else {
+  //     // Clear any invalid tokens and navigate to login
+  //     await TokenManager.clearAuthData();
+  //     Get.offAll(() => LoginPage(
+  //           email: '',
+  //           onLoginSuccess: () {},
+  //         ));
+  //   }
+  // }
+
+  // @override
+  // void dispose() {
+  //   _controller.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

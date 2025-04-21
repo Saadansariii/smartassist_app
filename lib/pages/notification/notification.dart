@@ -34,18 +34,18 @@ class _NotificationPageState extends State<NotificationPage> {
 
   final Map<String, String> categoryMap = {
     'All': 'All',
-    'leads': 'leads',
-    'followups': 'followups',
-    'appointment': 'appointment',
-    'test drive': 'test drive',
+    'Leads': 'leads',
+    'Followups': 'followups',
+    'Appointment': 'appointment',
+    'Test drive': 'test drive',
   };
 
   final List<String> categories = [
     'All',
-    'leads',
-    'followups',
-    'appointment',
-    'test drive',
+    'Leads',
+    'Followups',
+    'Appointment',
+    'Test drive',
   ];
 
   Future<void> fetchNotifications({String? category}) async {
