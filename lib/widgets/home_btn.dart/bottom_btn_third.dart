@@ -322,6 +322,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -657,7 +658,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
             ],
           ),
         ),
-        const SizedBox(width: 5),
+        // const SizedBox(width: 5),
         // Performance and Rank headers
         Expanded(
           child: Column(
@@ -675,13 +676,14 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                       ),
                       const SizedBox(height: 8),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'My',
                             style: AppFont.tinyText(context)
                                 .copyWith(fontWeight: FontWeight.w500),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 10),
                           Text(
                             'All India Best',
                             style: AppFont.tinyText(context)
@@ -691,15 +693,17 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                       ),
                     ],
                   ),
-
-                  const SizedBox(
-                    height: 10,
-                    width: 10,
-                    child: Divider(
-                      thickness: 1,
-                      color: Colors.black,
+                  Container(
+                    // margin: const EdgeInsets.symmetric(horizontal: 10),
+                    height: MediaQuery.of(context).size.height * .07,
+                    width: 0.1,
+                    decoration: BoxDecoration(
+                      border: Border(
+                          right:
+                              BorderSide(color: Colors.grey.withOpacity(0.3))),
                     ),
                   ),
+
                   // Rank Column
                   Column(
                     children: [

@@ -177,30 +177,6 @@ class _FavoritePageState extends State<FavoritePage> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.only(top: 5.0),
-                  //   child: FlexibleButton(
-                  //     title: 'Opportunity',
-                  //     onPressed: () {
-                  //       setState(() {
-                  //         _selectedButtonIndex = 4;
-                  //       });
-                  //     },
-                  //     decoration: BoxDecoration(
-                  //       border: _selectedButtonIndex == 4
-                  //           ? Border.all(color: Colors.blue)
-                  //           : Border.all(color: Colors.transparent),
-                  //       borderRadius: BorderRadius.circular(13),
-                  //     ),
-                  //     textStyle: GoogleFonts.poppins(
-                  //       color: _selectedButtonIndex == 4
-                  //           ? Colors.blue
-                  //           : Colors.black,
-                  //       fontSize: 14,
-                  //       fontWeight: FontWeight.w400,
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
             ),

@@ -2342,6 +2342,8 @@ class _CreateLeadsState extends State<CreateLeads> {
         print('ittt hitttttttttttttttt');
       }
 
+      final double highestBudgetValue = _rangeAmount.end;
+
       final leadData = {
         'fname': firstNameController.text,
         'lname': lastNameController.text,
@@ -2359,6 +2361,9 @@ class _CreateLeadsState extends State<CreateLeads> {
         'fuel_type': _selectedFuel,
         'enquiry_type': _selectedEnquiryType,
         'lead_source': _selectedType,
+        'consent': consentValue,
+        'budget': highestBudgetValue,
+        'pincode': pinController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor
       };
