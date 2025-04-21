@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
+import 'package:smart_assist/config/getX/fab.controller.dart';
 
 class MyTeams extends StatefulWidget {
   const MyTeams({super.key});
@@ -16,6 +19,8 @@ class _MyTeamsState extends State<MyTeams> {
   int _tabIndex = 0; // 0 for Individual Performance, 1 for Team Comparison
   int _selectedButtonIndex = 0;
   int _selectedProfileIndex = -1; // Track selected profile
+  late Future<Map<String, dynamic>> _data;
+  final FabController fabController = Get.put(FabController());
 
   // Sample profile data
   final List<Map<String, String>> teamProfiles = [
@@ -25,6 +30,49 @@ class _MyTeamsState extends State<MyTeams> {
     {'name': 'Jigar', 'lastName': 'Shah'},
     {'name': 'Pritesh', 'lastName': 'Gamali'},
   ];
+
+  // This will fetch the data based on the selected button
+  Future<Map<String, dynamic>> _fetchData(String category) async {
+    // Replace this with your API logic
+    // Simulating an API call based on category
+    await Future.delayed(Duration(seconds: 1));
+    // Example mock data based on category
+    switch (category) {
+      case 'Enquiries':
+        return {
+          'Abhey Dayal': 6,
+          'Amit Arora': 5,
+          'Gia Valecha': 2,
+          'Jigar Shah': 7,
+          'Pritesh Gamali': 1
+        };
+      case 'Test Drives':
+        return {
+          'Abhey Dayal': 4,
+          'Amit Arora': 5,
+          'Gia Valecha': 3,
+          'Jigar Shah': 8,
+          'Pritesh Gamali': 2
+        };
+      case 'Net Orders':
+        return {
+          'Abhey Dayal': 3,
+          'Amit Arora': 4,
+          'Gia Valecha': 2,
+          'Jigar Shah': 7,
+          'Pritesh Gamali': 1
+        };
+      // Add more categories as needed
+      default:
+        return {
+          'Abhey Dayal': 0,
+          'Amit Arora': 0,
+          'Gia Valecha': 0,
+          'Jigar Shah': 0,
+          'Pritesh Gamali': 0
+        };
+    }
+  }
 
   // Sample individual performance data
   final Map<String, dynamic> individualData = {
@@ -56,6 +104,34 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
+  List<Color> _getGradientForProgress(double percentage) {
+    if (percentage >= 0.8) {
+      return [
+        Color.fromRGBO(255, 237, 215, 0.9),
+        Color.fromRGBO(83, 157, 243, 1),
+        Color.fromRGBO(144, 109, 250, 1),
+      ];
+    } else if (percentage >= 0.6) {
+      return [
+        Color.fromRGBO(229, 208, 210, 1),
+        Color.fromRGBO(255, 150, 165, 1),
+        Color.fromRGBO(255, 122, 113, 1),
+      ];
+    } else if (percentage >= 0.3) {
+      return [
+        Color.fromRGBO(254, 221, 176, 1),
+        Color.fromRGBO(144, 109, 250, 1),
+        Color.fromRGBO(255, 122, 113, 1),
+      ];
+    } else {
+      return [
+        Color.fromRGBO(182, 247, 249, 1),
+        Color.fromRGBO(168, 230, 251, 1),
+        Color.fromRGBO(196, 201, 255, 1),
+      ];
+    }
+  }
+
   Widget _buildContent() {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -83,6 +159,13 @@ class _MyTeamsState extends State<MyTeams> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    _data = _fetchData('Test Drives');
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -101,231 +184,482 @@ class _MyTeamsState extends State<MyTeams> {
         backgroundColor: Colors.blue,
         title: Text('My team', style: AppFont.appbarfontWhite(context)),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tab selection buttons
-              _buildTabButtons(),
-
-              // Message below tabs
-              _tabIndex == 0
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: Text(
-                        'Select a PS to view their statistics',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    )
-                  : SizedBox(), // If _tabIndex != 0, show nothing (empty SizedBox)
-
-              // Profile avatars (only show for Individual Performance tab)
-              if (_tabIndex == 0) _buildProfileAvatars(),
-
-              // Period filter and date selection
-
-              // Start of your widget
-              Column(
+      body: Stack(children: [
+        Scaffold(
+          body: SingleChildScrollView(
+            child: Container(
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Period Filter and Individual/Team view with condition
+                  // Tab selection buttons
+                  _buildTabButtons(),
+
+                  // Message below tabs
                   _tabIndex == 0
                       ? Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.backgroundLightGrey,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Column(
-                              children: [
-                                _buildPeriodFilter(
-                                    screenWidth), // Content area - different for each tab
-                                _buildIndividualPerformanceView(
-                                    context, screenWidth),
-                              ],
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: Text(
+                            'Select a PS to view their statistics',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.black87,
                             ),
                           ),
                         )
-                      : Column(
-                          children: [
-                            _buildPeriodFilter(screenWidth),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 10),
-                              child: Wrap(
-                                spacing: 1, // Space between buttons
-                                children: [
-                                  FlexibleButton(
-                                    title: 'Enquiries',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 0;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 0
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 0
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  FlexibleButton(
-                                    title: 'Test Drives',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 1;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 1
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 1
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  FlexibleButton(
-                                    title: 'Net Orders',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 2;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 2
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 2
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  FlexibleButton(
-                                    title: 'New Orders',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 3;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 3
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 3
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  FlexibleButton(
-                                    title: 'Cancellations',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 3;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 3
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 3
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  FlexibleButton(
-                                    title: 'Retails',
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedButtonIndex = 3;
-                                      });
-                                    },
-                                    decoration: BoxDecoration(
-                                      border: _selectedButtonIndex == 3
-                                          ? Border.all(color: Colors.blue)
-                                          : Border.all(
-                                              color: Colors.transparent),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    textStyle: GoogleFonts.poppins(
-                                      color: _selectedButtonIndex == 3
-                                          ? Colors.blue
-                                          : Colors.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
+                      : SizedBox(), // If _tabIndex != 0, show nothing (empty SizedBox)
+
+                  // Profile avatars (only show for Individual Performance tab)
+                  if (_tabIndex == 0) _buildProfileAvatars(),
+
+                  // Period filter and date selection
+
+                  // Start of your widget
+                  Column(
+                    children: [
+                      // Period Filter and Individual/Team view with condition
+                      _tabIndex == 0
+                          ? Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundLightGrey,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Column(
+                                  children: [
+                                    _buildPeriodFilter(
+                                        screenWidth), // Content area - different for each tab
+                                    _buildIndividualPerformanceView(
+                                        context, screenWidth),
+                                  ],
+                                ),
                               ),
-                            ),
-                            _buildTeamComparisonView(context, screenWidth),
-                          ],
-                        ), // No padding, no container for Team Comparison
+                            )
+                          : Column(
+                              children: [
+                                _buildPeriodFilter(screenWidth),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 0, vertical: 10),
+                                  child: Wrap(
+                                    spacing: 1, // Space between buttons
+                                    children: [
+                                      FlexibleButton(
+                                        title: 'Enquiries',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 0;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 0
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 0
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      FlexibleButton(
+                                        title: 'Test Drives',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 1;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 1
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 1
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      FlexibleButton(
+                                        title: 'Net Orders',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 2;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 2
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 2
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      FlexibleButton(
+                                        title: 'New Orders',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 3;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 3
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 3
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      FlexibleButton(
+                                        title: 'Cancellations',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 3;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 3
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 3
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      FlexibleButton(
+                                        title: 'Retails',
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedButtonIndex = 3;
+                                          });
+                                        },
+                                        decoration: BoxDecoration(
+                                          border: _selectedButtonIndex == 3
+                                              ? Border.all(color: Colors.blue)
+                                              : Border.all(
+                                                  color: Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
+                                        ),
+                                        textStyle: GoogleFonts.poppins(
+                                          color: _selectedButtonIndex == 3
+                                              ? Colors.blue
+                                              : Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Data and Progress Indicator
+                                FutureBuilder<Map<String, dynamic>>(
+                                  future: _data,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Center(
+                                          child: CircularProgressIndicator());
+                                    } else if (snapshot.hasError) {
+                                      return Center(
+                                          child: Text('Error loading data'));
+                                    } else if (snapshot.hasData) {
+                                      var data = snapshot.data!;
+                                      return Padding(
+                                        padding: const EdgeInsets.all(10.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: AppColors
+                                                  .backgroundLightGrey),
+                                          child: Column(
+                                            children: data.entries.map((entry) {
+                                              double percentage = entry.value /
+                                                  10.0; // Adjust as needed
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8.0),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10.0,
+                                                      vertical: 15),
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      // Name Text
+                                                      Expanded(
+                                                        child: Text(entry.key,
+                                                            style: AppFont
+                                                                .smallText(
+                                                                    context)),
+                                                      ),
+                                                      // Progress Bar
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 10),
+                                                          child:
+                                                              LinearPercentIndicator(
+                                                            lineHeight: 14.0,
+                                                            percent: percentage,
+                                                            backgroundColor:
+                                                                Colors
+                                                                    .grey[300]!,
+                                                            barRadius:
+                                                                const Radius
+                                                                    .circular(
+                                                                    8),
+                                                            linearGradient:
+                                                                LinearGradient(
+                                                              colors:
+                                                                  _getGradientForProgress(
+                                                                      percentage),
+                                                              begin: Alignment
+                                                                  .centerLeft,
+                                                              end: Alignment
+                                                                  .centerRight,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Percentage Text
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(left: 0),
+                                                        child: Text(
+                                                          '${(percentage * 100).toStringAsFixed(0)}%',
+                                                          style:
+                                                              AppFont.smallText(
+                                                                  context),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return Center(
+                                          child: Text('No data available'));
+                                    }
+                                  },
+                                )
+                              ],
+                            ), // No padding, no container for Team Comparison
+                    ],
+                  ),
+
+                  // Padding(
+                  //   padding: const EdgeInsets.all(10.0),
+                  //   child: Container(
+                  //       decoration: BoxDecoration(
+                  //           color: AppColors.backgroundLightGrey,
+                  //           borderRadius: BorderRadius.circular(5)),
+                  //       child: Column(
+                  //         children: [
+                  //           _buildPeriodFilter(
+                  //               screenWidth), // Content area - different for each tab
+                  //           _tabIndex == 0
+                  //               ? _buildIndividualPerformanceView(
+                  //                   context, screenWidth)
+                  //               : _buildTeamComparisonView(context, screenWidth),
+                  //         ],
+                  //       )),
+                  // ),
+
+                  // Add some bottom padding for better scrolling experience
+                  const SizedBox(height: 20),
                 ],
               ),
+            ),
+          ),
+        ),
 
-              // Padding(
-              //   padding: const EdgeInsets.all(10.0),
-              //   child: Container(
-              //       decoration: BoxDecoration(
-              //           color: AppColors.backgroundLightGrey,
-              //           borderRadius: BorderRadius.circular(5)),
-              //       child: Column(
-              //         children: [
-              //           _buildPeriodFilter(
-              //               screenWidth), // Content area - different for each tab
-              //           _tabIndex == 0
-              //               ? _buildIndividualPerformanceView(
-              //                   context, screenWidth)
-              //               : _buildTeamComparisonView(context, screenWidth),
-              //         ],
-              //       )),
-              // ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: _buildFloatingActionButton(context),
+        ),
 
-              // Add some bottom padding for better scrolling experience
-              const SizedBox(height: 20),
-            ],
+        // Popup Menu (Conditionally Rendered)
+        Obx(() => fabController.isFabExpanded.value
+            ? _buildPopupMenu(context)
+            : SizedBox.shrink()),
+      ]),
+    );
+  }
+
+  // FAB Builder
+  Widget _buildFloatingActionButton(BuildContext context) {
+    return Obx(
+      () => GestureDetector(
+        onTap: fabController.toggleFab,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: MediaQuery.of(context).size.width * .15,
+          height: MediaQuery.of(context).size.height * .08,
+          decoration: BoxDecoration(
+            color: fabController.isFabExpanded.value
+                ? Colors.red
+                : AppColors.colorsBlue,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: AnimatedRotation(
+              turns: fabController.isFabExpanded.value ? 0.25 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                fabController.isFabExpanded.value ? Icons.close : Icons.add,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  // Popup Menu Builder
+  Widget _buildPopupMenu(BuildContext context) {
+    return GestureDetector(
+      onTap: fabController.closeFab,
+      child: Stack(
+        children: [
+          // Background overlay
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.7),
+            ),
+          ),
+
+          // Popup Items Container aligned bottom right
+          Positioned(
+            bottom: 90,
+            right: 20,
+            child: SizedBox(
+              width: 200,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildPopupItem(Icons.people, "Create New Team", -40,
+                      onTap: () {
+                    fabController.closeFab();
+                    // _showFollowupPopup(context, widget.leadId);
+                  }),
+                  _buildPopupItem(Icons.person, "Create User", -80, onTap: () {
+                    fabController.closeFab();
+                    // _showAppointmentPopup(context, widget.leadId);
+                  }),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ FAB positioned above the overlay
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: _buildFloatingActionButton(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Popup Item Builder
+  Widget _buildPopupItem(IconData icon, String label, double offsetY,
+      {required Function() onTap}) {
+    return Obx(() => TweenAnimationBuilder(
+          tween: Tween<double>(
+              begin: 0, end: fabController.isFabExpanded.value ? 1 : 0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutBack,
+          builder: (context, double value, child) {
+            return Transform.translate(
+              offset: Offset(0, offsetY * (1 - value)),
+              child: Opacity(
+                opacity: value.clamp(0.0, 1.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: onTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.colorsBlue,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 24),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ));
   }
 
   Widget _buildTabButtons() {
@@ -641,48 +975,48 @@ class _MyTeamsState extends State<MyTeams> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // First row of cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  "${data['totalTeamEnquiries'] ?? 0}",
-                  "Team Total\nEnquiries",
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildMetricCard(
-                  "${data['teamConversion'] ?? 0}%",
-                  "Team Conversion\nRate",
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: _buildMetricCard(
+          //         "${data['totalTeamEnquiries'] ?? 0}",
+          //         "Team Total\nEnquiries",
+          //         Colors.blue,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 12),
+          //     Expanded(
+          //       child: _buildMetricCard(
+          //         "${data['teamConversion'] ?? 0}%",
+          //         "Team Conversion\nRate",
+          //         Colors.blue,
+          //       ),
+          //     ),
+          //   ],
+          // ),
 
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
 
-          // Second row of cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  data['topPerformer'] ?? 'N/A',
-                  "Top\nPerformer",
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricCard(
-                  data['averageResponse'] ?? 'N/A',
-                  "Avg. Response\nTime",
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
+          // // Second row of cards
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: _buildMetricCard(
+          //         data['topPerformer'] ?? 'N/A',
+          //         "Top\nPerformer",
+          //         Colors.blue,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 10),
+          //     Expanded(
+          //       child: _buildMetricCard(
+          //         data['averageResponse'] ?? 'N/A',
+          //         "Avg. Response\nTime",
+          //         Colors.blue,
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
