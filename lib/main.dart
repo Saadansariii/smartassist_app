@@ -46,8 +46,8 @@ class MyApp extends StatelessWidget {
               child: widget!,
             );
           },
-          // initialRoute: RoutesName.splashScreen,
-          home: MyTeams(),
+          initialRoute: RoutesName.splashScreen,
+          // home: MyTeams(),
           onGenerateRoute: Routes.generateRoute,
           theme: ThemeData(
             scaffoldBackgroundColor: const Color(0xFFFFFFFF),

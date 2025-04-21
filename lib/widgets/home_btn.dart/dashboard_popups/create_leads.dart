@@ -415,18 +415,9 @@ class _CreateLeadsState extends State<CreateLeads> {
   void _nextStep() {
     if (_currentStep == 0) {
       if (_validatePage1()) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
         setState(() => _currentStep++);
+        // No need for PageController navigation with IndexedStack
       } else {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(
-        //     content: Text('Please correct the errors before continuing'),
-        //     backgroundColor: Colors.red,
-        //   ),
-        // );
         Get.snackbar(
           'Error',
           'Error from first screen',
@@ -436,11 +427,8 @@ class _CreateLeadsState extends State<CreateLeads> {
       }
     } else if (_currentStep == 1) {
       if (_validatePage2()) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
         setState(() => _currentStep++);
+        // No need for PageController navigation with IndexedStack
       } else {
         Get.snackbar(
           'Error',
@@ -462,6 +450,57 @@ class _CreateLeadsState extends State<CreateLeads> {
       }
     }
   }
+
+  // void _nextStep() {
+  //   if (_currentStep == 0) {
+  //     if (_validatePage1()) {
+  //       _pageController.nextPage(
+  //         duration: const Duration(milliseconds: 300),
+  //         curve: Curves.easeInOut,
+  //       );
+  //       setState(() => _currentStep++);
+  //     } else {
+  //       // ScaffoldMessenger.of(context).showSnackBar(
+  //       //   const SnackBar(
+  //       //     content: Text('Please correct the errors before continuing'),
+  //       //     backgroundColor: Colors.red,
+  //       //   ),
+  //       // );
+  //       Get.snackbar(
+  //         'Error',
+  //         'Error from first screen',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   } else if (_currentStep == 1) {
+  //     if (_validatePage2()) {
+  //       _pageController.nextPage(
+  //         duration: const Duration(milliseconds: 300),
+  //         curve: Curves.easeInOut,
+  //       );
+  //       setState(() => _currentStep++);
+  //     } else {
+  //       Get.snackbar(
+  //         'Error',
+  //         'Error from second screen',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   } else {
+  //     if (_validatePage3()) {
+  //       _submitForm(); // ✅ API will hit now
+  //     } else {
+  //       Get.snackbar(
+  //         'Error',
+  //         'Error from third screen',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   }
+  // }
 
   void _submitForm() {
     submitForm();
@@ -652,13 +691,12 @@ class _CreateLeadsState extends State<CreateLeads> {
             const SizedBox(
               height: 10,
             ),
-            SizedBox(
-              height: height * .7,
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  Column(
+            IndexedStack(
+              index: _currentStep,
+              // physics: const NeverScrollableScrollPhysics(),
+              children: [
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -765,7 +803,9 @@ class _CreateLeadsState extends State<CreateLeads> {
                       _buildAmountRange(),
                     ],
                   ),
-                  Column(
+                ),
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(
@@ -908,7 +948,9 @@ class _CreateLeadsState extends State<CreateLeads> {
                           onTap: () => _pickDate(isStartDate: false)),
                     ],
                   ),
-                  Column(
+                ),
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSearchField(),
@@ -1004,8 +1046,8 @@ class _CreateLeadsState extends State<CreateLeads> {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             // ✅ Updated Button Row
