@@ -23,8 +23,10 @@ class _MyTeamsState extends State<MyTeams> {
   int _tabIndex = 0; // 0 for Individual Performance, 1 for Team Comparison
   int _selectedButtonIndex = 0;
   int _selectedProfileIndex = -1; // Track selected profile
+  String _selectedUserId = '';
   late Future<Map<String, dynamic>> _data;
   final FabController fabController = Get.put(FabController());
+  Map<String, dynamic> _individualPerformanceData = {};
 
   // Sample profile data
   final List<Map<String, String>> teamProfiles = [
@@ -164,7 +166,6 @@ class _MyTeamsState extends State<MyTeams> {
 
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
     // Simulate an API call for Individual Performance or Team Data
-    await Future.delayed(Duration(seconds: 1)); // Simulating a delay
 
     final token = await Storage.getToken();
     final response = await http.get(
@@ -200,6 +201,169 @@ class _MyTeamsState extends State<MyTeams> {
     } else {
       throw Exception('Failed to load data');
     }
+  }
+
+  Future<void> _fetchIndividualPerformance(String userId) async {
+    final token = await Storage.getToken();
+    final response = await http.get(
+      Uri.parse(
+          'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance?user_id=$userId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      // Update the individual performance data with the response
+      setState(() {
+        // Store the full user performance data, including the orders count
+        _individualPerformanceData = data['data']['selectedUserPerformance'];
+      });
+    } else {
+      throw Exception('Failed to load individual performance data');
+    }
+  }
+
+// Individual Performance View
+  Widget _buildIndividualPerformanceView(
+      BuildContext context, double screenWidth) {
+    // Get the updated performance data
+    final data = _individualPerformanceData;
+
+    // Ensure that the data is available before attempting to display it
+    if (data.isEmpty) {
+      return Center(child: Text('No performance data available.'));
+    }
+
+    // Access orders.count from MTD, QTD, and YTD
+    final mtdOrdersCount = data['MTD']['orders']['count'] ?? 0;
+    final qtdOrdersCount = data['QTD']['orders']['count'] ?? 0;
+    final ytdOrdersCount = data['YTD']['orders']['count'] ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // First row of cards
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  "${data['MTD']['enquiries']}",
+                  "Enquiries",
+                  Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMetricCard(
+                  "${data['MTD']['testDrives']}",
+                  "Test Drive\nDone",
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Second row of cards
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  "$mtdOrdersCount", // Display orders.count for MTD
+                  "Order Taken",
+                  Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMetricCard(
+                  "${data['MTD']['cancellation']}",
+                  "Cancellations",
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Third row of cards
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  "0", // Display orders.count for QTD
+                  "Net Orders ",
+                  Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricCard(
+                  "3", // Display orders.count for YTD
+                  "Retails",
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(
+      String firstName, String lastName, int index, String userId) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _selectedProfileIndex = index;
+              _selectedUserId = userId; // Store the selected user_id
+              _fetchIndividualPerformance(
+                  userId); // Call the API with the new user_id
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.backgroundLightGrey,
+              border: _selectedProfileIndex == index
+                  ? Border.all(color: Colors.blue, width: 2)
+                  : null,
+            ),
+            child: Center(
+              child: Icon(
+                Icons.person,
+                color: Colors.grey.shade400,
+                size: 32,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          firstName,
+          style: AppFont.mediumText14(context),
+        ),
+        Text(
+          lastName,
+          style: AppFont.mediumText14(context),
+        ),
+      ],
+    );
   }
 
   @override
@@ -440,110 +604,6 @@ class _MyTeamsState extends State<MyTeams> {
                                   ),
                                 ),
                                 // Data and Progress Indicator
-                                // FutureBuilder<Map<String, dynamic>>(
-                                //   future: _data,
-                                //   builder: (context, snapshot) {
-                                //     if (snapshot.connectionState ==
-                                //         ConnectionState.waiting) {
-                                //       return Center(
-                                //           child: CircularProgressIndicator());
-                                //     } else if (snapshot.hasError) {
-                                //       return Center(
-                                //           child: Text('Error loading data'));
-                                //     } else if (snapshot.hasData) {
-                                //       var data = snapshot.data!;
-                                //       return Padding(
-                                //         padding: const EdgeInsets.all(10.0),
-                                //         child: Container(
-                                //           decoration: BoxDecoration(
-                                //               borderRadius:
-                                //                   BorderRadius.circular(10),
-                                //               color: AppColors
-                                //                   .backgroundLightGrey),
-                                //           child: Column(
-                                //             children: data.entries.map((entry) {
-                                //               double percentage = entry.value /
-                                //                   10.0; // Adjust as needed
-                                //               return Padding(
-                                //                 padding:
-                                //                     const EdgeInsets.symmetric(
-                                //                         vertical: 8.0),
-                                //                 child: Padding(
-                                //                   padding: const EdgeInsets
-                                //                       .symmetric(
-                                //                       horizontal: 10.0,
-                                //                       vertical: 15),
-                                //                   child: Row(
-                                //                     crossAxisAlignment:
-                                //                         CrossAxisAlignment
-                                //                             .center,
-                                //                     children: [
-                                //                       // Name Text
-                                //                       Expanded(
-                                //                         child: Text(entry.key,
-                                //                             style: AppFont
-                                //                                 .smallText(
-                                //                                     context)),
-                                //                       ),
-                                //                       // Progress Bar
-                                //                       Expanded(
-                                //                         flex: 2,
-                                //                         child: Padding(
-                                //                           padding:
-                                //                               const EdgeInsets
-                                //                                   .only(
-                                //                                   left: 10),
-                                //                           child:
-                                //                               LinearPercentIndicator(
-                                //                             lineHeight: 14.0,
-                                //                             percent: percentage,
-                                //                             backgroundColor:
-                                //                                 Colors
-                                //                                     .grey[300]!,
-                                //                             barRadius:
-                                //                                 const Radius
-                                //                                     .circular(
-                                //                                     8),
-                                //                             linearGradient:
-                                //                                 LinearGradient(
-                                //                               colors:
-                                //                                   _getGradientForProgress(
-                                //                                       percentage),
-                                //                               begin: Alignment
-                                //                                   .centerLeft,
-                                //                               end: Alignment
-                                //                                   .centerRight,
-                                //                             ),
-                                //                           ),
-                                //                         ),
-                                //                       ),
-                                //                       // Percentage Text
-                                //                       Padding(
-                                //                         padding:
-                                //                             const EdgeInsets
-                                //                                 .only(left: 0),
-                                //                         child: Text(
-                                //                           '${(percentage * 100).toStringAsFixed(0)}%',
-                                //                           style:
-                                //                               AppFont.smallText(
-                                //                                   context),
-                                //                         ),
-                                //                       ),
-                                //                     ],
-                                //                   ),
-                                //                 ),
-                                //               );
-                                //             }).toList(),
-                                //           ),
-                                //         ),
-                                //       );
-                                //     } else {
-                                //       return Center(
-                                //           child: Text('No data available'));
-                                //     }
-                                //   },
-                                // )
-
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _data,
                                   builder: (context, snapshot) {
@@ -553,6 +613,109 @@ class _MyTeamsState extends State<MyTeams> {
                                           child: CircularProgressIndicator());
                                     } else if (snapshot.hasError) {
                                       return Center(
+                                          child: Text('Error loading data'));
+                                    } else if (snapshot.hasData) {
+                                      var data = snapshot.data!;
+                                      return Padding(
+                                        padding: const EdgeInsets.all(10.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: AppColors
+                                                  .backgroundLightGrey),
+                                          child: Column(
+                                            children: data.entries.map((entry) {
+                                              double percentage = entry.value /
+                                                  10.0; // Adjust as needed
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8.0),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10.0,
+                                                      vertical: 15),
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      // Name Text
+                                                      Expanded(
+                                                        child: Text(entry.key,
+                                                            style: AppFont
+                                                                .smallText(
+                                                                    context)),
+                                                      ),
+                                                      // Progress Bar
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 10),
+                                                          child:
+                                                              LinearPercentIndicator(
+                                                            lineHeight: 14.0,
+                                                            percent: percentage,
+                                                            backgroundColor:
+                                                                Colors
+                                                                    .grey[300]!,
+                                                            barRadius:
+                                                                const Radius
+                                                                    .circular(
+                                                                    8),
+                                                            linearGradient:
+                                                                LinearGradient(
+                                                              colors:
+                                                                  _getGradientForProgress(
+                                                                      percentage),
+                                                              begin: Alignment
+                                                                  .centerLeft,
+                                                              end: Alignment
+                                                                  .centerRight,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Percentage Text
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(left: 0),
+                                                        child: Text(
+                                                          '${(percentage * 100).toStringAsFixed(0)}%',
+                                                          style:
+                                                              AppFont.smallText(
+                                                                  context),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return const Center(child: Text(''));
+                                    }
+                                  },
+                                ),
+
+                                FutureBuilder<Map<String, dynamic>>(
+                                  future: _data,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Center(
+                                          child: CircularProgressIndicator());
+                                    } else if (snapshot.hasError) {
+                                      return const Center(
                                           child: Text('Error loading data'));
                                     } else if (snapshot.hasData) {
                                       var data = snapshot.data!;
@@ -573,6 +736,8 @@ class _MyTeamsState extends State<MyTeams> {
                                                 data['teamProfiles'][index]
                                                     ['lastName'],
                                                 index,
+                                                data['teamProfiles'][index]
+                                                    ['user_id'],
                                               ),
                                             ),
                                           ),
@@ -592,25 +757,6 @@ class _MyTeamsState extends State<MyTeams> {
                     ],
                   ),
 
-                  // Padding(
-                  //   padding: const EdgeInsets.all(10.0),
-                  //   child: Container(
-                  //       decoration: BoxDecoration(
-                  //           color: AppColors.backgroundLightGrey,
-                  //           borderRadius: BorderRadius.circular(5)),
-                  //       child: Column(
-                  //         children: [
-                  //           _buildPeriodFilter(
-                  //               screenWidth), // Content area - different for each tab
-                  //           _tabIndex == 0
-                  //               ? _buildIndividualPerformanceView(
-                  //                   context, screenWidth)
-                  //               : _buildTeamComparisonView(context, screenWidth),
-                  //         ],
-                  //       )),
-                  // ),
-
-                  // Add some bottom padding for better scrolling experience
                   const SizedBox(height: 20),
                 ],
               ),
@@ -849,7 +995,7 @@ class _MyTeamsState extends State<MyTeams> {
       future: _fetchDataUserProfile(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: Text('Loading...'));
         } else if (snapshot.hasError) {
           return Center(child: Text('Error loading data: ${snapshot.error}'));
         } else if (snapshot.hasData) {
@@ -869,6 +1015,7 @@ class _MyTeamsState extends State<MyTeams> {
                       teamProfiles[index]['name'] ?? '',
                       teamProfiles[index]['lastName'] ?? '',
                       index,
+                      data['teamProfiles'][index]['user_id'],
                     ),
                   ),
                 ),
@@ -881,49 +1028,6 @@ class _MyTeamsState extends State<MyTeams> {
           return const Center(child: Text('No data available'));
         }
       },
-    );
-  }
-
-   
-  Widget _buildProfileAvatar(String firstName, String lastName, int index) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: () {
-            setState(() {
-              _selectedProfileIndex = index;
-            });
-          },
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.backgroundLightGrey,
-              border: _selectedProfileIndex == index
-                  ? Border.all(color: Colors.blue, width: 2)
-                  : null,
-            ),
-            child: Center(
-              child: Icon(
-                Icons.person,
-                color: Colors.grey.shade400,
-                size: 32,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          firstName,
-          style: AppFont.mediumText14(context),
-        ),
-        Text(
-          lastName,
-          style: AppFont.mediumText14(context),
-        ),
-      ],
     );
   }
 
@@ -998,89 +1102,6 @@ class _MyTeamsState extends State<MyTeams> {
             color: isSelected ? Colors.blue : Colors.black,
           ),
         ),
-      ),
-    );
-  }
-
-  // Individual Performance View
-  Widget _buildIndividualPerformanceView(
-      BuildContext context, double screenWidth) {
-    final data = getSelectedData();
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // First row of cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  "8",
-                  "Enquiries",
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildMetricCard(
-                  "3",
-                  "Test Drive\nDone",
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Second row of cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  "3",
-                  "Order Taken",
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildMetricCard(
-                  "2",
-                  "Cancellations",
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Third row of cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  "-1",
-                  "Net Order",
-                  Colors.red,
-                  backgroundColor: const Color(0xFFFF3B30),
-                  textColor: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricCard(
-                  "0",
-                  "Retail",
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

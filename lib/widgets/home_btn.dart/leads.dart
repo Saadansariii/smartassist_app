@@ -202,10 +202,13 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'No.of followups per lost digital enquiry',
+                    'Follow-ups done by you per lost enquiry',
+                    'Follow-ups recommended for order',
+                    '2',
+                    '2',
                     // '${selectedData['enquiryBank'] ?? 0}',
-                    '1(3)',
                     screenWidth,
+                    Colors.red,
                     Colors.green,
                   ),
                 ),
@@ -213,12 +216,16 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'No.of followups per lost enquiry',
-                    '3(5)',
+                    'Follow-ups done by you per lost digital enquiry',
+                    // '${selectedData['enquiryBank'] ?? 0}',
+                    'Follow-ups recommended for order',
+                    '2',
+                    '2',
                     screenWidth,
-                    Colors.orange,
+                    Colors.red,
+                    Colors.green,
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -277,8 +284,15 @@ class _LeadsState extends State<Leads> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, String title, String value,
-      double screenWidth, Color valueColor) {
+  Widget _buildInfoCard(
+      BuildContext context,
+      String title1,
+      String title,
+      String value,
+      String value1,
+      double screenWidth,
+      Color valueColor,
+      Color valueColor1) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.02),
@@ -286,31 +300,64 @@ class _LeadsState extends State<Leads> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            softWrap: true,
-            overflow: TextOverflow.ellipsis,
-            // textAlign: TextAlign.center,
-            maxLines: 4,
-            value,
-            style: GoogleFonts.poppins(
-                fontSize: 20, fontWeight: FontWeight.w700, color: valueColor),
+          Row(
+            children: [
+              Text(
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                // textAlign: TextAlign.center,
+                maxLines: 4,
+                value,
+                style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(title,
+                    softWrap: true,
+                    // textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 4,
+                    style: AppFont.smallText10(context)),
+              ),
+            ],
           ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Text(
-              title,
-              softWrap: true,
-              // textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 4,
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[700]),
-            ),
+          const SizedBox(
+            height: 5,
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                // textAlign: TextAlign.center,
+                maxLines: 4,
+                value1,
+                style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor1),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: Text(title1,
+                    softWrap: true,
+                    // textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 4,
+                    style: AppFont.smallText10(context)),
+              ),
+            ],
           ),
         ],
       ),
@@ -320,46 +367,42 @@ class _LeadsState extends State<Leads> {
   // Info Card for Left Columns
   Widget _buildInfoCard1(BuildContext context, String title, String value,
       double screenWidth, Color valueColor) {
-    return Align(
-      alignment: Alignment.center,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(screenWidth * 0.04),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Using Container instead of Expanded for Title Text
-            Container(
-              decoration:
-                  BoxDecoration(border: Border.all(color: Colors.transparent)),
-              child: Text(
-                title,
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        // mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            value,
+            style: GoogleFonts.poppins(
+                fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          // Using Container instead of Expanded for Title Text
+          Expanded(
+            child: Text(title,
                 softWrap: true,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 4,
                 style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: Colors.grey[700]),
-              ),
-            ),
-            // The value text
-            Text(
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              value,
-              style: GoogleFonts.poppins(
-                  fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
-            ),
-          ],
-        ),
+                    color: Colors.grey[700])),
+          ),
+          // The value text
+        ],
       ),
     );
   }
@@ -447,14 +490,6 @@ class _LeadsState extends State<Leads> {
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[700]),
           ),
-          const SizedBox(height: 10),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '😍',
-              style: TextStyle(fontSize: 20),
-            ),
-          )
         ],
       ),
     );
@@ -494,14 +529,14 @@ class _LeadsState extends State<Leads> {
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[700]),
           ),
-          const SizedBox(height: 15),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '⏰',
-              style: TextStyle(fontSize: 20),
-            ),
-          )
+          // const SizedBox(height: 15),
+          // const Align(
+          //   alignment: Alignment.centerRight,
+          //   child: Text(
+          //     '⏰',
+          //     style: TextStyle(fontSize: 20),
+          //   ),
+          // )
         ],
       ),
     );

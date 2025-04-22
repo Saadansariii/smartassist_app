@@ -109,7 +109,7 @@ class _TestDriveState extends State<TestDrive> {
             Expanded(
               flex: 1,
               child: Container(
-                margin: const EdgeInsets.only(left: 10),
+                margin: const EdgeInsets.only(left: 0),
                 child: Column(
                   children: [
                     Expanded(
@@ -253,19 +253,14 @@ class _TestDriveState extends State<TestDrive> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: BoxDecoration(color: Colors.transparent),
-            child: Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                softWrap: true,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 4,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w400),
-              ),
-            ),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 4,
+            style:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400),
           ),
           Text(
             value,
@@ -273,19 +268,14 @@ class _TestDriveState extends State<TestDrive> {
             style: GoogleFonts.poppins(
                 fontSize: 30, fontWeight: FontWeight.w700, color: valueColor),
           ),
-          Container(
-            decoration: BoxDecoration(color: Colors.transparent),
-            child: Expanded(
-              child: Text(
-                title1,
-                textAlign: TextAlign.center,
-                softWrap: true,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 4,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w400),
-              ),
-            ),
+          Text(
+            title1,
+            textAlign: TextAlign.center,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 4,
+            style:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400),
           ),
           // const SizedBox(width: 10),
         ],
@@ -304,22 +294,20 @@ class _TestDriveState extends State<TestDrive> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            decoration: BoxDecoration(color: Colors.transparent),
-            child: Expanded(
-              child: Text(
-                value,
-                style: AppFont.dropDowmLabel(context),
-              ),
+            decoration: const BoxDecoration(color: Colors.transparent),
+            child: Text(
+              value,
+              style: AppFont.dropDowmLabel(context),
             ),
           ),
           Text(
             title,
             style: GoogleFonts.inter(
-                fontSize: 30, fontWeight: FontWeight.w700, color: Colors.red),
+                fontSize: 30, fontWeight: FontWeight.w700, color: Colors.blue),
           ),
           Text(
             value1,
@@ -329,14 +317,14 @@ class _TestDriveState extends State<TestDrive> {
           // const SizedBox(
           //   height: 5,
           // ),
-          const Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                textAlign: TextAlign.center,
-                '😍',
-                style:
-                    TextStyle(fontSize: 20, fontFamily: 'YourAppleEmojiFont'),
-              ))
+          // const Align(
+          //     alignment: Alignment.centerRight,
+          //     child: Text(
+          //       textAlign: TextAlign.center,
+          //       '😍',
+          //       style:
+          //           TextStyle(fontSize: 20, fontFamily: 'YourAppleEmojiFont'),
+          //     ))
         ],
       ),
     );
@@ -352,19 +340,19 @@ class _TestDriveState extends State<TestDrive> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            value,
+            style: AppFont.dropDowmLabel(context),
+          ),
           Text(
             title,
             style: GoogleFonts.inter(
                 fontSize: 30, fontWeight: FontWeight.w700, color: Colors.blue),
           ),
           // const SizedBox(height: 2),
-          Text(
-            value,
-            style: AppFont.dropDowmLabel(context),
-          ),
           const SizedBox(height: 5),
         ],
       ),
