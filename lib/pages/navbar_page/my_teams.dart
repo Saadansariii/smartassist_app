@@ -138,6 +138,87 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
+  late Future<List<Map<String, dynamic>>> _teamComparisonData;
+
+  int _selectedPeriodIndex = 0; // 0: All, 1: MTD, 2: QTD, 3: YTD
+  int _selectedMetricIndex = 0;
+
+  Future<List<Map<String, dynamic>>> fetchTeamComparisonData() async {
+    final token = await Storage.getToken();
+    final response = await http.get(
+        Uri.parse(
+            'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        });
+
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body);
+      List<dynamic> teams = decoded['data']['teamsData'];
+
+      List<Map<String, dynamic>> result = [];
+
+      for (var team in teams) {
+        if (team.containsKey('users')) {
+          for (var user in team['users']) {
+            String name = user['name'];
+            Map<String, dynamic> periodData;
+
+            switch (_selectedPeriodIndex) {
+              case 1:
+                periodData = user['MTD'];
+                break;
+              case 2:
+                periodData = user['QTD'];
+                break;
+              case 3:
+                periodData = user['YTD'];
+                break;
+              default:
+                periodData = {
+                  "enquiries": user['MTD']['enquiries'] +
+                      user['QTD']['enquiries'] +
+                      user['YTD']['enquiries'],
+                  "testDrives": user['MTD']['testDrives'] +
+                      user['QTD']['testDrives'] +
+                      user['YTD']['testDrives'],
+                  "orders": user['MTD']['orders'] +
+                      user['QTD']['orders'] +
+                      user['YTD']['orders'],
+                  "cancellation": user['MTD']['cancellation'] +
+                      user['QTD']['cancellation'] +
+                      user['YTD']['cancellation'],
+                };
+            }
+
+            result.add({
+              "name": name,
+              "count": periodData[_getMetricKey()],
+            });
+          }
+        }
+      }
+
+      return result;
+    } else {
+      throw Exception('Failed to fetch data');
+    }
+  }
+
+  String _getMetricKey() {
+    switch (_selectedMetricIndex) {
+      case 1:
+        return 'testDrives';
+      case 2:
+        return 'orders';
+      case 3:
+        return 'cancellation';
+      default:
+        return 'enquiries';
+    }
+  }
+
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
     // Simulate an API call for Individual Performance or Team Data
 
@@ -354,6 +435,7 @@ class _MyTeamsState extends State<MyTeams> {
       // Handle any error here
       print('Error: $e');
     });
+    _teamComparisonData = fetchTeamComparisonData();
   }
 
   @override
@@ -440,7 +522,10 @@ class _MyTeamsState extends State<MyTeams> {
                                         title: 'Enquiries',
                                         onPressed: () {
                                           setState(() {
-                                            _selectedButtonIndex = 0;
+                                            _selectedMetricIndex =
+                                                1; // for Test Drives etc.
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -577,109 +662,163 @@ class _MyTeamsState extends State<MyTeams> {
                                     ],
                                   ),
                                 ),
+
                                 // Data and Progress Indicator
-                                FutureBuilder<Map<String, dynamic>>(
-                                  future: _data,
+                                FutureBuilder<List<Map<String, dynamic>>>(
+                                  future: _teamComparisonData,
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState ==
                                         ConnectionState.waiting) {
-                                      return Center(
-                                          child: CircularProgressIndicator());
+                                      return const CircularProgressIndicator();
                                     } else if (snapshot.hasError) {
-                                      return Center(
-                                          child: Text('Error loading data'));
+                                      return Text('Error: ${snapshot.error}');
                                     } else if (snapshot.hasData) {
-                                      var data = snapshot.data!;
-                                      return Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              color: AppColors
-                                                  .backgroundLightGrey),
-                                          child: Column(
-                                            children: data.entries.map((entry) {
-                                              double percentage = entry.value /
-                                                  10.0; // Adjust as needed
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8.0),
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 10.0,
-                                                      vertical: 15),
-                                                  child: Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      // Name Text
-                                                      Expanded(
-                                                        child: Text(entry.key,
-                                                            style: AppFont
-                                                                .smallText(
-                                                                    context)),
-                                                      ),
-                                                      // Progress Bar
-                                                      Expanded(
-                                                        flex: 2,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10),
-                                                          child:
-                                                              LinearPercentIndicator(
-                                                            lineHeight: 14.0,
-                                                            percent: percentage,
-                                                            backgroundColor:
-                                                                Colors
-                                                                    .grey[300]!,
-                                                            barRadius:
-                                                                const Radius
-                                                                    .circular(
-                                                                    8),
-                                                            linearGradient:
-                                                                LinearGradient(
-                                                              colors:
-                                                                  _getGradientForProgress(
-                                                                      percentage),
-                                                              begin: Alignment
-                                                                  .centerLeft,
-                                                              end: Alignment
-                                                                  .centerRight,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Percentage Text
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(left: 0),
-                                                        child: Text(
-                                                          '${(percentage * 100).toStringAsFixed(0)}%',
-                                                          style:
-                                                              AppFont.smallText(
-                                                                  context),
-                                                        ),
-                                                      ),
-                                                    ],
+                                      final data = snapshot.data!;
+                                      return Column(
+                                        children: data.map((userData) {
+                                          final percentage =
+                                              (userData['count'] as int) / 10.0;
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 6.0),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                    child:
+                                                        Text(userData['name'])),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: LinearPercentIndicator(
+                                                    percent: percentage.clamp(
+                                                        0.0, 1.0),
+                                                    lineHeight: 14.0,
+                                                    barRadius:
+                                                        const Radius.circular(
+                                                            10),
+                                                    backgroundColor:
+                                                        Colors.grey[300]!,
+                                                    linearGradient:
+                                                        LinearGradient(
+                                                      colors:
+                                                          _getGradientForProgress(
+                                                              percentage),
+                                                    ),
                                                   ),
                                                 ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
+                                                Text('${userData['count']}'),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
                                       );
                                     } else {
-                                      return const Center(child: Text(''));
+                                      return const Text('No Data Available');
                                     }
                                   },
                                 ),
+
+                                // FutureBuilder<Map<String, dynamic>>(
+                                //   future: _data,
+                                //   builder: (context, snapshot) {
+                                //     if (snapshot.connectionState ==
+                                //         ConnectionState.waiting) {
+                                //       return Center(
+                                //           child: CircularProgressIndicator());
+                                //     } else if (snapshot.hasError) {
+                                //       return Center(
+                                //           child: Text('Error loading data'));
+                                //     } else if (snapshot.hasData) {
+                                //       var data = snapshot.data!;
+                                //       return Padding(
+                                //         padding: const EdgeInsets.all(10.0),
+                                //         child: Container(
+                                //           decoration: BoxDecoration(
+                                //               borderRadius:
+                                //                   BorderRadius.circular(10),
+                                //               color: AppColors
+                                //                   .backgroundLightGrey),
+                                //           child: Column(
+                                //             children: data.entries.map((entry) {
+                                //               double percentage = entry.value /
+                                //                   10.0; // Adjust as needed
+                                //               return Padding(
+                                //                 padding:
+                                //                     const EdgeInsets.symmetric(
+                                //                         vertical: 8.0),
+                                //                 child: Padding(
+                                //                   padding: const EdgeInsets
+                                //                       .symmetric(
+                                //                       horizontal: 10.0,
+                                //                       vertical: 15),
+                                //                   child: Row(
+                                //                     crossAxisAlignment:
+                                //                         CrossAxisAlignment
+                                //                             .center,
+                                //                     children: [
+                                //                       // Name Text
+                                //                       Expanded(
+                                //                         child: Text(entry.key,
+                                //                             style: AppFont
+                                //                                 .smallText(
+                                //                                     context)),
+                                //                       ),
+                                //                       // Progress Bar
+                                //                       Expanded(
+                                //                         flex: 2,
+                                //                         child: Padding(
+                                //                           padding:
+                                //                               const EdgeInsets
+                                //                                   .only(
+                                //                                   left: 10),
+                                //                           child:
+                                //                               LinearPercentIndicator(
+                                //                             lineHeight: 14.0,
+                                //                             percent: percentage,
+                                //                             backgroundColor:
+                                //                                 Colors
+                                //                                     .grey[300]!,
+                                //                             barRadius:
+                                //                                 const Radius
+                                //                                     .circular(
+                                //                                     8),
+                                //                             linearGradient:
+                                //                                 LinearGradient(
+                                //                               colors:
+                                //                                   _getGradientForProgress(
+                                //                                       percentage),
+                                //                               begin: Alignment
+                                //                                   .centerLeft,
+                                //                               end: Alignment
+                                //                                   .centerRight,
+                                //                             ),
+                                //                           ),
+                                //                         ),
+                                //                       ),
+                                //                       // Percentage Text
+                                //                       Padding(
+                                //                         padding:
+                                //                             const EdgeInsets
+                                //                                 .only(left: 0),
+                                //                         child: Text(
+                                //                           '${(percentage * 100).toStringAsFixed(0)}%',
+                                //                           style:
+                                //                               AppFont.smallText(
+                                //                                   context),
+                                //                         ),
+                                //                       ),
+                                //                     ],
+                                //                   ),
+                                //                 ),
+                                //               );
+                                //             }).toList(),
+                                //           ),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       return const Center(child: Text(''));
+                                //     }
+                                //   },
+                                // ),
 
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _data,
@@ -717,8 +856,7 @@ class _MyTeamsState extends State<MyTeams> {
                                           ),
                                         );
                                       } else {
-                                        return Center(
-                                            child: Text('No data available'));
+                                        return Center(child: Text(''));
                                       }
                                     } else {
                                       return Center(
@@ -1049,8 +1187,7 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-
- Widget _comparisionButtons(double screenWidth) {
+  Widget _comparisionButtons(double screenWidth) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -1125,7 +1262,7 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
- Widget _combuildPeriodButton(String text, int index) {
+  Widget _combuildPeriodButton(String text, int index) {
     bool isSelected = _periodIndex == index;
 
     return InkWell(
