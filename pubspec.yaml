@@ -70,6 +70,7 @@ dependencies:
   percent_indicator: ^4.2.5
   record: ^6.0.0
   speech_to_text: ^7.0.0
+  screenshot: ^3.0.0
 
 
 dev_dependencies:

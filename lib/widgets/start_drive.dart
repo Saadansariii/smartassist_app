@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/feedback.dart';
+import 'package:smart_assist/widgets/testdrive_overview.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:geolocator/geolocator.dart';
 // Remove permission_handler import since we're going to use only Geolocator's permission system
@@ -527,6 +532,58 @@ class _StartDriveMapState extends State<StartDriveMap> {
     super.dispose();
   }
 
+  ScreenshotController _screenshotController = ScreenshotController();
+
+  Future<void> _captureAndUploadImage() async {
+    // Capture the map screenshot
+    final image = await _screenshotController.capture();
+    if (image == null) {
+      print("Error capturing the screenshot");
+      return;
+    }
+
+    // Convert to a file and save
+    final directory = await getTemporaryDirectory();
+    final filePath = '${directory.path}/map_image.png';
+    final file = File(filePath)..writeAsBytesSync(image);
+
+    // Upload the image to the server
+    _uploadImage(file);
+  }
+
+  Future<void> _uploadImage(File file) async {
+    final url = Uri.parse(
+        'https://api.smartassistapp.in/api/events/${widget.eventId}/upload-map');
+    final token = await Storage
+        .getToken(); // You can get your token from Storage or authentication
+
+    try {
+      var request = http.MultipartRequest('POST', url)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..files.add(await http.MultipartFile.fromPath(
+          'file', // This should be the field name expected by the API (e.g., 'file' or 'image')
+          file.path,
+          contentType: MediaType('image', 'jpeg'), // Set the correct MIME type
+        ));
+
+      // Send the request
+      var streamedResponse = await request.send();
+
+      // Get the response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        print('Image uploaded successfully');
+        print('Response: ${response.body}');
+      } else {
+        print('Failed to upload image: ${response.statusCode}');
+        print('Response: ${response.body}');
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -606,23 +663,32 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                           color: Colors.black,
                                           borderRadius:
                                               BorderRadius.circular(10)),
-                                      child: GoogleMap(
-                                        onMapCreated: _onMapCreated,
-                                        initialCameraPosition: CameraPosition(
-                                          target: startMarker?.position ??
-                                              const LatLng(0, 0),
-                                          zoom: 16,
+                                      child: Expanded(
+                                        child: Screenshot(
+                                          controller: _screenshotController,
+                                          child: GoogleMap(
+                                            onMapCreated: _onMapCreated,
+                                            initialCameraPosition:
+                                                CameraPosition(
+                                              target: startMarker?.position ??
+                                                  const LatLng(0, 0),
+                                              zoom: 16,
+                                            ),
+                                            myLocationEnabled: true,
+                                            myLocationButtonEnabled: true,
+                                            zoomControlsEnabled: true,
+                                            markers: {
+                                              if (startMarker != null)
+                                                startMarker!,
+                                              if (userMarker != null)
+                                                userMarker!,
+                                              if (isDriveEnded &&
+                                                  endMarker != null)
+                                                endMarker!,
+                                            },
+                                            polylines: {routePolyline},
+                                          ),
                                         ),
-                                        myLocationEnabled: true,
-                                        myLocationButtonEnabled: true,
-                                        zoomControlsEnabled: true,
-                                        markers: {
-                                          if (startMarker != null) startMarker!,
-                                          if (userMarker != null) userMarker!,
-                                          if (isDriveEnded && endMarker != null)
-                                            endMarker!,
-                                        },
-                                        polylines: {routePolyline},
                                       ),
                                     ),
                                   ),
@@ -665,7 +731,10 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
-                                      onPressed: _endTestDrive,
+                                      onPressed: () {
+                                        _endTestDrive;
+                                        _captureAndUploadImage;
+                                      },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 10),
@@ -681,6 +750,36 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                               color: Colors.white)),
                                     ),
                                   ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => TestdriveOverview(
+                                              // The route points (list of LatLng)
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    child: Text(
+                                      'End drive & Submit Feedback later',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
