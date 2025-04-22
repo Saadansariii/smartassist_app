@@ -757,9 +757,11 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => TestdriveOverview(
-                                              // The route points (list of LatLng)
-                                              ),
+                                          builder: (context) =>
+                                              TestdriveOverview(
+                                            eventId: widget.eventId,
+                                            leadId: widget.leadId,
+                                          ),
                                         ),
                                       );
                                     },

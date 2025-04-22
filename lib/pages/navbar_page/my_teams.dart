@@ -138,32 +138,6 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  Widget _buildContent() {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    switch (_selectedButtonIndex) {
-      case 0:
-      // return FUpcoming(
-      //   leadId: widget.leadId,
-      // ); // Load follow-ups
-      case 1:
-      // return _buildDataList(appointmentData);
-      // return const FAppointment();
-      case 2:
-      // return _buildDataList(testDriveData);
-      // return const FTestdrive();
-      case 3:
-      // return _buildDataList(opportunityData);
-      // return FLeads();
-      // case 4:
-      //   return FOpportunity();
-      default:
-        return const SizedBox();
-    }
-  }
-
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
     // Simulate an API call for Individual Performance or Team Data
 
@@ -239,9 +213,9 @@ class _MyTeamsState extends State<MyTeams> {
     }
 
     // Access orders.count from MTD, QTD, and YTD
-    final mtdOrdersCount = data['MTD']['orders']['count'] ?? 0;
-    final qtdOrdersCount = data['QTD']['orders']['count'] ?? 0;
-    final ytdOrdersCount = data['YTD']['orders']['count'] ?? 0;
+    final mtdOrdersCount = data['MTD']['orders'] ?? 0;
+    final qtdOrdersCount = data['QTD']['orders'] ?? 0;
+    final ytdOrdersCount = data['YTD']['orders'] ?? 0;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -455,7 +429,7 @@ class _MyTeamsState extends State<MyTeams> {
                             )
                           : Column(
                               children: [
-                                _buildPeriodFilter(screenWidth),
+                                _comparisionButtons(screenWidth),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 0, vertical: 10),
@@ -1075,7 +1049,83 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
+
+ Widget _comparisionButtons(double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Period selector (ALL, MTD, QTD, YTD)
+          Container(
+            height: 26,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.fontColor, width: .5),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                _combuildPeriodButton('All', 0),
+                _combuildPeriodButton('MTD', 1),
+                _combuildPeriodButton('QTD', 2),
+                _combuildPeriodButton('YTD', 3),
+              ],
+            ),
+          ),
+
+          // Calendar button
+          Container(
+            height: 36,
+            width: 36,
+            decoration: BoxDecoration(
+              // color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today, size: 18),
+              onPressed: () {
+                // Handle calendar selection
+              },
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPeriodButton(String text, int index) {
+    bool isSelected = _periodIndex == index;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _periodIndex = index;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        decoration: BoxDecoration(
+          // color: isSelected ? Colors.blue : Colors.grey.shade200,
+          // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
+          border: Border.all(
+              color: isSelected ? Colors.blue : Colors.transparent, width: 2),
+
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.blue : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+ Widget _combuildPeriodButton(String text, int index) {
     bool isSelected = _periodIndex == index;
 
     return InkWell(
