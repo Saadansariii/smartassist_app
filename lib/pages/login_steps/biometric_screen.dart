@@ -27,11 +27,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
     super.initState();
     // _checkBiometrics();  //uncooment
     // checkTokenAndAuthenticate();
-    Future.delayed(Duration(milliseconds: 500), () {
-      if (_mounted) {
-        _authenticate();
-      }
-    });
+    // Future.delayed(Duration(milliseconds: 500), () {
+    //   if (_mounted) {
+    //     _authenticate();
+    //   }
+    // });
   }
 
   @override

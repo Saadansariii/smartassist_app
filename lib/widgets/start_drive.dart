@@ -15,7 +15,7 @@ import 'package:geolocator/geolocator.dart';
 
 class StartDriveMap extends StatefulWidget {
   final String eventId;
-final String leadId;
+  final String leadId;
   const StartDriveMap({super.key, required this.eventId, required this.leadId});
 
   @override
@@ -443,7 +443,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
       //     ],
       //   ),
       // );
-    
     }
   }
 
@@ -474,11 +473,15 @@ class _StartDriveMapState extends State<StartDriveMap> {
 
       if (response.statusCode == 200) {
         print('Test drive ended successfully');
+        print(_calculateDuration);
         // Handle successful end of drive
         _handleDriveEnded(totalDistance, _calculateDuration());
-         Navigator.of(context).push(
+        Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => Feedbackscreen(leadId : widget.leadId, eventId: widget.eventId,),
+            builder: (context) => Feedbackscreen(
+              leadId: widget.leadId,
+              eventId: widget.eventId,
+            ),
           ),
         );
         // Navigator.push(context, MaterialPageRoute(builder: ))

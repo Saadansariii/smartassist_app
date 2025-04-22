@@ -214,19 +214,21 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? spId = prefs.getString('user_id');
       final url = Uri.parse(
-          'https://api.smartassistapp.in/api/events/${widget.eventId}/update');
+          'https://api.smartassistapp.in/api/events/${widget.eventId}/submit-feedback');
       final token = await Storage.getToken();
 
       // Create the request body
       final requestBody = {
         'sp_id': spId,
-        'ambience': ratings['Overall Ambience'],
-        'features': ratings['Features'],
-        'ride_comfort': ratings['Ride and comfort'],
-        'quality': ratings['Quality'],
-        'dynamics': ratings['Dynamics'],
-        'driving_experience': ratings['Driving Experience'],
         'purchase_potential': _selectedType,
+        "drive_feedback": {
+          'ambience': ratings['Overall Ambience'],
+          'features': ratings['Features'],
+          'ride_comfort': ratings['Ride and comfort'],
+          'quality': ratings['Quality'],
+          'dynamics': ratings['Dynamics'],
+          'driving_experience': ratings['Driving Experience'],
+        }
       };
 
       // Print the data to console for debugging
@@ -259,7 +261,7 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
                 builder: (context) => FollowupsDetails(leadId: widget.leadId)));
       } else {
         // Error handling
-        print('Failed to submit feedback');
+        // print('Failed to submit feedback');
         Get.snackbar(
           'Error',
           'Failed to submit feedback',
@@ -278,6 +280,78 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
       );
     }
   }
+
+  // Future<void> submitFeedback() async {
+  //   try {
+  //     SharedPreferences prefs = await SharedPreferences.getInstance();
+  //     String? spId = prefs.getString('user_id');
+  //     final url = Uri.parse(
+  //         'https://api.smartassistapp.in/api/events/${widget.eventId}/submit-feedback');
+  //     final token = await Storage.getToken();
+
+  //     // Create the request body
+  //     final requestBody = {
+  //       'sp_id': spId,
+  //       'purchase_potential': _selectedType,
+  //       "drive_feedback": {
+  //         'ambience': ratings['Overall Ambience'],
+  //         'features': ratings['Features'],
+  //         'ride_comfort': ratings['Ride and comfort'],
+  //         'quality': ratings['Quality'],
+  //         'dynamics': ratings['Dynamics'],
+  //         'driving_experience': ratings['Driving Experience'],
+  //       }
+  //     };
+
+  //     // Print the data to console for debugging
+  //     print('Submitting feedback data:');
+  //     print(requestBody);
+
+  //     final response = await http.put(url,
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': 'Bearer $token',
+  //         },
+  //         body: json.encode(requestBody));
+
+  //     // Print the response
+  //     print('API Response status: ${response.statusCode}');
+  //     print('API Response body: ${response.body}');
+
+  //     if (response.statusCode == 200) {
+  //       // Success handling
+  //       print('Feedback submitted successfully');
+  //       Get.snackbar(
+  //         'Success',
+  //         'Feedback submitted successfully',
+  //         backgroundColor: Colors.green,
+  //         colorText: Colors.white,
+  //       );
+  //       Navigator.push(
+  //           context,
+  //           MaterialPageRoute(
+  //               builder: (context) => FollowupsDetails(leadId: widget.leadId)));
+  //     } else {
+  //       // Error handling
+  //       // print('Failed to submit feedback');
+  //       Get.snackbar(
+  //         'Error',
+  //         'Failed to submit feedback',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     // Exception handling
+  //     print('Exception occurred: ${e.toString()}');
+  //     Get.snackbar(
+  //       'Error',
+  //       'An error occurred: ${e.toString()}',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

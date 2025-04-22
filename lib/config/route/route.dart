@@ -14,10 +14,10 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => const SplashScreen(),
         );
-      case RoutesName.biometricScreen:
-        return MaterialPageRoute(
-          builder: (context) => const BiometricScreen(),
-        );
+      // case RoutesName.biometricScreen:
+      //   return MaterialPageRoute(
+      //     builder: (context) => const BiometricScreen(),
+      //   );
 //comment this
       case RoutesName.home:
         return MaterialPageRoute(

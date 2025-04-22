@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,8 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
+import 'package:http/http.dart' as http;
+import 'package:smart_assist/utils/storage.dart';
 
 class MyTeams extends StatefulWidget {
   const MyTeams({super.key});
@@ -158,11 +162,60 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
+  Future<Map<String, dynamic>> _fetchDataUserProfile() async {
+    // Simulate an API call for Individual Performance or Team Data
+    await Future.delayed(Duration(seconds: 1)); // Simulating a delay
+
+    final token = await Storage.getToken();
+    final response = await http.get(
+        Uri.parse(
+            'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        });
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      // Parse the API response to update the teamProfiles data
+      if (response.statusCode == 200) {
+        List<Map<String, String>> teamProfiles = [];
+        for (var team in data['data']) {
+          for (var member in team['teamMembers']) {
+            teamProfiles.add({
+              'name': member['fname'],
+              'lname': member['lname'],
+              'user_id': member['user_id'],
+            });
+          }
+        }
+
+        return {
+          'status': 200,
+          'teamProfiles': teamProfiles,
+        };
+      }
+      return {}; // Return empty map if the category doesn't match
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
-    _data = _fetchData('Test Drives');
     super.initState();
+    _data = _fetchData('Test Drives');
+    // Make sure you assign the result to the _fetchDataUserProfile() method too.
+    // You might want to await the result of _fetchDataUserProfile() before setting up the team profiles.
+    _fetchDataUserProfile().then((data) {
+      setState(() {
+        // You can update the team profiles or other data here based on the fetched response
+      });
+    }).catchError((e) {
+      // Handle any error here
+      print('Error: $e');
+    });
   }
 
   @override
@@ -341,11 +394,11 @@ class _MyTeamsState extends State<MyTeams> {
                                         title: 'Cancellations',
                                         onPressed: () {
                                           setState(() {
-                                            _selectedButtonIndex = 3;
+                                            _selectedButtonIndex = 4;
                                           });
                                         },
                                         decoration: BoxDecoration(
-                                          border: _selectedButtonIndex == 3
+                                          border: _selectedButtonIndex == 4
                                               ? Border.all(color: Colors.blue)
                                               : Border.all(
                                                   color: Colors.transparent),
@@ -353,7 +406,7 @@ class _MyTeamsState extends State<MyTeams> {
                                               BorderRadius.circular(13),
                                         ),
                                         textStyle: GoogleFonts.poppins(
-                                          color: _selectedButtonIndex == 3
+                                          color: _selectedButtonIndex == 4
                                               ? Colors.blue
                                               : Colors.black,
                                           fontSize: 14,
@@ -364,11 +417,11 @@ class _MyTeamsState extends State<MyTeams> {
                                         title: 'Retails',
                                         onPressed: () {
                                           setState(() {
-                                            _selectedButtonIndex = 3;
+                                            _selectedButtonIndex = 5;
                                           });
                                         },
                                         decoration: BoxDecoration(
-                                          border: _selectedButtonIndex == 3
+                                          border: _selectedButtonIndex == 5
                                               ? Border.all(color: Colors.blue)
                                               : Border.all(
                                                   color: Colors.transparent),
@@ -376,7 +429,7 @@ class _MyTeamsState extends State<MyTeams> {
                                               BorderRadius.circular(13),
                                         ),
                                         textStyle: GoogleFonts.poppins(
-                                          color: _selectedButtonIndex == 3
+                                          color: _selectedButtonIndex == 5
                                               ? Colors.blue
                                               : Colors.black,
                                           fontSize: 14,
@@ -387,6 +440,110 @@ class _MyTeamsState extends State<MyTeams> {
                                   ),
                                 ),
                                 // Data and Progress Indicator
+                                // FutureBuilder<Map<String, dynamic>>(
+                                //   future: _data,
+                                //   builder: (context, snapshot) {
+                                //     if (snapshot.connectionState ==
+                                //         ConnectionState.waiting) {
+                                //       return Center(
+                                //           child: CircularProgressIndicator());
+                                //     } else if (snapshot.hasError) {
+                                //       return Center(
+                                //           child: Text('Error loading data'));
+                                //     } else if (snapshot.hasData) {
+                                //       var data = snapshot.data!;
+                                //       return Padding(
+                                //         padding: const EdgeInsets.all(10.0),
+                                //         child: Container(
+                                //           decoration: BoxDecoration(
+                                //               borderRadius:
+                                //                   BorderRadius.circular(10),
+                                //               color: AppColors
+                                //                   .backgroundLightGrey),
+                                //           child: Column(
+                                //             children: data.entries.map((entry) {
+                                //               double percentage = entry.value /
+                                //                   10.0; // Adjust as needed
+                                //               return Padding(
+                                //                 padding:
+                                //                     const EdgeInsets.symmetric(
+                                //                         vertical: 8.0),
+                                //                 child: Padding(
+                                //                   padding: const EdgeInsets
+                                //                       .symmetric(
+                                //                       horizontal: 10.0,
+                                //                       vertical: 15),
+                                //                   child: Row(
+                                //                     crossAxisAlignment:
+                                //                         CrossAxisAlignment
+                                //                             .center,
+                                //                     children: [
+                                //                       // Name Text
+                                //                       Expanded(
+                                //                         child: Text(entry.key,
+                                //                             style: AppFont
+                                //                                 .smallText(
+                                //                                     context)),
+                                //                       ),
+                                //                       // Progress Bar
+                                //                       Expanded(
+                                //                         flex: 2,
+                                //                         child: Padding(
+                                //                           padding:
+                                //                               const EdgeInsets
+                                //                                   .only(
+                                //                                   left: 10),
+                                //                           child:
+                                //                               LinearPercentIndicator(
+                                //                             lineHeight: 14.0,
+                                //                             percent: percentage,
+                                //                             backgroundColor:
+                                //                                 Colors
+                                //                                     .grey[300]!,
+                                //                             barRadius:
+                                //                                 const Radius
+                                //                                     .circular(
+                                //                                     8),
+                                //                             linearGradient:
+                                //                                 LinearGradient(
+                                //                               colors:
+                                //                                   _getGradientForProgress(
+                                //                                       percentage),
+                                //                               begin: Alignment
+                                //                                   .centerLeft,
+                                //                               end: Alignment
+                                //                                   .centerRight,
+                                //                             ),
+                                //                           ),
+                                //                         ),
+                                //                       ),
+                                //                       // Percentage Text
+                                //                       Padding(
+                                //                         padding:
+                                //                             const EdgeInsets
+                                //                                 .only(left: 0),
+                                //                         child: Text(
+                                //                           '${(percentage * 100).toStringAsFixed(0)}%',
+                                //                           style:
+                                //                               AppFont.smallText(
+                                //                                   context),
+                                //                         ),
+                                //                       ),
+                                //                     ],
+                                //                   ),
+                                //                 ),
+                                //               );
+                                //             }).toList(),
+                                //           ),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       return Center(
+                                //           child: Text('No data available'));
+                                //     }
+                                //   },
+                                // )
+
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _data,
                                   builder: (context, snapshot) {
@@ -399,97 +556,37 @@ class _MyTeamsState extends State<MyTeams> {
                                           child: Text('Error loading data'));
                                     } else if (snapshot.hasData) {
                                       var data = snapshot.data!;
-                                      return Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              color: AppColors
-                                                  .backgroundLightGrey),
-                                          child: Column(
-                                            children: data.entries.map((entry) {
-                                              double percentage = entry.value /
-                                                  10.0; // Adjust as needed
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8.0),
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 10.0,
-                                                      vertical: 15),
-                                                  child: Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      // Name Text
-                                                      Expanded(
-                                                        child: Text(entry.key,
-                                                            style: AppFont
-                                                                .smallText(
-                                                                    context)),
-                                                      ),
-                                                      // Progress Bar
-                                                      Expanded(
-                                                        flex: 2,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10),
-                                                          child:
-                                                              LinearPercentIndicator(
-                                                            lineHeight: 14.0,
-                                                            percent: percentage,
-                                                            backgroundColor:
-                                                                Colors
-                                                                    .grey[300]!,
-                                                            barRadius:
-                                                                const Radius
-                                                                    .circular(
-                                                                    8),
-                                                            linearGradient:
-                                                                LinearGradient(
-                                                              colors:
-                                                                  _getGradientForProgress(
-                                                                      percentage),
-                                                              begin: Alignment
-                                                                  .centerLeft,
-                                                              end: Alignment
-                                                                  .centerRight,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Percentage Text
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(left: 0),
-                                                        child: Text(
-                                                          '${(percentage * 100).toStringAsFixed(0)}%',
-                                                          style:
-                                                              AppFont.smallText(
-                                                                  context),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
+
+                                      if (data.containsKey('teamProfiles')) {
+                                        // Use the teamProfiles fetched from the API
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: List.generate(
+                                              data['teamProfiles'].length,
+                                              (index) => _buildProfileAvatar(
+                                                data['teamProfiles'][index]
+                                                    ['name'],
+                                                data['teamProfiles'][index]
+                                                    ['lastName'],
+                                                index,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      );
+                                        );
+                                      } else {
+                                        return Center(
+                                            child: Text('No data available'));
+                                      }
                                     } else {
                                       return Center(
                                           child: Text('No data available'));
                                     }
                                   },
-                                )
+                                ),
                               ],
                             ), // No padding, no container for Team Comparison
                     ],
@@ -748,23 +845,46 @@ class _MyTeamsState extends State<MyTeams> {
   }
 
   Widget _buildProfileAvatars() {
-    return Container(
-      height: 120,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(
-          teamProfiles.length,
-          (index) => _buildProfileAvatar(
-            teamProfiles[index]['name'] ?? '',
-            teamProfiles[index]['lastName'] ?? '',
-            index,
-          ),
-        ),
-      ),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchDataUserProfile(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error loading data: ${snapshot.error}'));
+        } else if (snapshot.hasData) {
+          var data = snapshot.data;
+          if (data != null && data.containsKey('teamProfiles')) {
+            List teamProfiles = data['teamProfiles'];
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                height: 120,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    teamProfiles.length,
+                    (index) => _buildProfileAvatar(
+                      teamProfiles[index]['name'] ?? '',
+                      teamProfiles[index]['lastName'] ?? '',
+                      index,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          } else {
+            return const Center(child: Text('No team profiles available.'));
+          }
+        } else {
+          return const Center(child: Text('No data available'));
+        }
+      },
     );
   }
 
+   
   Widget _buildProfileAvatar(String firstName, String lastName, int index) {
     return Column(
       mainAxisSize: MainAxisSize.min,

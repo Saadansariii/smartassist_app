@@ -290,17 +290,13 @@
 // }
 
 import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
+import 'dart:io'; 
 import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_launcher_icons/xml_templates.dart';
-import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:flutter/material.dart'; 
+import 'package:get/get.dart'; 
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:http_parser/http_parser.dart';
+import 'package:path_provider/path_provider.dart'; 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
@@ -613,7 +609,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text(
+              child:const Text(
                 'Cancel',
                 style: TextStyle(color: AppColors.colorsBlue),
               ),

@@ -333,24 +333,22 @@ class _LeadsState extends State<Leads> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Using Container instead of Expanded for Title Text
             Container(
               decoration:
                   BoxDecoration(border: Border.all(color: Colors.transparent)),
-              child: Expanded(
-                child: Text(
-                  title,
-                  softWrap: true,
-                  // textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 4,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[700]),
-                ),
+              child: Text(
+                title,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey[700]),
               ),
             ),
-            // const SizedBox(height: 5),
+            // The value text
             Text(
               softWrap: true,
               overflow: TextOverflow.ellipsis,
@@ -365,6 +363,54 @@ class _LeadsState extends State<Leads> {
       ),
     );
   }
+
+  // Widget _buildInfoCard1(BuildContext context, String title, String value,
+  //     double screenWidth, Color valueColor) {
+  //   return Align(
+  //     alignment: Alignment.center,
+  //     child: Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(screenWidth * 0.04),
+  //       decoration: BoxDecoration(
+  //         color: Colors.white,
+  //         borderRadius: BorderRadius.circular(10),
+  //       ),
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         crossAxisAlignment: CrossAxisAlignment.center,
+  //         children: [
+  //           Container(
+  //             decoration:
+  //                 BoxDecoration(border: Border.all(color: Colors.transparent)),
+  //             child: Expanded(
+  //               child: Text(
+  //                 title,
+  //                 softWrap: true,
+  //                 // textAlign: TextAlign.center,
+  //                 overflow: TextOverflow.ellipsis,
+  //                 maxLines: 4,
+  //                 style: GoogleFonts.poppins(
+  //                     fontSize: 12,
+  //                     fontWeight: FontWeight.w400,
+  //                     color: Colors.grey[700]),
+  //               ),
+  //             ),
+  //           ),
+  //           // const SizedBox(height: 5),
+  //           Text(
+  //             softWrap: true,
+  //             overflow: TextOverflow.ellipsis,
+  //             textAlign: TextAlign.center,
+  //             maxLines: 4,
+  //             value,
+  //             style: GoogleFonts.poppins(
+  //                 fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // Right Info Card
   Widget _buildRightInfoCard(BuildContext context, String title, String head,
