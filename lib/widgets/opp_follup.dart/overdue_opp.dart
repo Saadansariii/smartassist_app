@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 
 class OverdueOpp extends StatelessWidget {
   const OverdueOpp({super.key});
@@ -86,7 +87,9 @@ class OverdueOpp extends StatelessWidget {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const FollowupsDetails(leadId: '',)));
+                              builder: (context) => const FollowupsDetails(
+                                    leadId: '',
+                                  )));
                     },
                     child: Image.asset('assets/arrowButton.png'),
                   ),

@@ -663,31 +663,27 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                           color: Colors.black,
                                           borderRadius:
                                               BorderRadius.circular(10)),
-                                      child: Expanded(
-                                        child: Screenshot(
-                                          controller: _screenshotController,
-                                          child: GoogleMap(
-                                            onMapCreated: _onMapCreated,
-                                            initialCameraPosition:
-                                                CameraPosition(
-                                              target: startMarker?.position ??
-                                                  const LatLng(0, 0),
-                                              zoom: 16,
-                                            ),
-                                            myLocationEnabled: true,
-                                            myLocationButtonEnabled: true,
-                                            zoomControlsEnabled: true,
-                                            markers: {
-                                              if (startMarker != null)
-                                                startMarker!,
-                                              if (userMarker != null)
-                                                userMarker!,
-                                              if (isDriveEnded &&
-                                                  endMarker != null)
-                                                endMarker!,
-                                            },
-                                            polylines: {routePolyline},
+                                      child: Screenshot(
+                                        controller: _screenshotController,
+                                        child: GoogleMap(
+                                          onMapCreated: _onMapCreated,
+                                          initialCameraPosition: CameraPosition(
+                                            target: startMarker?.position ??
+                                                const LatLng(0, 0),
+                                            zoom: 16,
                                           ),
+                                          myLocationEnabled: true,
+                                          myLocationButtonEnabled: true,
+                                          zoomControlsEnabled: true,
+                                          markers: {
+                                            if (startMarker != null)
+                                              startMarker!,
+                                            if (userMarker != null) userMarker!,
+                                            if (isDriveEnded &&
+                                                endMarker != null)
+                                              endMarker!,
+                                          },
+                                          polylines: {routePolyline},
                                         ),
                                       ),
                                     ),
@@ -732,8 +728,8 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        _endTestDrive;
-                                        _captureAndUploadImage;
+                                        _endTestDrive();
+                                        _captureAndUploadImage();
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(

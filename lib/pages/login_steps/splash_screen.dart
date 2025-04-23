@@ -336,7 +336,8 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (isTokenValid) {
         // If token exists and is valid, go to biometric screen
-        Navigator.of(context).pushReplacementNamed(RoutesName.home); //replashce with splash
+        Navigator.of(context)
+            .pushReplacementNamed(RoutesName.home); //replashce with biometric
       } else {
         // If no token or invalid token, go to login screen
         await TokenManager.clearAuthData();

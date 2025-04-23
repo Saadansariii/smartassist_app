@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
-import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_appointment.dart';
+import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_appointment.dart'; 
 
 class EventWidget extends StatelessWidget {
   final DateTime selectedDate;

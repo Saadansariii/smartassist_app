@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/config/component/font/font.dart';
+import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'dart:convert';
 
 import 'package:smart_assist/utils/storage.dart';
@@ -45,7 +50,7 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
-        startTime = data['data']['start_time'];
+        startTime = data['data']['duration'];
         distanceCovered = data['data']['distance'] + ' km';
         mapImgUrl = data['data']['map_img'] ?? '';
         potentialPurchase = data['data']['purchase_potential'];
@@ -56,12 +61,41 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
     }
   }
 
+  String formatTime(String startTime) {
+    try {
+      DateFormat inputFormat = DateFormat(
+          "HH:mm"); // Assuming startTime is in "24-hour" format (e.g., "12:12")
+      DateTime time = inputFormat.parse(startTime);
+      DateFormat outputFormat =
+          DateFormat("hh:mm a"); // Converts to 12-hour format with AM/PM
+      return outputFormat.format(time);
+    } catch (e) {
+      return "Invalid time"; // Handle if input is not in the expected format
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    String formattedTime = formatTime(startTime);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Test Drive Summary'),
         backgroundColor: Colors.blue,
+        title:
+            Text('Test Drive Summary', style: AppFont.popupTitleWhite(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_outlined,
+              color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        FollowupsDetails(leadId: widget.leadId)));
+            // MaterialPageRoute(
+            //     builder: (context) => FollowupsDetails(leadId: widget.leadId));
+          },
+        ),
+        elevation: 0,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -71,41 +105,90 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Map image
-                    if (mapImgUrl.isNotEmpty) Image.network(mapImgUrl),
+                    // Map
+
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLightGrey,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        children: [
+                          if (mapImgUrl.isNotEmpty) Image.network(mapImgUrl),
+                        ],
+                      ),
+                    ),
 
                     SizedBox(height: 20),
 
                     // Start time
-                    Text('Start Time: $startTime',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLightGrey,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Start Time: $formattedTime',
+                              style: AppFont.dropDowmLabel(context)),
+                          SizedBox(height: 10),
+                          Text('Distance covered: $distanceCovered',
+                              style: AppFont.dropDowmLabel(context)),
+                        ],
+                      ),
+                    ),
 
                     // Distance covered
-                    SizedBox(height: 10),
-                    Text('Distance covered: $distanceCovered',
-                        style: TextStyle(fontSize: 16)),
 
                     // Ratings
                     SizedBox(height: 20),
-                    Text('Ratings:',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Ratings:', style: AppFont.dropDowmLabel(context)),
                     SizedBox(height: 10),
-                    _buildRatingRow('Overall Ambience', ratings['ambience']),
-                    _buildRatingRow('Features', ratings['features']),
-                    _buildRatingRow(
-                        'Ride and Comfort', ratings['ride_comfort']),
-                    _buildRatingRow('Quality', ratings['quality']),
-                    _buildRatingRow('Dynamics', ratings['dynamics']),
-                    _buildRatingRow(
-                        'Driving Experience', ratings['driving_experience']),
+
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLightGrey,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildRatingRow(
+                              'Overall Ambience', ratings['ambience']),
+                          _buildRatingRow('Features', ratings['features']),
+                          _buildRatingRow(
+                              'Ride and Comfort', ratings['ride_comfort']),
+                          _buildRatingRow('Quality', ratings['quality']),
+                          _buildRatingRow('Dynamics', ratings['dynamics']),
+                          _buildRatingRow('Driving Experience',
+                              ratings['driving_experience']),
+                        ],
+                      ),
+                    ),
 
                     // Potential of purchase
-                    SizedBox(height: 20),
-                    Text('Potential of Purchase: $potentialPurchase',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    Text('Potential of Purchase: ',
+                        style: AppFont.dropDowmLabel(context)),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.searchBar,
+                        border: Border.all(color: Colors.blue),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Text(
+                        potentialPurchase,
+                        style: AppFont.mediumText14blue(context),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
@@ -116,15 +199,21 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
   // Helper method to build the rating rows
   Widget _buildRatingRow(String label, int? rating) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('$label: ', style: TextStyle(fontSize: 14)),
+        Text('$label: ', style: AppFont.dropDowmLabel(context)),
+        const SizedBox(
+          height: 10,
+        ),
         IconTheme(
-          data: IconThemeData(color: Colors.orange),
+          data: IconThemeData(color: Colors.amber),
           child: Row(
             children: List.generate(5, (index) {
               return Icon(
-                index < (rating ?? 0) ? Icons.star : Icons.star_border,
-                size: 18,
+                index < (rating ?? 0)
+                    ? Icons.star_rounded
+                    : Icons.star_outline_rounded,
+                size: 30,
               );
             }),
           ),

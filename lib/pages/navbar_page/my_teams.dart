@@ -29,56 +29,56 @@ class _MyTeamsState extends State<MyTeams> {
   Map<String, dynamic> _individualPerformanceData = {};
 
   // Sample profile data
-  final List<Map<String, String>> teamProfiles = [
-    {'name': 'Abhey', 'lastName': 'Dayal'},
-    {'name': 'Amit', 'lastName': 'Arora'},
-    {'name': 'Gia', 'lastName': 'Valecha'},
-    {'name': 'Jigar', 'lastName': 'Shah'},
-    {'name': 'Pritesh', 'lastName': 'Gamali'},
-  ];
+  // final List<Map<String, String>> teamProfiles = [
+  //   {'name': 'Abhey', 'lastName': 'Dayal'},
+  //   {'name': 'Amit', 'lastName': 'Arora'},
+  //   {'name': 'Gia', 'lastName': 'Valecha'},
+  //   {'name': 'Jigar', 'lastName': 'Shah'},
+  //   {'name': 'Pritesh', 'lastName': 'Gamali'},
+  // ];
 
   // This will fetch the data based on the selected button
-  Future<Map<String, dynamic>> _fetchData(String category) async {
-    // Replace this with your API logic
-    // Simulating an API call based on category
-    await Future.delayed(Duration(seconds: 1));
-    // Example mock data based on category
-    switch (category) {
-      case 'Enquiries':
-        return {
-          'Abhey Dayal': 6,
-          'Amit Arora': 5,
-          'Gia Valecha': 2,
-          'Jigar Shah': 7,
-          'Pritesh Gamali': 1
-        };
-      case 'Test Drives':
-        return {
-          'Abhey Dayal': 4,
-          'Amit Arora': 5,
-          'Gia Valecha': 3,
-          'Jigar Shah': 8,
-          'Pritesh Gamali': 2
-        };
-      case 'Net Orders':
-        return {
-          'Abhey Dayal': 3,
-          'Amit Arora': 4,
-          'Gia Valecha': 2,
-          'Jigar Shah': 7,
-          'Pritesh Gamali': 1
-        };
-      // Add more categories as needed
-      default:
-        return {
-          'Abhey Dayal': 0,
-          'Amit Arora': 0,
-          'Gia Valecha': 0,
-          'Jigar Shah': 0,
-          'Pritesh Gamali': 0
-        };
-    }
-  }
+  // Future<Map<String, dynamic>> _fetchData(String category) async {
+  //   // Replace this with your API logic
+  //   // Simulating an API call based on category
+  //   await Future.delayed(Duration(seconds: 1));
+  //   // Example mock data based on category
+  //   switch (category) {
+  //     case 'Enquiries':
+  //       return {
+  //         'Abhey Dayal': 6,
+  //         'Amit Arora': 5,
+  //         'Gia Valecha': 2,
+  //         'Jigar Shah': 7,
+  //         'Pritesh Gamali': 1
+  //       };
+  //     case 'Test Drives':
+  //       return {
+  //         'Abhey Dayal': 4,
+  //         'Amit Arora': 5,
+  //         'Gia Valecha': 3,
+  //         'Jigar Shah': 8,
+  //         'Pritesh Gamali': 2
+  //       };
+  //     case 'Net Orders':
+  //       return {
+  //         'Abhey Dayal': 3,
+  //         'Amit Arora': 4,
+  //         'Gia Valecha': 2,
+  //         'Jigar Shah': 7,
+  //         'Pritesh Gamali': 1
+  //       };
+  //     // Add more categories as needed
+  //     default:
+  //       return {
+  //         'Abhey Dayal': 0,
+  //         'Amit Arora': 0,
+  //         'Gia Valecha': 0,
+  //         'Jigar Shah': 0,
+  //         'Pritesh Gamali': 0
+  //       };
+  //   }
+  // }
 
   // Sample individual performance data
   final Map<String, dynamic> individualData = {
@@ -138,6 +138,36 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
+  String _getMetricKey() {
+    switch (_selectedButtonIndex) {
+      case 1:
+        return 'testDrives';
+      case 2:
+        return 'orders';
+      case 3:
+        return 'newOrders'; // Update if your backend uses 'orders' or 'newOrders'
+      case 4:
+        return 'cancellation';
+      case 5:
+        return 'retails'; // if applicable
+      default:
+        return 'enquiries';
+    }
+  }
+
+  String _getPeriodKey() {
+    switch (_periodIndex) {
+      case 1:
+        return 'MTD';
+      case 2:
+        return 'QTD';
+      case 3:
+        return 'YTD';
+      default:
+        return 'ALL'; // if backend returns separate ALL block, else skip
+    }
+  }
+
   late Future<List<Map<String, dynamic>>> _teamComparisonData;
 
   int _selectedPeriodIndex = 0; // 0: All, 1: MTD, 2: QTD, 3: YTD
@@ -160,12 +190,23 @@ class _MyTeamsState extends State<MyTeams> {
       List<Map<String, dynamic>> result = [];
 
       for (var team in teams) {
+        // Case 1: Count at team level
+        if (team.containsKey('team_name') &&
+            team.containsKey(_getPeriodKey())) {
+          final name = team['team_name'];
+          final periodData = team[_getPeriodKey()];
+          final count = periodData[_getMetricKey()] ?? 0;
+
+          result.add({"name": name, "count": count});
+        }
+
+        // Case 2: Count at user level inside team
         if (team.containsKey('users')) {
           for (var user in team['users']) {
-            String name = user['name'];
+            final name = user['name'];
             Map<String, dynamic> periodData;
 
-            switch (_selectedPeriodIndex) {
+            switch (_periodIndex) {
               case 1:
                 periodData = user['MTD'];
                 break;
@@ -177,24 +218,24 @@ class _MyTeamsState extends State<MyTeams> {
                 break;
               default:
                 periodData = {
-                  "enquiries": user['MTD']['enquiries'] +
-                      user['QTD']['enquiries'] +
-                      user['YTD']['enquiries'],
-                  "testDrives": user['MTD']['testDrives'] +
-                      user['QTD']['testDrives'] +
-                      user['YTD']['testDrives'],
-                  "orders": user['MTD']['orders'] +
-                      user['QTD']['orders'] +
-                      user['YTD']['orders'],
-                  "cancellation": user['MTD']['cancellation'] +
-                      user['QTD']['cancellation'] +
-                      user['YTD']['cancellation'],
+                  "enquiries": (user['MTD']?['enquiries'] ?? 0) +
+                      (user['QTD']?['enquiries'] ?? 0) +
+                      (user['YTD']?['enquiries'] ?? 0),
+                  "testDrives": (user['MTD']?['testDrives'] ?? 0) +
+                      (user['QTD']?['testDrives'] ?? 0) +
+                      (user['YTD']?['testDrives'] ?? 0),
+                  "orders": (user['MTD']?['orders'] ?? 0) +
+                      (user['QTD']?['orders'] ?? 0) +
+                      (user['YTD']?['orders'] ?? 0),
+                  "cancellation": (user['MTD']?['cancellation'] ?? 0) +
+                      (user['QTD']?['cancellation'] ?? 0) +
+                      (user['YTD']?['cancellation'] ?? 0),
                 };
             }
 
             result.add({
               "name": name,
-              "count": periodData[_getMetricKey()],
+              "count": periodData[_getMetricKey()] ?? 0,
             });
           }
         }
@@ -203,19 +244,6 @@ class _MyTeamsState extends State<MyTeams> {
       return result;
     } else {
       throw Exception('Failed to fetch data');
-    }
-  }
-
-  String _getMetricKey() {
-    switch (_selectedMetricIndex) {
-      case 1:
-        return 'testDrives';
-      case 2:
-        return 'orders';
-      case 3:
-        return 'cancellation';
-      default:
-        return 'enquiries';
     }
   }
 
@@ -290,7 +318,10 @@ class _MyTeamsState extends State<MyTeams> {
 
     // Ensure that the data is available before attempting to display it
     if (data.isEmpty) {
-      return Center(child: Text('No performance data available.'));
+      return const Padding(
+        padding:  EdgeInsets.symmetric(vertical: 10.0),
+        child: Center(child: Text('No performance data available.')),
+      );
     }
 
     // Access orders.count from MTD, QTD, and YTD
@@ -424,7 +455,7 @@ class _MyTeamsState extends State<MyTeams> {
   @override
   void initState() {
     super.initState();
-    _data = _fetchData('Test Drives');
+    // _data = _fetchData('Test Drives');
     // Make sure you assign the result to the _fetchDataUserProfile() method too.
     // You might want to await the result of _fetchDataUserProfile() before setting up the team profiles.
     _fetchDataUserProfile().then((data) {
@@ -522,8 +553,9 @@ class _MyTeamsState extends State<MyTeams> {
                                         title: 'Enquiries',
                                         onPressed: () {
                                           setState(() {
-                                            _selectedMetricIndex =
-                                                1; // for Test Drives etc.
+                                            _selectedButtonIndex =
+                                                0; // for Test Drives etc.
+
                                             _teamComparisonData =
                                                 fetchTeamComparisonData();
                                           });
@@ -549,6 +581,8 @@ class _MyTeamsState extends State<MyTeams> {
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 1;
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -572,6 +606,8 @@ class _MyTeamsState extends State<MyTeams> {
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 2;
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -595,6 +631,9 @@ class _MyTeamsState extends State<MyTeams> {
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 3;
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
+                                            ;
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -618,6 +657,8 @@ class _MyTeamsState extends State<MyTeams> {
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 4;
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -641,6 +682,8 @@ class _MyTeamsState extends State<MyTeams> {
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 5;
+                                            _teamComparisonData =
+                                                fetchTeamComparisonData();
                                           });
                                         },
                                         decoration: BoxDecoration(
@@ -1029,35 +1072,30 @@ class _MyTeamsState extends State<MyTeams> {
         child: Row(
           children: [
             // Individual Performance Button
-            Container(
-              color: Colors.transparent,
-              child: Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _tabIndex = 0;
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color:
-                            _tabIndex == 0 ? Colors.blue : Colors.transparent,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Text(
-                            'Individual Performance',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: _tabIndex == 0
-                                  ? Colors.white
-                                  : Colors.black54,
-                            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _tabIndex = 0;
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _tabIndex == 0 ? Colors.blue : Colors.transparent,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        child: Text(
+                          'Individual Performance',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color:
+                                _tabIndex == 0 ? Colors.white : Colors.black54,
                           ),
                         ),
                       ),
@@ -1158,10 +1196,10 @@ class _MyTeamsState extends State<MyTeams> {
             ),
             child: Row(
               children: [
-                _buildPeriodButton('All', 0),
-                _buildPeriodButton('MTD', 1),
-                _buildPeriodButton('QTD', 2),
-                _buildPeriodButton('YTD', 3),
+                // _buildPeriodButton('All', 0),
+                _buildPeriodButton('MTD', 0),
+                _buildPeriodButton('QTD', 1),
+                _buildPeriodButton('YTD', 2),
               ],
             ),
           ),
@@ -1269,6 +1307,8 @@ class _MyTeamsState extends State<MyTeams> {
       onTap: () {
         setState(() {
           _periodIndex = index;
+
+          _teamComparisonData = fetchTeamComparisonData();
         });
       },
       child: Container(

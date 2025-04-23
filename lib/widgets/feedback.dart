@@ -176,10 +176,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
-import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_id_screens/single_leads.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:smart_assist/widgets/testdrive_overview.dart';
 
 class Feedbackscreen extends StatefulWidget {
   final String eventId;
@@ -258,7 +259,8 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => FollowupsDetails(leadId: widget.leadId)));
+                builder: (context) => TestdriveOverview(
+                    leadId: widget.leadId, eventId: widget.eventId)));
       } else {
         // Error handling
         // print('Failed to submit feedback');

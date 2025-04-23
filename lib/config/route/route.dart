@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart';
 import 'package:smart_assist/config/route/route_name.dart';
 import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
 import 'package:smart_assist/pages/login_steps/login_page.dart';
@@ -14,10 +13,10 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => const SplashScreen(),
         );
-      // case RoutesName.biometricScreen:
-      //   return MaterialPageRoute(
-      //     builder: (context) => const BiometricScreen(),
-      //   );
+      case RoutesName.biometricScreen:
+        return MaterialPageRoute(
+          builder: (context) => const BiometricScreen(),
+        );
 //comment this
       case RoutesName.home:
         return MaterialPageRoute(
