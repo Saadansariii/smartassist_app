@@ -162,19 +162,19 @@ Widget _buildNavItem({
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
   final RxBool isFabExpanded = false.obs;
-  
+
   // Add selected date and appointments as observable properties
   final Rx<DateTime> selectedDate = DateTime.now().obs;
   final RxList appointments = [].obs;
   final RxList tasks = [].obs;
   final Rx<CalendarFormat> calendarFormat = CalendarFormat.week.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     fetchInitialData();
   }
-  
+
   // Method to fetch initial data
   Future<void> fetchInitialData() async {
     await Future.wait([
@@ -182,7 +182,7 @@ class NavigationController extends GetxController {
       fetchTasks(selectedDate.value)
     ]);
   }
-  
+
   // Method to fetch appointments
   Future<void> fetchAppointments(DateTime date) async {
     try {
@@ -193,7 +193,7 @@ class NavigationController extends GetxController {
       appointments.value = []; // Set to empty list on error
     }
   }
-  
+
   // Method to fetch tasks
   Future<void> fetchTasks(DateTime date) async {
     try {
@@ -204,22 +204,23 @@ class NavigationController extends GetxController {
       tasks.value = []; // Set to empty list on error
     }
   }
-  
+
   // Method to handle date selection
   void onDateSelected(DateTime date) {
     selectedDate.value = date;
     fetchAppointments(date);
     fetchTasks(date);
   }
-  
+
   // Use a getter for screens to ensure it always uses current values
   List<Widget> get screens => [
-    const HomeScreen(greeting: '', leadId: ''),
-    const Opportunity(leadId: ''),
-    // Replace Calendar with CalendarWithTimeline widget
-    CalendarWithTimeline(
-      leadId: '',
-      leadName: '',
-    ),
-  ];
+        const HomeScreen(greeting: '', leadId: ''),
+        const Opportunity(leadId: ''),
+        // Replace Calendar with CalendarWithTimeline widget
+        // const Calender(leadId: '', leadName: ''),
+        CalendarWithTimeline(
+          leadId: '',
+          leadName: '',
+        ),
+      ];
 }

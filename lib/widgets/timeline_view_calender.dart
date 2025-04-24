@@ -26,6 +26,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   List<dynamic> appointments = [];
   List<dynamic> tasks = [];
   DateTime? _selectedDay;
+  bool _isLoading = false;
   ScrollController _timelineScrollController = ScrollController();
 
   @override
@@ -63,37 +64,58 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   }
 
   Future<void> _fetchInitialData() async {
+    setState(() {
+      _isLoading = true; // Set loading to true before fetching data
+    });
+
     await _fetchAppointments(_selectedDay ?? _focusedDay);
     await _fetchTasks(_selectedDay ?? _focusedDay);
-  }
 
-  Future<void> _fetchAppointments(DateTime selectedDate) async {
-    final data = await LeadsSrv.fetchAppointments(selectedDate);
-    if (!mounted) return;
     setState(() {
-      appointments = data;
+      _isLoading = false; // Set loading to false once data is fetched
     });
   }
 
-  Future<void> _fetchTasks(DateTime? selectedDate) async {
-    final DateTime finalDate = selectedDate ?? DateTime.now();
-    final data = await LeadsSrv.fetchtasks(finalDate);
-    if (!mounted) return;
-    setState(() {
-      tasks = data;
-    });
-  }
+Future<void> _fetchAppointments(DateTime selectedDate) async {
+  final data = await LeadsSrv.fetchAppointments(selectedDate);
+  if (!mounted) return;
+  setState(() {
+    appointments = data;
+    _isLoading = false; // Update loading state
+  });
+  print("Appointments Fetched: $appointments");
+}
 
-  // Handle date selection
-  void _handleDateSelected(DateTime selectedDate) {
-    setState(() {
-      _selectedDay = selectedDate;
-      _focusedDay = selectedDate;
-    });
+Future<void> _fetchTasks(DateTime? selectedDate) async {
+  final DateTime finalDate = selectedDate ?? DateTime.now();
+  final data = await LeadsSrv.fetchtasks(finalDate);
+  if (!mounted) return;
+  setState(() {
+    tasks = data;
+    _isLoading = false; // Update loading state
+  });
+  print("Tasks Fetched: $tasks");
+}
 
-    _fetchAppointments(selectedDate);
-    _fetchTasks(selectedDate);
-  }
+ void _handleDateSelected(DateTime selectedDate) {
+  // Set the selected date for focusedDay and selectedDay
+  setState(() {
+    _selectedDay = selectedDate;
+    _focusedDay = selectedDate;
+    appointments = []; // Clear previous appointments
+    tasks = []; // Clear previous tasks
+    _isLoading = true; // Set loading to true
+  });
+
+  // Log the selected date for debugging
+  String formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
+  print('Selected Date State: ${_selectedDay}'); // Add this debug line
+  print('Fetching data for date: $formattedDate');
+
+  // Fetch appointments and tasks based on selected date
+  _fetchAppointments(selectedDate);
+  _fetchTasks(selectedDate);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -134,24 +156,24 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
             calendarFormat: _calendarFormat,
             onDateSelected: _handleDateSelected,
           ),
-
           // Date header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             width: double.infinity,
             child: Text(
               DateFormat('EEEE, MMMM d').format(_selectedDay ?? _focusedDay),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-
           // Timeline view
-          Expanded(
-            child: _buildTimelineView(),
-          ),
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                      color: Colors.blue)) // Show loading spinner
+              : Expanded(
+                  child:
+                      _buildTimelineView()), // Show the timeline once the data is fetched
+          // Show the timeline once the data is fetched
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -165,12 +187,19 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   }
 
   Widget _buildTimelineView() {
+    if (_isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(
+              color: Colors.blue)); // Show loading spinner
+    }
+
     // Combine appointments and tasks for the timeline
     final combinedItems = [...appointments, ...tasks];
 
+    print("Combined Items: $combinedItems"); // Log combined items to check data
+
     // Sort items by start time
     combinedItems.sort((a, b) {
-      // Check for null start_time and provide a default if necessary
       final aTime = _parseTimeString(a['start_time'] ?? '00:00');
       final bTime = _parseTimeString(b['start_time'] ?? '00:00');
       return aTime.compareTo(bTime);
@@ -179,30 +208,25 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     // Group overlapping appointments
     final groupedItems = _groupOverlappingItems(combinedItems);
 
+    print("Grouped Items: $groupedItems"); // Log grouped items
+
     return Row(
       children: [
         // Left time column
         _buildTimeColumn(),
-
         // Divider line
-        Container(
-          width: 1,
-          color: Colors.grey.shade300,
-        ),
-
+        Container(width: 1, color: Colors.grey.shade300),
         // Main content area
         Expanded(
           child: SingleChildScrollView(
             controller: _timelineScrollController,
-            physics: ClampingScrollPhysics(), // Better scroll physics
+            physics: ClampingScrollPhysics(),
             child: Stack(
               children: [
                 // Time grid lines
                 _buildTimeGridLines(),
-
                 // Current time indicator
                 _buildCurrentTimeIndicator(),
-
                 // Render grouped appointments
                 ...groupedItems
                     .map((group) => _buildAppointmentGroup(group))
@@ -491,7 +515,6 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     return hours * 60; // Each hour is 60 pixels
   }
 
-// Updated _parseTimeString function
   DateTime _parseTimeString(String timeStr) {
     // If timeStr is null or empty, return a default time
     if (timeStr.isEmpty) {
@@ -505,8 +528,10 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     try {
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
+      // Ignore seconds if present
       return DateTime(2022, 1, 1, hour, minute);
     } catch (e) {
+      print("Error parsing time: $timeStr - $e");
       return DateTime(2022, 1, 1, 0, 0); // Default to midnight if parsing fails
     }
   }

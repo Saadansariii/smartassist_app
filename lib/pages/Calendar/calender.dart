@@ -84,18 +84,18 @@ class _CalenderState extends State<Calender> {
     }
   }
 
-  void _handleDateSelection(DateTime selectedDay) {
-    setState(() {
-      _selectedDay = selectedDay;
-      _focusedDay = selectedDay;
-    });
+  // void _handleDateSelection(DateTime selectedDay) {
+  //   setState(() {
+  //     _selectedDay = selectedDay;
+  //     _focusedDay = selectedDay;
+  //   });
 
-    print(
-        'Fetching data for date is tthe ajdfoadjfadjf: ${DateFormat('dd-MM-yyyy').format(selectedDay)}');
+  //   print(
+  //       'Fetching data for date is tthe ajdfoadjfadjf: ${DateFormat('dd-MM-yyyy').format(selectedDay)}');
 
-    _fetchAppointments(selectedDay);
-    _fetchCount(selectedDay);
-  }
+  //   _fetchAppointments(selectedDay);
+  //   _fetchCount(selectedDay);
+  // }
 
   @override
   Widget build(BuildContext context) {
