@@ -1244,10 +1244,18 @@ class _CreateLeadsState extends State<CreateLeads> {
                       if (_currentStep == 0) {
                         Navigator.pop(context); // Close if on first page
                       } else {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
+                        // _pageController.previousPage(
+                        //   duration: const Duration(milliseconds: 300),
+                        //   curve: Curves.easeInOut,
+                        // );
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_pageController.hasClients) {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        });
                         setState(() => _currentStep--);
                       }
                     },

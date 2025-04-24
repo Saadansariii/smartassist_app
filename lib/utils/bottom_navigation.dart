@@ -6,6 +6,10 @@ import 'package:smart_assist/pages/Leads/home_screen.dart';
 import 'package:smart_assist/pages/Leads/opportunity.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:smart_assist/pages/navbar_page/my_teams.dart';
+import 'package:smart_assist/services/leads_srv.dart';
+import 'package:smart_assist/widgets/timeline_view_calender.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class BottomNavigation extends StatelessWidget {
   BottomNavigation({super.key});
@@ -141,264 +145,81 @@ Widget _buildNavItem({
 }
 
 // ✅ Navigation Controller
-class NavigationController extends GetxController {
-  final RxInt selectedIndex = 0.obs;
-  final RxBool isFabExpanded = false.obs;
-  final screens = [
-    const HomeScreen(greeting: '', leadId: ''),
-    const Opportunity(leadId: ''),
-    const Calender(leadId: '', leadName: ''),
-  ];
-}
-
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:smart_assist/config/component/color/colors.dart';
-// import 'package:smart_assist/pages/calenderPages/calender.dart';
-// import 'package:smart_assist/pages/home_screens/home_screen.dart';
-// import 'package:smart_assist/pages/home_screens/opportunity.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:flutter/services.dart';
-// import 'package:smart_assist/widgets/home_btn.dart/popups_model/appointment_popup.dart';
-// import 'package:smart_assist/widgets/home_btn.dart/popups_model/create_followups/create_Followups_popups.dart';
-// import 'package:smart_assist/widgets/home_btn.dart/popups_model/create_leads.dart';
-
-// class BottomNavigation extends StatelessWidget {
-//   BottomNavigation({super.key});
-
-//   final NavigationController controller = Get.put(NavigationController());
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Stack(
-//         children: [
-//           Obx(() => controller.screens[controller.selectedIndex.value]),
-
-//           // Draggable Floating Popup
-//           Obx(() => controller.isFabExpanded.value
-//               ? _buildDraggablePopupMenu(controller, context)
-//               : const SizedBox.shrink()),
-//         ],
-//       ),
-//       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-//       floatingActionButton:
-//           Obx(() => _buildFloatingActionButton(controller, context)),
-//       bottomNavigationBar: _buildBottomNavigationBar(controller),
-//     );
-//   }
-// }
-
-// // ✅ Floating Action Button (FAB)
-// Widget _buildFloatingActionButton(
-//     NavigationController controller, BuildContext context) {
-//   return GestureDetector(
-//     onLongPress: () {
-//       HapticFeedback.lightImpact();
-//       controller.isFabExpanded.value = true;
-//     },
-//     child: Container(
-//       width: MediaQuery.of(context).size.width * .18,
-//       height: MediaQuery.of(context).size.height * .1,
-//       decoration: BoxDecoration(
-//         border: Border.all(color: Colors.white, width: 2),
-//         color: AppColors.colorsBlue,
-//         shape: BoxShape.circle,
-//       ),
-//       child: Center(
-//         child: Icon(
-//           controller.isFabExpanded.value ? Icons.close : Icons.add,
-//           color: Colors.white,
-//           size: 30,
-//         ),
-//       ),
-//     ),
-//   );
-// }
-
-// // ✅ Draggable Popup Menu
-// Widget _buildDraggablePopupMenu(
-//     NavigationController controller, BuildContext context) {
-//   return Positioned.fill(
-//     child: Stack(
-//       alignment: Alignment.center,
-//       children: [
-//         GestureDetector(
-//           onTap: () => controller.isFabExpanded.value = false,
-//           child: Container(
-//             color: Colors.black.withOpacity(0.7),
-//           ),
-//         ),
-
-//         // Draggable Menu Item
-//         Draggable<String>(
-//           data: "popup",
-//           feedback: _buildPopupMenu(context),
-//           child: _buildPopupMenu(context),
-//           childWhenDragging: const SizedBox.shrink(),
-//           onDragEnd: (details) {
-//             controller.isFabExpanded.value = false;
-//           },
-//         ),
-
-//         // Drop Targets for Popup Items
-//         _buildDragTarget(
-//             controller,
-//             "Appointment",
-//             Icons.calendar_month_outlined,
-//             -130,
-//             120,
-//             () => _showAppointmentPopup(context)),
-//         _buildDragTarget(controller, "Lead", Icons.people_alt_rounded, -65, 40,
-//             () => _showLeadPopup(context)),
-//         _buildDragTarget(controller, "Followup", Icons.call, 5, 40,
-//             () => _showFollowupPopup(context)),
-//       ],
-//     ),
-//   );
-// }
-
-// // ✅ Draggable Popup Menu Items
-// Widget _buildPopupMenu(BuildContext context) {
-//   return Material(
-//     color: Colors.transparent,
-//     child: Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         _popupItem(Icons.calendar_month_outlined, "Appointment"),
-//         _popupItem(Icons.people_alt_rounded, "Lead"),
-//         _popupItem(Icons.call, "Followup"),
-//       ],
-//     ),
-//   );
-// }
-
-// Widget _popupItem(IconData icon, String label) {
-//   return Container(
-//     margin: const EdgeInsets.symmetric(vertical: 8),
-//     padding: const EdgeInsets.all(12),
-//     decoration: BoxDecoration(
-//       color: Colors.white,
-//       borderRadius: BorderRadius.circular(30),
-//     ),
-//     child: Row(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         Icon(icon, color: Colors.blue, size: 24),
-//         const SizedBox(width: 10),
-//         Text(label, style: GoogleFonts.poppins(fontSize: 14)),
-//       ],
-//     ),
-//   );
-// }
-
-// // ✅ Drag Target for Popup Menu Items
-// Widget _buildDragTarget(NavigationController controller, String label,
-//     IconData icon, double dx, double dy, Function() onTap) {
-//   return Positioned(
-//     left: MediaQuery.of(controller.screens[0].context!).size.width / 2 + dx,
-//     top: MediaQuery.of(controller.screens[0].context!).size.height / 2 + dy,
-//     child: DragTarget<String>(
-//       builder: (context, candidateData, rejectedData) {
-//         return Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Container(
-//               padding: const EdgeInsets.all(12),
-//               decoration: BoxDecoration(
-//                 color: candidateData.isNotEmpty
-//                     ? Colors.blue.withOpacity(0.5)
-//                     : Colors.white,
-//                 borderRadius: BorderRadius.circular(30),
-//               ),
-//               child: Icon(icon, color: Colors.blue, size: 24),
-//             ),
-//             const SizedBox(height: 5),
-//             Text(
-//               label,
-//               style: GoogleFonts.poppins(
-//                 fontSize: 14,
-//                 fontWeight: FontWeight.w500,
-//                 color: Colors.white,
-//               ),
-//             ),
-//           ],
-//         );
-//       },
-//       onAccept: (data) {
-//         if (data == "popup") {
-//           onTap();
-//         }
-//       },
-//     ),
-//   );
-// }
-
-// // ✅ Functions to Show Popups
-// void _showLeadPopup(BuildContext context) {
-//   showDialog(
-//     context: context,
-//     builder: (context) {
-//       return Dialog(
-//         backgroundColor: Colors.transparent,
-//         child: Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 16),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: const CreateLeads(),
-//         ),
-//       );
-//     },
-//   );
-// }
-
-// void _showFollowupPopup(BuildContext context) {
-//   showDialog(
-//     context: context,
-//     builder: (context) {
-//       return Dialog(
-//         backgroundColor: Colors.transparent,
-//         child: Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 16),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: const CreateFollowupsPopups(),
-//         ),
-//       );
-//     },
-//   );
-// }
-
-// void _showAppointmentPopup(BuildContext context) {
-//   showDialog(
-//     context: context,
-//     builder: (context) {
-//       return Dialog(
-//         backgroundColor: Colors.transparent,
-//         child: Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 16),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: const AppointmentPopup(),
-//         ),
-//       );
-//     },
-//   );
-// }
-
-// // ✅ Navigation Controller
 // class NavigationController extends GetxController {
 //   final RxInt selectedIndex = 0.obs;
 //   final RxBool isFabExpanded = false.obs;
 //   final screens = [
 //     const HomeScreen(greeting: '', leadId: ''),
 //     const Opportunity(leadId: ''),
+//     // const MyTeams(),
 //     const Calender(leadId: '', leadName: ''),
+//     // TimelineView(selectedDate: selectedDate, appointments: appointments, onDateSelected: onDateSelected)
 //   ];
 // }
+
+// ✅ Navigation Controller
+// ✅ Navigation Controller for Calendar Integration
+class NavigationController extends GetxController {
+  final RxInt selectedIndex = 0.obs;
+  final RxBool isFabExpanded = false.obs;
+  
+  // Add selected date and appointments as observable properties
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
+  final RxList appointments = [].obs;
+  final RxList tasks = [].obs;
+  final Rx<CalendarFormat> calendarFormat = CalendarFormat.week.obs;
+  
+  @override
+  void onInit() {
+    super.onInit();
+    fetchInitialData();
+  }
+  
+  // Method to fetch initial data
+  Future<void> fetchInitialData() async {
+    await Future.wait([
+      fetchAppointments(selectedDate.value),
+      fetchTasks(selectedDate.value)
+    ]);
+  }
+  
+  // Method to fetch appointments
+  Future<void> fetchAppointments(DateTime date) async {
+    try {
+      final data = await LeadsSrv.fetchAppointments(date);
+      appointments.value = data;
+    } catch (e) {
+      print('Error fetching appointments: $e');
+      appointments.value = []; // Set to empty list on error
+    }
+  }
+  
+  // Method to fetch tasks
+  Future<void> fetchTasks(DateTime date) async {
+    try {
+      final data = await LeadsSrv.fetchtasks(date);
+      tasks.value = data;
+    } catch (e) {
+      print('Error fetching tasks: $e');
+      tasks.value = []; // Set to empty list on error
+    }
+  }
+  
+  // Method to handle date selection
+  void onDateSelected(DateTime date) {
+    selectedDate.value = date;
+    fetchAppointments(date);
+    fetchTasks(date);
+  }
+  
+  // Use a getter for screens to ensure it always uses current values
+  List<Widget> get screens => [
+    const HomeScreen(greeting: '', leadId: ''),
+    const Opportunity(leadId: ''),
+    // Replace Calendar with CalendarWithTimeline widget
+    CalendarWithTimeline(
+      leadId: '',
+      leadName: '',
+    ),
+  ];
+}

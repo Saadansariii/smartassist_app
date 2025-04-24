@@ -10,6 +10,7 @@ import 'package:smart_assist/utils/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class CreateTestdrive extends StatefulWidget {
   final Function onFormSubmit;
@@ -43,6 +44,8 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
   String? selectedInteriorColor;
   List<String> exteriorOptions = [];
   List<String> interiorOptions = [];
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   // List<dynamic> _searchResults = [];
   List<dynamic> vehicleName = [];
@@ -52,6 +55,7 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
   TextEditingController endDateController = TextEditingController();
   TextEditingController startTimeController = TextEditingController();
   TextEditingController endTimeController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -59,6 +63,9 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
     _searchController.addListener(_onSearchChanged);
     // fetchDropdownData();
     _searchController1.addListener(_onSearchChanged1);
+
+    _speech = stt.SpeechToText();
+    _initSpeech();
   }
 
   @override
@@ -67,6 +74,57 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
     _searchController1.removeListener(_onSearchChanged1);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
   }
 
   Future<void> fetchVehicleData(String query) async {
@@ -340,6 +398,76 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
     }
   }
 
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.fontBlack,
+            ),
+          ),
+        ),
+        Container(
+          height: MediaQuery.of(context).size.height * .055,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              // TextField itself
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              // Microphone icon with speech recognition
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _toggleListening(controller),
+                  icon: Icon(
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
+                    color: _isListening ? Colors.red : AppColors.fontColor,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -413,6 +541,11 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                  label: 'Comments:',
+                  controller: descriptionController,
+                  hint: 'Add Comments'),
               const SizedBox(height: 10),
             ],
           ),
@@ -874,6 +1007,7 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
       'end_time': formattedEndTime,
       'PMI': selectedVehicleName,
       'sp_id': spId,
+      'comments': descriptionController.text,
     };
 
     // Call the service to submit the appointment.

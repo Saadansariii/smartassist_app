@@ -181,14 +181,16 @@ class _AppointmentWidgetState extends State<AppointmentWidget> {
                                           width: 5,
                                         ),
                                         Text(
-                                          appointment['start_date'] != null
-                                              ? DateFormat('dd-MM-yyyy').format(
-                                                  DateTime.parse(appointment[
-                                                      'start_date']))
+                                          appointment['start_time'] != null
+                                              ? DateFormat('dd-MM-yyyy hh:mm a')
+                                                  .format(DateTime.parse(
+                                                      appointment[
+                                                          'start_time']))
                                               : 'No start date',
                                           style: GoogleFonts.poppins(
-                                              fontSize:
-                                                  screenWidth > 600 ? 16 : 10),
+                                            fontSize:
+                                                screenWidth > 600 ? 16 : 10,
+                                          ),
                                         ),
                                         SizedBox(
                                           width: 5,
