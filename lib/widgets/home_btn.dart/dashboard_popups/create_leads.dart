@@ -153,119 +153,119 @@ class _CreateLeadsState extends State<CreateLeads> {
   }
 
   // Modified _buildSearchField with speech recognition
-  Widget _buildSearchField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
-        const SizedBox(height: 5),
-        Container(
-          height: MediaQuery.of(context).size.height * 0.055,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
-            color: AppColors.containerBg,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: AppColors.containerBg,
-                    hintText: selectedVehicleName ?? 'Vehicle Name',
-                    hintStyle: TextStyle(
-                      color: selectedVehicleName != null
-                          ? Colors.black
-                          : Colors.grey,
-                    ),
-                    prefixIcon: const Icon(
-                      FontAwesomeIcons.magnifyingGlass,
-                      size: 15,
-                      color: AppColors.iconGrey,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isListening
-                            ? FontAwesomeIcons.stop
-                            : FontAwesomeIcons.microphone,
-                        color: _isListening ? Colors.red : AppColors.iconGrey,
-                        size: 15,
-                      ),
-                      onPressed: _toggleListening,
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  // Widget _buildSearchField() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const SizedBox(height: 10),
+  //       Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
+  //       const SizedBox(height: 5),
+  //       Container(
+  //         height: MediaQuery.of(context).size.height * 0.055,
+  //         width: double.infinity,
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(5),
+  //           color: AppColors.containerBg,
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Expanded(
+  //               child: TextField(
+  //                 controller: _searchController,
+  //                 decoration: InputDecoration(
+  //                   filled: true,
+  //                   fillColor: AppColors.containerBg,
+  //                   hintText: selectedVehicleName ?? 'Vehicle Name',
+  //                   hintStyle: TextStyle(
+  //                     color: selectedVehicleName != null
+  //                         ? Colors.black
+  //                         : Colors.grey,
+  //                   ),
+  //                   prefixIcon: const Icon(
+  //                     FontAwesomeIcons.magnifyingGlass,
+  //                     size: 15,
+  //                     color: AppColors.iconGrey,
+  //                   ),
+  //                   suffixIcon: IconButton(
+  //                     icon: Icon(
+  //                       _isListening
+  //                           ? FontAwesomeIcons.stop
+  //                           : FontAwesomeIcons.microphone,
+  //                       color: _isListening ? Colors.red : AppColors.iconGrey,
+  //                       size: 15,
+  //                     ),
+  //                     onPressed: _toggleListening,
+  //                   ),
+  //                   contentPadding:
+  //                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(5),
+  //                     borderSide: BorderSide.none,
+  //                   ),
+  //                 ),
+  //                 style: GoogleFonts.poppins(
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.w500,
+  //                   color: Colors.black,
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
 
-        // Show loading indicator
-        if (_isLoadingSearch)
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Center(child: CircularProgressIndicator()),
-          ),
+  //       // Show loading indicator
+  //       if (_isLoadingSearch)
+  //         const Padding(
+  //           padding: EdgeInsets.only(top: 8.0),
+  //           child: Center(child: CircularProgressIndicator()),
+  //         ),
 
-        // Show search results
-        if (_searchResults.isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(5),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 4)
-              ],
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _searchResults.length,
-              itemBuilder: (context, index) {
-                final result = _searchResults[index];
-                return ListTile(
-                  onTap: () {
-                    setState(() {
-                      FocusScope.of(context).unfocus();
-                      // selectedLeads = result['lead_id'];
-                      selectedVehicleName = result['vehicle_name'];
-                      _searchController.clear();
-                      _searchResults.clear();
-                    });
-                    // ✅ Call the color-fetching function here!
-                    fetchVehicleColors(result['vehicle_name']);
-                  },
-                  title: Text(
-                    result['vehicle_name'] ?? 'No Name',
-                    style: TextStyle(
-                      color: selectedVehicleName == result['vehicle_name']
-                          ? Colors.black
-                          : AppColors.fontBlack,
-                    ),
-                  ),
-                  leading: const Icon(Icons.directions_car),
-                );
-              },
-            ),
-          ),
-      ],
-    );
-  }
+  //       // Show search results
+  //       if (_searchResults.isNotEmpty)
+  //         Container(
+  //           margin: const EdgeInsets.only(top: 8),
+  //           decoration: BoxDecoration(
+  //             color: Colors.white,
+  //             borderRadius: BorderRadius.circular(5),
+  //             boxShadow: const [
+  //               BoxShadow(color: Colors.black12, blurRadius: 4)
+  //             ],
+  //           ),
+  //           child: ListView.builder(
+  //             shrinkWrap: true,
+  //             physics: const NeverScrollableScrollPhysics(),
+  //             itemCount: _searchResults.length,
+  //             itemBuilder: (context, index) {
+  //               final result = _searchResults[index];
+  //               return ListTile(
+  //                 onTap: () {
+  //                   setState(() {
+  //                     FocusScope.of(context).unfocus();
+  //                     // selectedLeads = result['lead_id'];
+  //                     selectedVehicleName = result['vehicle_name'];
+  //                     _searchController.clear();
+  //                     _searchResults.clear();
+  //                   });
+  //                   // ✅ Call the color-fetching function here!
+  //                   fetchVehicleColors(result['vehicle_name']);
+  //                 },
+  //                 title: Text(
+  //                   result['vehicle_name'] ?? 'No Name',
+  //                   style: TextStyle(
+  //                     color: selectedVehicleName == result['vehicle_name']
+  //                         ? Colors.black
+  //                         : AppColors.fontBlack,
+  //                   ),
+  //                 ),
+  //                 leading: const Icon(Icons.directions_car),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
 
   Future<void> fetchVehicleData(String query) async {
     if (query.isEmpty) {
@@ -1269,7 +1269,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.colorsBlue,
+                      backgroundColor: AppColors.colorsBlueButton,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
@@ -1289,119 +1289,119 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Widget _buildSearchField() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(height: 10),
-  //       Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
-  //       const SizedBox(height: 5),
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * 0.055,
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: AppColors.containerBg,
-  //         ),
-  //         child: Row(
-  //           children: [
-  //             Expanded(
-  //               child: TextField(
-  //                 controller: _searchController,
-  //                 decoration: InputDecoration(
-  //                   filled: true,
-  //                   fillColor: AppColors.containerBg,
-  //                   hintText: selectedVehicleName ?? 'Vehicle Name',
-  //                   hintStyle: TextStyle(
-  //                     color: selectedVehicleName != null
-  //                         ? Colors.black
-  //                         : Colors.grey,
-  //                   ),
-  //                   prefixIcon: const Icon(
-  //                     FontAwesomeIcons.magnifyingGlass,
-  //                     size: 15,
-  //                     color: AppColors.iconGrey,
-  //                   ),
-  //                   suffixIcon: IconButton(
-  //                     icon: const Icon(
-  //                       FontAwesomeIcons.microphone,
-  //                       color: AppColors.iconGrey,
-  //                       size: 15,
-  //                     ),
-  //                     onPressed: () {
-  //                       print('Microphone button pressed');
-  //                     },
-  //                   ),
-  //                   contentPadding:
-  //                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-  //                   border: OutlineInputBorder(
-  //                     borderRadius: BorderRadius.circular(5),
-  //                     borderSide: BorderSide.none,
-  //                   ),
-  //                 ),
-  //                 style: GoogleFonts.poppins(
-  //                   fontSize: 14,
-  //                   fontWeight: FontWeight.w500,
-  //                   color: Colors.black,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
+  Widget _buildSearchField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
+        const SizedBox(height: 5),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.055,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.containerBg,
+                    hintText: selectedVehicleName ?? 'Vehicle Name',
+                    hintStyle: TextStyle(
+                      color: selectedVehicleName != null
+                          ? Colors.black
+                          : Colors.grey,
+                    ),
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      size: 15,
+                      color: AppColors.iconGrey,
+                    ),
+                    // suffixIcon: IconButton(
+                    //   icon: const Icon(
+                    //     FontAwesomeIcons.microphone,
+                    //     color: AppColors.iconGrey,
+                    //     size: 15,
+                    //   ),
+                    //   onPressed: () {
+                    //     print('Microphone button pressed');
+                    //   },
+                    // ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
 
-  //       // Show loading indicator
-  //       if (_isLoadingSearch)
-  //         const Padding(
-  //           padding: EdgeInsets.only(top: 8.0),
-  //           child: Center(child: CircularProgressIndicator()),
-  //         ),
+        // Show loading indicator
+        if (_isLoadingSearch)
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
 
-  //       // Show search results
-  //       if (_searchResults.isNotEmpty)
-  //         Container(
-  //           margin: const EdgeInsets.only(top: 8),
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(5),
-  //             boxShadow: const [
-  //               BoxShadow(color: Colors.black12, blurRadius: 4)
-  //             ],
-  //           ),
-  //           child: ListView.builder(
-  //             shrinkWrap: true,
-  //             physics: const NeverScrollableScrollPhysics(),
-  //             itemCount: _searchResults.length,
-  //             itemBuilder: (context, index) {
-  //               final result = _searchResults[index];
-  //               return ListTile(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     FocusScope.of(context).unfocus();
-  //                     // selectedLeads = result['lead_id'];
-  //                     selectedVehicleName = result['vehicle_name'];
-  //                     _searchController.clear();
-  //                     _searchResults.clear();
-  //                   });
-  //                   // ✅ Call the color-fetching function here!
-  //                   fetchVehicleColors(result['vehicle_name']);
-  //                 },
-  //                 title: Text(
-  //                   result['vehicle_name'] ?? 'No Name',
-  //                   style: TextStyle(
-  //                     color: selectedVehicleName == result['vehicle_name']
-  //                         ? Colors.black
-  //                         : AppColors.fontBlack,
-  //                   ),
-  //                 ),
-  //                 leading: const Icon(Icons.directions_car),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
+        // Show search results
+        if (_searchResults.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 4)
+              ],
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final result = _searchResults[index];
+                return ListTile(
+                  onTap: () {
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                      // selectedLeads = result['lead_id'];
+                      selectedVehicleName = result['vehicle_name'];
+                      _searchController.clear();
+                      _searchResults.clear();
+                    });
+                    // ✅ Call the color-fetching function here!
+                    fetchVehicleColors(result['vehicle_name']);
+                  },
+                  title: Text(
+                    result['vehicle_name'] ?? 'No Name',
+                    style: TextStyle(
+                      color: selectedVehicleName == result['vehicle_name']
+                          ? Colors.black
+                          : AppColors.fontBlack,
+                    ),
+                  ),
+                  leading: const Icon(Icons.directions_car),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _buildNumberWidget({
     required TextEditingController controller,

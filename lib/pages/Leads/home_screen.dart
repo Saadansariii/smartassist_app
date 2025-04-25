@@ -120,48 +120,52 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final data = await LeadsSrv.fetchDashboardData();
-      setState(() {
-        upcomingFollowups = data['upcomingFollowups'];
-        overdueFollowups = data['overdueFollowups'];
-        upcomingAppointments = data['upcomingAppointments'];
-        overdueAppointments = data['overdueAppointments'];
-        upcomingTestDrives = data['upcomingTestDrives'];
-        overdueTestDrives = data['overdueTestDrives'];
-        overdueFollowupsCount = data.containsKey('overdueFollowupsCount') &&
-                data['overdueFollowupsCount'] is int
-            ? data['overdueFollowupsCount']
-            : 0;
+      if (mounted) {
+        setState(() {
+          upcomingFollowups = data['upcomingFollowups'];
+          overdueFollowups = data['overdueFollowups'];
+          upcomingAppointments = data['upcomingAppointments'];
+          overdueAppointments = data['overdueAppointments'];
+          upcomingTestDrives = data['upcomingTestDrives'];
+          overdueTestDrives = data['overdueTestDrives'];
+          overdueFollowupsCount = data.containsKey('overdueFollowupsCount') &&
+                  data['overdueFollowupsCount'] is int
+              ? data['overdueFollowupsCount']
+              : 0;
 
-        overdueAppointmentsCount =
-            data.containsKey('overdueAppointmentsCount') &&
-                    data['overdueAppointmentsCount'] is int
-                ? data['overdueAppointmentsCount']
-                : 0;
+          overdueAppointmentsCount =
+              data.containsKey('overdueAppointmentsCount') &&
+                      data['overdueAppointmentsCount'] is int
+                  ? data['overdueAppointmentsCount']
+                  : 0;
 
-        overdueTestDrivesCount = data.containsKey('overdueTestDrivesCount') &&
-                data['overdueTestDrivesCount'] is int
-            ? data['overdueTestDrivesCount']
-            : 0;
+          overdueTestDrivesCount = data.containsKey('overdueTestDrivesCount') &&
+                  data['overdueTestDrivesCount'] is int
+              ? data['overdueTestDrivesCount']
+              : 0;
 
-        notificationCount =
-            data.containsKey('notifications') && data['notifications'] is int
-                ? data['notifications']
-                : 0;
-        greeting =
-            (data.containsKey('greetings') && data['greetings'] is String)
-                ? data['greetings']
-                : 'Welcome!';
-        // if (upcomingFollowups.isNotEmpty) {
-        //   leadId = upcomingFollowups[0]['lead_id'];
-        // }
-      });
+          notificationCount =
+              data.containsKey('notifications') && data['notifications'] is int
+                  ? data['notifications']
+                  : 0;
+          greeting =
+              (data.containsKey('greetings') && data['greetings'] is String)
+                  ? data['greetings']
+                  : 'Welcome!';
+          // if (upcomingFollowups.isNotEmpty) {
+          //   leadId = upcomingFollowups[0]['lead_id'];
+          // }
+        });
+      }
     } catch (e) {
       print(e);
       // showErrorMessage(context, message: e.toString());
     } finally {
-      setState(() {
-        isDashboardLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isDashboardLoading = false;
+        });
+      }
     }
   }
 

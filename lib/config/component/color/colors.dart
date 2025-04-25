@@ -12,6 +12,8 @@ class AppColors {
   static const Color fontBlack = Color(0xff000000);
   static const Color homeContainerLeads = Color(0xffE1EFFF);
   static const Color colorsBlue = Color(0xff0276FE);
+  static const Color colorsBlueButton = Color.fromRGBO(19, 128, 254, 1);
+
   static const Color arrowContainerColor = Color(0xffD9D9D9);
   static const Color starBorderColor = Color.fromRGBO(239, 206, 29, 1);
   static const Color starColorsYellow = Color.fromRGBO(248, 204, 99, 1);

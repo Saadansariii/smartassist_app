@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui'; 
+import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -73,45 +73,45 @@ class _LicenseVarificationState extends State<LicenseVarification> {
       cameraController!.value.previewSize!.height,
       cameraController!.value.previewSize!.width,
     );
-    
+
     // Calculate the ratio between the actual image and what's displayed on screen
     double scaleX = previewSize.width / screenSize.width;
     double scaleY = previewSize.height / screenSize.height;
-    
+
     // Calculate coordinates for the rectangle in the image
     double centerX = screenSize.width / 2;
     double centerY = screenSize.height / 2;
-    
+
     frameWidth = MediaQuery.of(context).size.width * 0.85;
     frameHeight = MediaQuery.of(context).size.width * 0.55;
-    
+
     double left = (centerX - frameWidth / 2) * scaleX;
     double top = (centerY - frameHeight / 2) * scaleY;
     double right = (centerX + frameWidth / 2) * scaleX;
     double bottom = (centerY + frameHeight / 2) * scaleY;
-    
+
     // Ensure coordinates are within bounds
     left = max(0, left);
     top = max(0, top);
     right = min(previewSize.width, right);
     bottom = min(previewSize.height, bottom);
-    
+
     // Create Rect for cropping
     frameRect = Rect.fromLTRB(left, top, right, bottom);
-    
+
     // Use image package to load and crop the image
     final image = await img.decodeImageFile(file.path);
     if (image == null) {
       print("Failed to decode image");
       return;
     }
-    
+
     // Calculate crop dimensions based on the frame rectangle
     final int cropX = (left).round();
     final int cropY = (top).round();
     final int cropWidth = (right - left).round();
     final int cropHeight = (bottom - top).round();
-    
+
     // Crop the image
     final img.Image croppedImage = img.copyCrop(
       image,
@@ -120,7 +120,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
       width: cropWidth,
       height: cropHeight,
     );
-    
+
     // Save the cropped image
     final Directory appDir = await getApplicationDocumentsDirectory();
     final String imagePath = path.join(appDir.path, '${DateTime.now()}.png');
@@ -237,17 +237,20 @@ class _LicenseVarificationState extends State<LicenseVarification> {
     frameHeight = MediaQuery.of(context).size.width * 0.55;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text(
-          'Scan License',
-          style: TextStyle(
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(
+            size: 30,
+            Icons.keyboard_arrow_left_rounded,
             color: Colors.white,
-            fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        // backgroundColor: Colors.black,
+        title: Text('License', style: AppFont.appbarfontWhite(context)),
+        backgroundColor: Colors.blue,
+        automaticallyImplyLeading: false,
       ),
       body: _isCameraInitialized
           ? Stack(
@@ -275,7 +278,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                         clipper: InvertedRectangleClipper(
                           center: Offset(
                             MediaQuery.of(context).size.width / 2,
-                            MediaQuery.of(context).size.height / 2,
+                            MediaQuery.of(context).size.height / 2.4,
                           ),
                           width: frameWidth,
                           height: frameHeight,
@@ -291,6 +294,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                       // Border for the cutout
                       Center(
                         child: Container(
+                          margin: const EdgeInsets.only(bottom: 55),
                           width: frameWidth,
                           height: frameHeight,
                           decoration: BoxDecoration(
@@ -366,13 +370,14 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                                 }
                               },
                               child: Container(
+                                margin: const EdgeInsets.all(10),
                                 width: 70,
                                 height: 70,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppColors.colorsBlue,
+                                    color: Colors.blue,
                                     width: 3,
                                   ),
                                 ),
@@ -381,13 +386,8 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                                     width: 60,
                                     height: 60,
                                     decoration: const BoxDecoration(
-                                      color: AppColors.colorsBlue,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.camera_alt,
                                       color: Colors.white,
-                                      size: 30,
+                                      shape: BoxShape.circle,
                                     ),
                                   ),
                                 ),
@@ -404,7 +404,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                 ),
               ],
             )
-          : Center(
+          : const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -426,6 +426,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
     final cornerSize = 20.0;
     final centerWidget = Center(
       child: Container(
+        margin: const EdgeInsets.only(bottom: 55),
         width: frameWidth,
         height: frameHeight,
         child: Stack(
@@ -685,8 +686,7 @@ class InvertedRectangleClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final path = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final cutoutLeft = center.dx - width / 2;
     final cutoutTop = center.dy - height / 2;
@@ -694,7 +694,7 @@ class InvertedRectangleClipper extends CustomClipper<Path> {
     final cutoutBottom = center.dy + height / 2;
 
     final cutoutPath = Path();
-    
+
     if (borderRadius > 0) {
       cutoutPath.addRRect(
         RRect.fromRectAndRadius(
@@ -714,7 +714,6 @@ class InvertedRectangleClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => true;
-  
 }
 
 

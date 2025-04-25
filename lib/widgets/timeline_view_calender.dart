@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/widgets/calender/calender.dart';
@@ -65,16 +66,28 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   }
 
   Future<void> _fetchInitialData() async {
-    setState(() {
-      _isLoading = true; // Set loading to true before fetching data
-    });
+    // Set loading to true before fetching data
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
-    await _fetchAppointments(_selectedDay ?? _focusedDay);
-    await _fetchTasks(_selectedDay ?? _focusedDay);
-
-    setState(() {
-      _isLoading = false; // Set loading to false once data is fetched
-    });
+    try {
+      // Fetch appointments and tasks
+      await _fetchAppointments(_selectedDay ?? _focusedDay);
+      await _fetchTasks(_selectedDay ?? _focusedDay);
+    } catch (e) {
+      // Handle any errors here if needed
+      print("Error fetching initial data: $e");
+    } finally {
+      // Set loading to false once data is fetched, check if mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchAppointments(DateTime selectedDate) async {
@@ -176,13 +189,13 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
           // Show the timeline once the data is fetched
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add new appointment or task logic here
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.blue,
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     // Add new appointment or task logic here
+      //   },
+      //   child: const Icon(Icons.add),
+      //   backgroundColor: Colors.blue,
+      // ),
     );
   }
 
@@ -656,13 +669,13 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   Color _getTaskColor(dynamic task) {
     final type = task['taskType']?.toString().toLowerCase() ?? '';
     if (type == 'follow-up' || type == 'followup') {
-      return Colors.orange; // Orange for follow-up tasks
+      return AppColors.colorsBlue; // Orange for follow-up tasks
     } else if (type == 'urgent') {
       return Colors.red; // Red for urgent tasks
     } else if (type == 'reminder') {
       return Colors.green; // Green for reminders
     } else {
-      return Colors.amber.shade700; // Default color for tasks
+      return AppColors.colorsBlueButton; // Default color for tasks
     }
   }
 

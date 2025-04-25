@@ -418,7 +418,6 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
           ),
         ),
         Container(
-          height: MediaQuery.of(context).size.height * .055,
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
@@ -426,10 +425,14 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
           ),
           child: Row(
             children: [
-              // TextField itself
+              // Expanded TextField that adjusts height
               Expanded(
                 child: TextField(
                   controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText: hint,
                     hintStyle: GoogleFonts.poppins(
@@ -437,7 +440,8 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
                       fontWeight: FontWeight.w500,
                       color: Colors.grey,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
                     border: InputBorder.none,
                   ),
                   style: GoogleFonts.poppins(
@@ -565,7 +569,7 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.colorsBlue,
+                      backgroundColor: AppColors.colorsBlueButton,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5))),
                   onPressed: submitForm,
@@ -714,6 +718,8 @@ class _CreateTestdriveState extends State<CreateTestdrive> {
             children: [
               Expanded(
                 child: TextField(
+                  maxLines: null,
+                  minLines: 1,
                   controller: _searchController,
                   decoration: InputDecoration(
                     filled: true,

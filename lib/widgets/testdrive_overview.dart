@@ -36,28 +36,33 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
   }
 
   Future<void> _fetchTestDriveData() async {
-    // final url = Uri.parse(
-    //     'https://api.smartassistapp.in/api/events/7cf0f7e5-d10d-492a-80e8-54bb6e575605');
-    final token = await Storage.getToken();
-    final response = await http.get(
+    try {
+      final token = await Storage.getToken();
+      final response = await http.get(
         Uri.parse('https://api.smartassistapp.in/api/events/${widget.eventId}'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-        });
-    // final response = await http.get(url);
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        startTime = data['data']['duration'];
-        distanceCovered = data['data']['distance'] + ' km';
-        mapImgUrl = data['data']['map_img'] ?? '';
-        potentialPurchase = data['data']['purchase_potential'];
-        ratings = data['data']['drive_feedback'];
-      });
-    } else {
-      print('Failed to fetch test drive data');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          startTime = data['data']['duration'];
+          distanceCovered = data['data']['distance'] + ' km';
+          mapImgUrl = data['data']['map_img'] ?? '';
+          potentialPurchase = data['data']['purchase_potential'];
+          ratings = data['data']['drive_feedback'];
+        });
+      } else {
+        print(
+            'Failed to fetch test drive data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle different types of errors (network, JSON, etc.)
+      print('Error fetching test drive data: $e');
+      // Optionally, you can also show an error message to the user
     }
   }
 

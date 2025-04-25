@@ -375,18 +375,35 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        setState(() {
-          _dashboardData = jsonData['data'];
-          _isLoading = false;
-        });
+        // Check if the widget is still in the widget tree before calling setState
+        if (mounted) {
+          setState(() {
+            _dashboardData = jsonData['data'];
+            _isLoading = false;
+          });
+        }
       } else {
-        throw Exception('Failed to load dashboard data');
+        // Handle unsuccessful status codes
+        throw Exception(
+            'Failed to load dashboard data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      debugPrint('Error fetching dashboard data: $e');
+      // Check if the widget is still in the widget tree before calling setState
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+
+      // Handle different types of errors
+      if (e is http.ClientException) {
+        debugPrint('Network error: $e');
+      } else if (e is FormatException) {
+        debugPrint('Error parsing data: $e');
+      } else {
+        debugPrint('Unexpected error: $e');
+      }
+
       // Fallback to mock data in case of error
       _loadMockData();
     }

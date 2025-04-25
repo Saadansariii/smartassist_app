@@ -11,7 +11,7 @@ import 'package:smart_assist/utils/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
-import 'package:smart_assist/utils/style_text.dart'; 
+import 'package:smart_assist/utils/style_text.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class CreateFollowupsPopups extends StatefulWidget {
@@ -46,7 +46,8 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);// Initialize speech recognition
+    _searchController
+        .addListener(_onSearchChanged); // Initialize speech recognition
     _speech = stt.SpeechToText();
     _initSpeech();
   }
@@ -57,7 +58,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     super.dispose();
   }
 
-    // Initialize speech recognition
+  // Initialize speech recognition
   void _initSpeech() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -71,11 +72,13 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
         setState(() {
           _isListening = false;
         });
-        showErrorMessage(context, message: 'Speech recognition error: ${errorNotification.errorMsg}');
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
       },
     );
     if (!available) {
-      showErrorMessage(context, message: 'Speech recognition not available on this device');
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
     }
   }
 
@@ -90,7 +93,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
       setState(() {
         _isListening = true;
       });
-      
+
       await _speech.listen(
         onResult: (result) {
           setState(() {
@@ -231,8 +234,75 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     }
   }
 
+//  Widget _buildTextField({
+//     required String label,
+//     required TextEditingController controller,
+//     required String hint,
+//   }) {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 5.0),
+//           child: Text(
+//             label,
+//             style: GoogleFonts.poppins(
+//               fontSize: 14,
+//               fontWeight: FontWeight.w500,
+//               color: AppColors.fontBlack,
+//             ),
+//           ),
+//         ),
+//         Container(
+//           height: MediaQuery.of(context).size.height * .055,
+//           width: double.infinity,
+//           decoration: BoxDecoration(
+//             borderRadius: BorderRadius.circular(5),
+//             color: AppColors.containerBg,
+//           ),
+//           child: Row(
+//             children: [
+//               // TextField itself
+//               Expanded(
+//                 child: TextField(
+//                   controller: controller,
+//                   decoration: InputDecoration(
+//                     hintText: hint,
+//                     hintStyle: GoogleFonts.poppins(
+//                       fontSize: 14,
+//                       fontWeight: FontWeight.w500,
+//                       color: Colors.grey,
+//                     ),
+//                     contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+//                     border: InputBorder.none,
+//                   ),
+//                   style: GoogleFonts.poppins(
+//                     fontSize: 14,
+//                     fontWeight: FontWeight.w500,
+//                     color: Colors.black,
+//                   ),
+//                 ),
+//               ),
+//               // Microphone icon with speech recognition
+//               Align(
+//                 alignment: Alignment.centerRight,
+//                 child: IconButton(
+//                   onPressed: () => _toggleListening(controller),
+//                   icon: Icon(
+//                     _isListening ? FontAwesomeIcons.stop : FontAwesomeIcons.microphone,
+//                     color: _isListening ? Colors.red : AppColors.fontColor,
+//                     size: 15,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ],
+//     );
+//   }
 
- Widget _buildTextField({
+  Widget _buildTextField({
     required String label,
     required TextEditingController controller,
     required String hint,
@@ -252,7 +322,6 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
           ),
         ),
         Container(
-          height: MediaQuery.of(context).size.height * .055,
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
@@ -260,10 +329,14 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
           ),
           child: Row(
             children: [
-              // TextField itself
+              // Expanded TextField that adjusts height
               Expanded(
                 child: TextField(
                   controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText: hint,
                     hintStyle: GoogleFonts.poppins(
@@ -271,7 +344,8 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                       fontWeight: FontWeight.w500,
                       color: Colors.grey,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
                     border: InputBorder.none,
                   ),
                   style: GoogleFonts.poppins(
@@ -287,7 +361,9 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                 child: IconButton(
                   onPressed: () => _toggleListening(controller),
                   icon: Icon(
-                    _isListening ? FontAwesomeIcons.stop : FontAwesomeIcons.microphone,
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
                     color: _isListening ? Colors.red : AppColors.fontColor,
                     size: 15,
                   ),
@@ -299,8 +375,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
       ],
     );
   }
- 
- 
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

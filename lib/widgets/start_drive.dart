@@ -554,9 +554,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
   Future<void> _uploadImage(File file) async {
     final url = Uri.parse(
         'https://api.smartassistapp.in/api/events/${widget.eventId}/upload-map');
-    final token = await Storage
-        .getToken(); // You can get your token from Storage or authentication
-
+    final token = await Storage.getToken();
     try {
       var request = http.MultipartRequest('POST', url)
         ..headers['Authorization'] = 'Bearer $token'
@@ -726,6 +724,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                 if (!isDriveEnded)
                                   SizedBox(
                                     width: double.infinity,
+                                    height: 50,
                                     child: ElevatedButton(
                                       onPressed: () {
                                         _endTestDrive();
@@ -737,7 +736,8 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10)),
-                                        backgroundColor: Colors.red,
+                                        backgroundColor:
+                                            AppColors.colorsBlueButton,
                                       ),
                                       child: Text('End Drive & Submit Feedback',
                                           style: GoogleFonts.poppins(
@@ -746,8 +746,10 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                               color: Colors.white)),
                                     ),
                                   ),
+                                const SizedBox(height: 10),
                                 SizedBox(
                                   width: double.infinity,
+                                  height: 50,
                                   child: ElevatedButton(
                                     onPressed: () {
                                       Navigator.push(
@@ -767,7 +769,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(10)),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: Colors.black,
                                     ),
                                     child: Text(
                                       'End drive & Submit Feedback later',
