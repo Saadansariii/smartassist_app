@@ -57,7 +57,15 @@ Widget _buildBottomNavigationBar(NavigationController controller) {
                   isIcon: true,
                   isImg: false,
                   controller: controller),
-                  
+
+              _buildNavItem(
+                  icon: Icons.people_alt_outlined,
+                  label: 'My Teams',
+                  index: 1,
+                  isIcon: true,
+                  isImg: false,
+                  controller: controller),
+
               // SizedBox(width: 10), // Space for the FAB
               _buildNavItem(
                   isImg: true,
@@ -68,6 +76,14 @@ Widget _buildBottomNavigationBar(NavigationController controller) {
                   ),
                   label: 'Calendar',
                   index: 2,
+                  controller: controller),
+
+              _buildNavItem(
+                  icon: Icons.settings,
+                  label: 'More',
+                  index: 3,
+                  isIcon: true,
+                  isImg: false,
                   controller: controller),
             ],
           ),
@@ -216,7 +232,9 @@ class NavigationController extends GetxController {
   // Use a getter for screens to ensure it always uses current values
   List<Widget> get screens => [
         const HomeScreen(greeting: '', leadId: ''),
-        const Opportunity(leadId: ''), 
+        const MyTeams(),
+        // onclick more this will open 
+        
         const CalendarWithTimeline(
           // leadId: '',
           leadName: '',

@@ -418,36 +418,129 @@ class _StartDriveMapState extends State<StartDriveMap> {
           positionStreamSubscription!.cancel();
         }
       });
+    }
+  }
 
-      // Show summary dialog
-      // showDialog(
-      //   context: context,
-      //   barrierDismissible: false,
-      //   builder: (context) => AlertDialog(
-      //     title: const Text('Drive Summary'),
-      //     content: Column(
-      //       mainAxisSize: MainAxisSize.min,
-      //       children: [
-      //         Text('Total Distance: ${totalDistance.toStringAsFixed(2)} km'),
-      //         Text('Duration: $driveDuration minutes'),
-      //       ],
-      //     ),
-      //     actions: [
-      //       TextButton(
-      //         onPressed: () {
-      //           Navigator.pop(context); // Close dialog
-      //           Navigator.of(context).push(
-      //             MaterialPageRoute(
-      //               builder: (context) =>
-      //                   FeedbackScreen(eventId: widget.eventId),
-      //             ),
-      //           );
-      //         },
-      //         child: const Text('Submit Feedback'),
-      //       ),
-      //     ],
-      //   ),
-      // );
+// New method to upload drive summary instead of image
+  Future<void> _uploadDriveSummary() async {
+    try {
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/events/${widget.eventId}/drive-summary');
+      final token = await Storage.getToken();
+
+      // Convert route points to a simpler format for the API
+      List<Map<String, double>> routeCoordinates = routePoints
+          .map((point) => {
+                'latitude': point.latitude,
+                'longitude': point.longitude,
+              })
+          .toList();
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'startPoint': {
+            'latitude': startMarker?.position.latitude,
+            'longitude': startMarker?.position.longitude,
+          },
+          'endPoint': {
+            'latitude': userMarker?.position.latitude,
+            'longitude': userMarker?.position.longitude,
+          },
+          'totalDistance': totalDistance,
+          'duration': _calculateDuration(),
+          'routePoints': routeCoordinates,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Drive summary data uploaded successfully');
+      } else {
+        print('Failed to upload drive summary: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error uploading drive summary: $e');
+      // Just log the error but don't throw - we want to continue with the workflow
+    }
+  }
+
+  Future<void> _handleEndDrive() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Try screenshot but don't let failure block the process
+      try {
+        await _captureAndUploadImage().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            print("Screenshot operation timed out");
+            throw TimeoutException("Screenshot timed out");
+          },
+        );
+      } catch (e) {
+        print("Screenshot failed: $e");
+        // Continue with the process regardless of screenshot failure
+      }
+
+      // End the drive with API call - the most important part
+      await _endTestDrive();
+
+      // Clean up resources
+      _cleanupResources();
+
+      // Navigate to feedback screen
+      if (mounted) {
+        // Add a small delay to let any UI updates complete
+        await Future.delayed(Duration(milliseconds: 200));
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => Feedbackscreen(
+              leadId: widget.leadId,
+              eventId: widget.eventId,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error in end drive process: $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error ending test drive: $e')),
+        );
+        setState(() {
+          isLoading = false;
+        });
+      }
+
+      _cleanupResources();
+    }
+  }
+
+// Dedicated method for resource cleanup
+  void _cleanupResources() {
+    try {
+      if (socket != null) {
+        socket!.disconnect();
+        socket = null;
+      }
+      if (positionStreamSubscription != null) {
+        positionStreamSubscription!.cancel();
+        positionStreamSubscription = null;
+      }
+      if (mapController != null) {
+        // No need to explicitly dispose mapController as it's handled by the GoogleMap widget
+      }
+    } catch (e) {
+      print("Error during resource cleanup: $e");
     }
   }
 
@@ -457,13 +550,14 @@ class _StartDriveMapState extends State<StartDriveMap> {
   }
 
   // End the test drive with API call
+
+// Modify your _endTestDrive function
   Future<void> _endTestDrive() async {
     try {
       final url = Uri.parse(
           'https://api.smartassistapp.in/api/events/${widget.eventId}/end-drive');
       final token = await Storage.getToken();
 
-      // Send current calculated distance and duration
       final response = await http.post(
         url,
         headers: {
@@ -478,43 +572,14 @@ class _StartDriveMapState extends State<StartDriveMap> {
 
       if (response.statusCode == 200) {
         print('Test drive ended successfully');
-        print(_calculateDuration);
-        // Handle successful end of drive
+        print('Duration: ${_calculateDuration()}');
         _handleDriveEnded(totalDistance, _calculateDuration());
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => Feedbackscreen(
-              leadId: widget.leadId,
-              eventId: widget.eventId,
-            ),
-          ),
-        );
-        // Navigator.push(context, MaterialPageRoute(builder: ))
       } else {
-        print('Failed to end drive: ${response.statusCode}');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Failed to end drive: ${response.statusCode}')),
-          );
-        }
+        throw Exception('Failed to end drive: ${response.statusCode}');
       }
     } catch (e) {
       print('Error ending drive: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error ending drive: $e')),
-        );
-      }
-    } finally {
-      // Clean up resources even if API call fails
-      if (socket != null) {
-        socket!.disconnect();
-      }
-
-      if (positionStreamSubscription != null) {
-        positionStreamSubscription!.cancel();
-      }
+      throw e; // Re-throw to be caught by caller
     }
   }
 
@@ -534,22 +599,39 @@ class _StartDriveMapState extends State<StartDriveMap> {
 
   ScreenshotController _screenshotController = ScreenshotController();
 
+  // Update your screenshot capture function
   Future<void> _captureAndUploadImage() async {
-    // Capture the map screenshot
-    final image = await _screenshotController.capture();
-    if (image == null) {
-      print("Error capturing the screenshot");
-      return;
+    // Small delay before capture to let the UI stabilize
+    await Future.delayed(Duration(milliseconds: 100));
+
+    try {
+      final image = await _screenshotController.capture();
+      if (image == null) {
+        throw Exception("Screenshot capture returned null");
+      }
+
+      final directory = await getTemporaryDirectory();
+      final filePath = '${directory.path}/map_image.png';
+      final file = File(filePath)..writeAsBytesSync(image);
+
+      await _uploadImage(file);
+    } catch (e) {
+      print("Error capturing or uploading screenshot: $e");
+      throw e; // Re-throw to be caught by caller
     }
-
-    // Convert to a file and save
-    final directory = await getTemporaryDirectory();
-    final filePath = '${directory.path}/map_image.png';
-    final file = File(filePath)..writeAsBytesSync(image);
-
-    // Upload the image to the server
-    _uploadImage(file);
   }
+
+//   Future<void> _captureAndUploadImage() async {
+//   try {
+//     // Your existing code
+//     final image = await _screenshotController.capture();
+//     // Rest of your function
+//     await _uploadImage(file); // Make sure to await this
+//   } catch (e) {
+//     print("Error capturing or uploading screenshot: $e");
+//     rethrow; // Re-throw to be caught by the caller
+//   }
+// }
 
   Future<void> _uploadImage(File file) async {
     final url = Uri.parse(
@@ -663,6 +745,27 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                               BorderRadius.circular(10)),
                                       child: Screenshot(
                                         controller: _screenshotController,
+                                        // child: GoogleMap(
+                                        //   onMapCreated: _onMapCreated,
+                                        //   initialCameraPosition: CameraPosition(
+                                        //     target: startMarker?.position ??
+                                        //         const LatLng(0, 0),
+                                        //     zoom: 16,
+                                        //   ),
+                                        //   myLocationEnabled: true,
+                                        //   myLocationButtonEnabled: true,
+                                        //   zoomControlsEnabled: true,
+                                        //   markers: {
+                                        //     if (startMarker != null)
+                                        //       startMarker!,
+                                        //     if (userMarker != null) userMarker!,
+                                        //     if (isDriveEnded &&
+                                        //         endMarker != null)
+                                        //       endMarker!,
+                                        //   },
+                                        //   polylines: {routePolyline},
+                                        // ),
+
                                         child: GoogleMap(
                                           onMapCreated: _onMapCreated,
                                           initialCameraPosition: CameraPosition(
@@ -726,10 +829,43 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                     width: double.infinity,
                                     height: 50,
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        _endTestDrive();
-                                        _captureAndUploadImage();
+                                      // Update the button onPressed handler
+                                      onPressed: () async {
+                                        try {
+                                          // First try to capture and upload the image
+                                          try {
+                                            await _captureAndUploadImage();
+                                          } catch (e) {
+                                            // Log but don't block the flow if screenshot fails
+                                            print(
+                                                "Screenshot capture/upload failed: $e");
+                                            // Maybe show a toast notification
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Could not capture map image: $e')),
+                                            );
+                                          }
+
+                                          // Continue with ending the drive regardless of screenshot success
+                                          await _handleEndDrive();
+                                          ;
+                                        } catch (e) {
+                                          // Handle errors with the end drive API call
+                                          print("Error ending drive: $e");
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    'Error ending drive: $e')),
+                                          );
+                                        }
                                       },
+                                      // onPressed: () {
+                                      //   _endTestDrive();
+                                      //   _captureAndUploadImage();
+                                      // },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 10),
@@ -739,7 +875,8 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                         backgroundColor:
                                             AppColors.colorsBlueButton,
                                       ),
-                                      child: Text('End Drive & Submit Feedback',
+                                      child: Text(
+                                          'End Test Drive & Submit Feedback Now',
                                           style: GoogleFonts.poppins(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w500,
@@ -772,7 +909,7 @@ class _StartDriveMapState extends State<StartDriveMap> {
                                       backgroundColor: Colors.black,
                                     ),
                                     child: Text(
-                                      'End drive & Submit Feedback later',
+                                      'End Test Drive & Submit Feedback Later',
                                       style: GoogleFonts.poppins(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,

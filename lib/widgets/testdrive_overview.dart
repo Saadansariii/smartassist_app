@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
+// import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'dart:convert';
 
 import 'package:smart_assist/utils/storage.dart';
@@ -25,8 +27,10 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
   String startTime = '';
   String distanceCovered = '';
   String mapImgUrl = '';
-  bool isLoading = false;
+  bool isLoading = true;
   String potentialPurchase = '';
+  String purchase_potential = '';
+  String avg_rating = '4';
   Map<String, dynamic> ratings = {};
 
   @override
@@ -37,9 +41,12 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
 
   Future<void> _fetchTestDriveData() async {
     try {
+      await Future.delayed(Duration(seconds: 1));
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse('https://api.smartassistapp.in/api/events/${widget.eventId}'),
+        // Uri.parse(
+        //     'https://api.smartassistapp.in/api/events/883dbb2e-e571-4cb3-acdb-06621d4a3319'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -49,17 +56,26 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          startTime = data['data']['duration'];
+          startTime = data['data']['start_time'];
           distanceCovered = data['data']['distance'] + ' km';
           mapImgUrl = data['data']['map_img'] ?? '';
           potentialPurchase = data['data']['purchase_potential'];
+          purchase_potential = data['data']['purchase_potential'];
+          avg_rating = data['data']['avg_rating'];
           ratings = data['data']['drive_feedback'];
         });
       } else {
+        setState(() {
+          isLoading =
+              false; // If there is an error, stop loading and show content
+        });
         print(
             'Failed to fetch test drive data. Status code: ${response.statusCode}');
       }
     } catch (e) {
+      setState(() {
+        isLoading = false; // Stop loading if there is an error
+      });
       // Handle different types of errors (network, JSON, etc.)
       print('Error fetching test drive data: $e');
       // Optionally, you can also show an error message to the user
@@ -83,147 +99,385 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
   Widget build(BuildContext context) {
     String formattedTime = formatTime(startTime);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title:
-            Text('Test Drive Summary', style: AppFont.popupTitleWhite(context)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_outlined,
-              color: Colors.white),
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        FollowupsDetails(leadId: widget.leadId)));
-            // MaterialPageRoute(
-            //     builder: (context) => FollowupsDetails(leadId: widget.leadId));
-          },
+        // backgroundColor: AppColors.backgroundLightGrey,
+        appBar: AppBar(
+          backgroundColor: Colors.blue,
+          title: Text('Summary', style: AppFont.popupTitleWhite(context)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_outlined,
+                color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          FollowupsDetails(leadId: widget.leadId)));
+              // MaterialPageRoute(
+              //     builder: (context) => FollowupsDetails(leadId: widget.leadId));
+            },
+          ),
+          elevation: 0,
         ),
-        elevation: 0,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Map
-
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLightGrey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Scaffold(
+                backgroundColor: AppColors.backgroundLightGrey,
+                body: Container(
+                  width: double.infinity, // ✅ Ensures full width
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLightGrey,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(0),
+                    child: SingleChildScrollView(
                       child: Column(
-                        children: [
-                          if (mapImgUrl.isNotEmpty) Image.network(mapImgUrl),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    // Start time
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLightGrey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Start Time: $formattedTime',
-                              style: AppFont.dropDowmLabel(context)),
-                          SizedBox(height: 10),
-                          Text('Distance covered: $distanceCovered',
-                              style: AppFont.dropDowmLabel(context)),
+                          // Map
+
+                          const SizedBox(height: 30),
+
+                          // Your main display section
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0),
+                                child: Container(
+                                  padding: const EdgeInsets.all(15),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(avg_rating,
+                                                  style: AppFont.dropDowmLabel(
+                                                      context)),
+                                              Text(purchase_potential,
+                                                  style: AppFont.mediumText14(
+                                                      context)),
+                                            ],
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Potential of Purchase',
+                                                  style: AppFont.dropDowmLabel(
+                                                      context)),
+                                              Text(potentialPurchase,
+                                                  style:
+                                                      AppFont.mediumText14blue(
+                                                          context)),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Column(
+                                        children: [
+                                          _buildRatingRow('Overall Ambience',
+                                              ratings['ambience']),
+                                          _buildRatingRow(
+                                              'Features', ratings['features']),
+                                          _buildRatingRow('Ride and Comfort',
+                                              ratings['ride_comfort']),
+                                          _buildRatingRow(
+                                              'Quality', ratings['quality']),
+                                          _buildRatingRow(
+                                              'Dynamics', ratings['dynamics']),
+                                          _buildRatingRow('Driving Experience',
+                                              ratings['driving_experience']),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // Potential of purchase
+                              // const SizedBox(height: 20),
+                              // Padding(
+                              //   padding: const EdgeInsets.symmetric(
+                              //       horizontal: 10.0),
+                              //   child: Text('Potential of Purchase: ',
+                              //       style: AppFont.dropDowmLabel(context)),
+                              // ),
+                              // const SizedBox(height: 10),
+                              // Padding(
+                              //   padding: const EdgeInsets.symmetric(
+                              //       horizontal: 10.0),
+                              //   child: Container(
+                              //     padding: const EdgeInsets.symmetric(
+                              //         horizontal: 10, vertical: 5),
+                              //     decoration: BoxDecoration(
+                              //       color: AppColors.searchBar,
+                              //       border: Border.all(color: Colors.blue),
+                              //       borderRadius: BorderRadius.circular(30),
+                              //     ),
+                              //     child: Text(
+                              //       potentialPurchase, // The text or result for the potential purchase
+                              //       style: AppFont.mediumText14blue(context),
+                              //     ),
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                          // Potential of purchase
+                          // const SizedBox(height: 20),
+                          // Padding(
+                          //   padding:
+                          //       const EdgeInsets.symmetric(horizontal: 10.0),
+                          //   child: Text('Potential of Purchase: ',
+                          //       style: AppFont.dropDowmLabel(context)),
+                          // ),
+                          // const SizedBox(height: 10),
+                          // Padding(
+                          //   padding:
+                          //       const EdgeInsets.symmetric(horizontal: 10.0),
+                          //   child: Container(
+                          //     padding: const EdgeInsets.symmetric(
+                          //         horizontal: 10, vertical: 5),
+                          //     decoration: BoxDecoration(
+                          //       color: AppColors.searchBar,
+                          //       border: Border.all(color: Colors.blue),
+                          //       borderRadius: BorderRadius.circular(30),
+                          //     ),
+                          //     child: Text(
+                          //       potentialPurchase,
+                          //       style: AppFont.mediumText14blue(context),
+                          //     ),
+                          //   ),
+                          // ),
+
+                          // Start time
+                          Container(
+                            margin: const EdgeInsets.fromLTRB(10, 30, 10, 0),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              // crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              color: AppColors
+                                                  .backgroundLightGrey),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              FontAwesomeIcons.clock,
+                                              size: 20,
+                                              color: AppColors.colorsBlue,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Start Time',
+                                            style:
+                                                AppFont.dropDowmLabel(context)),
+                                        Text(formattedTime,
+                                            style:
+                                                AppFont.mediumText14(context)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                // const SizedBox(width: 5),
+                                Row(
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              color: AppColors
+                                                  .backgroundLightGrey),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              FontAwesomeIcons.locationDot,
+                                              size: 20,
+                                              color: AppColors.colorsBlue,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          margin:
+                                              const EdgeInsets.only(right: 10),
+                                          child: Text('Distance covered',
+                                              style: AppFont.mediumText14Black(
+                                                  context)),
+                                        ),
+                                        Text(distanceCovered,
+                                            style:
+                                                AppFont.mediumText14(context)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Column(
+                            children: [
+                              if (mapImgUrl.isNotEmpty)
+                                Image.network(mapImgUrl),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
                         ],
                       ),
                     ),
-
-                    // Distance covered
-
-                    // Ratings
-                    SizedBox(height: 20),
-                    Text('Ratings:', style: AppFont.dropDowmLabel(context)),
-                    SizedBox(height: 10),
-
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLightGrey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildRatingRow(
-                              'Overall Ambience', ratings['ambience']),
-                          _buildRatingRow('Features', ratings['features']),
-                          _buildRatingRow(
-                              'Ride and Comfort', ratings['ride_comfort']),
-                          _buildRatingRow('Quality', ratings['quality']),
-                          _buildRatingRow('Dynamics', ratings['dynamics']),
-                          _buildRatingRow('Driving Experience',
-                              ratings['driving_experience']),
-                        ],
-                      ),
-                    ),
-
-                    // Potential of purchase
-                    const SizedBox(height: 20),
-                    Text('Potential of Purchase: ',
-                        style: AppFont.dropDowmLabel(context)),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.searchBar,
-                        border: Border.all(color: Colors.blue),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        potentialPurchase,
-                        style: AppFont.mediumText14blue(context),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-    );
+              ));
   }
 
   // Helper method to build the rating rows
+  // Widget _buildRatingRow(String label, int? rating) {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //     children: [
+  //       Text('$label: ', style: AppFont.dropDowmLabel(context)),
+  //       const SizedBox(
+  //         height: 10,
+  //       ),
+  //       IconTheme(
+  //         data: IconThemeData(color: Colors.amber),
+  //         child: Row(
+  //           children: List.generate(5, (index) {
+  //             return Icon(
+  //               index < (rating ?? 0)
+  //                   ? Icons.star_rounded
+  //                   : Icons.star_outline_rounded,
+  //               size: 30,
+  //             );
+  //           }),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+// Helper method to build the rating row with stars and emojis
+
   Widget _buildRatingRow(String label, int? rating) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('$label: ', style: AppFont.dropDowmLabel(context)),
-        const SizedBox(
-          height: 10,
-        ),
-        IconTheme(
-          data: IconThemeData(color: Colors.amber),
-          child: Row(
-            children: List.generate(5, (index) {
-              return Icon(
-                index < (rating ?? 0)
-                    ? Icons.star_rounded
-                    : Icons.star_outline_rounded,
-                size: 30,
-              );
-            }),
+    // List of emojis corresponding to each rating level
+    final List<String> emojiRatings = [
+      '😔', // For 1 star
+      '🙁', // For 2 stars
+      '🙂', // For 3 stars
+      '😃', // For 4 stars
+      '😍', // For 5 stars
+    ];
+
+    // Ensure that rating falls within a valid range (1 to 5)
+    int validRating = (rating ?? 0).clamp(1, 5);
+
+    // Calculate the percentage for the progress bar
+    double percentage = (validRating / 5.0); // rating out of 5 stars
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Rating label
+          Text('$label', style: AppFont.smallText(context)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(' $validRating', style: AppFont.mediumText14(context)),
           ),
-        ),
-      ],
+          const Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
+                size: 20,
+                color: Colors.amber,
+              )
+            ],
+          ),
+          // The progress line using LinearPercentIndicator
+          Container(
+            width: MediaQuery.of(context).size.width * 0.4,
+            child: LinearPercentIndicator(
+              lineHeight: 8.0, // Height of the progress line
+              percent: percentage, // Fill percentage
+              backgroundColor:
+                  Colors.grey[300]!, // Background color for the line
+              progressColor:
+                  Colors.amber, // Color for the filled portion of the line
+              barRadius: Radius.circular(10),
+            ),
+          ),
+
+          // Emoji corresponding to the rating level
+          Padding(
+            padding: const EdgeInsets.only(left: 0),
+            child: Text(
+              emojiRatings[
+                  validRating - 1], // Adjust emoji index based on rating
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+
+          // Static stars (5 stars)
+        ],
+      ),
     );
   }
 }

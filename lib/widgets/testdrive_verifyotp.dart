@@ -140,12 +140,30 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     );
   }
 
+  // Widget _buildEmailInfo() {
+  //   return Padding(
+
+  //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+  //     child: Text(
+  //       textAlign: TextAlign.center,
+  //       'Enter OTP sent to ${widget.email} to continue',
+  //       style: AppFont.mediumText14(context),
+  //     ),
+  //   );
+  // }
   Widget _buildEmailInfo() {
+    bool isEmailHidden =
+        true; // Set this flag to control visibility of email part
+
+    String emailPart = widget.email; // The email that you want to hide
+    String message =
+        'Enter OTP sent to ${isEmailHidden ? '****' : emailPart} to continue';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Text(
         textAlign: TextAlign.center,
-        'Enter OTP sent to ${widget.email} to continue',
+        message, // This will conditionally show the email or hide it with '****'
         style: AppFont.mediumText14(context),
       ),
     );
