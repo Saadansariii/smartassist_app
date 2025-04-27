@@ -188,7 +188,7 @@
 //   }
 // }
 
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
@@ -672,7 +672,7 @@ class LeadsSrv {
   }
 
   static Future<Map<String, dynamic>> singleFollowupsById(String leadId) async {
-    const String apiUrl = "https://api.smartassistapp.in/api/admin/leads/";
+    const String apiUrl = "https://api.smartassistapp.in/api/leads/by-id/";
 
     final token = await Storage.getToken();
     if (token == null) {
@@ -1138,5 +1138,4 @@ class LeadsSrv {
       throw Exception(e.toString());
     }
   }
-
- }
+}

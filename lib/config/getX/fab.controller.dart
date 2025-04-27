@@ -12,4 +12,6 @@ class FabController extends GetxController {
   void closeFab() {
     isFabExpanded.value = false;
   }
+
+  // void handleLostAction() {}
 }

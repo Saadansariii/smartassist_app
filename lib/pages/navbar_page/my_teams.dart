@@ -9,6 +9,7 @@ import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:http/http.dart' as http;
+import 'package:smart_assist/utils/bottom_navigation.dart';
 import 'package:smart_assist/utils/storage.dart';
 
 class MyTeams extends StatefulWidget {
@@ -248,22 +249,22 @@ class _MyTeamsState extends State<MyTeams> {
   }
 
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
-    // Simulate an API call for Individual Performance or Team Data
-
-    final token = await Storage.getToken();
-    final response = await http.get(
+    try {
+      // Simulate an API call for Individual Performance or Team Data
+      final token = await Storage.getToken();
+      final response = await http.get(
         Uri.parse(
             'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-        });
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-
-      // Parse the API response to update the teamProfiles data
       if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        // Parse the API response to update the teamProfiles data
         List<Map<String, String>> teamProfiles = [];
         for (var team in data['data']) {
           for (var member in team['teamMembers']) {
@@ -279,34 +280,49 @@ class _MyTeamsState extends State<MyTeams> {
           'status': 200,
           'teamProfiles': teamProfiles,
         };
+      } else {
+        return {
+          'status': response.statusCode,
+          'message': 'Failed to load data'
+        };
       }
-      return {}; // Return empty map if the category doesn't match
-    } else {
-      throw Exception('Failed to load data');
+    } catch (e) {
+      // Catch any errors during the API call or parsing
+      print('Error occurred: $e');
+      return {
+        'status': 500,
+        'message': 'An error occurred while fetching data'
+      };
     }
   }
 
   Future<void> _fetchIndividualPerformance(String userId) async {
-    final token = await Storage.getToken();
-    final response = await http.get(
-      Uri.parse(
-          'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance?user_id=$userId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final token = await Storage.getToken();
+      final response = await http.get(
+        Uri.parse(
+            'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance?user_id=$userId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
 
-      // Update the individual performance data with the response
-      setState(() {
-        // Store the full user performance data, including the orders count
-        _individualPerformanceData = data['data']['selectedUserPerformance'];
-      });
-    } else {
-      throw Exception('Failed to load individual performance data');
+        // Update the individual performance data with the response
+        setState(() {
+          // Store the full user performance data, including the orders count
+          _individualPerformanceData = data['data']['selectedUserPerformance'];
+        });
+      } else {
+        throw Exception('Failed to load individual performance data');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the HTTP request or data processing
+      print('Error occurred: $e');
+      // Optionally, update the UI or show a message to the user
     }
   }
 
@@ -319,7 +335,7 @@ class _MyTeamsState extends State<MyTeams> {
     // Ensure that the data is available before attempting to display it
     if (data.isEmpty) {
       return const Padding(
-        padding:  EdgeInsets.symmetric(vertical: 10.0),
+        padding: EdgeInsets.symmetric(vertical: 10.0),
         child: Center(child: Text('No performance data available.')),
       );
     }
@@ -475,15 +491,16 @@ class _MyTeamsState extends State<MyTeams> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            FontAwesomeIcons.angleLeft,
-            color: Colors.white,
-          ),
-        ),
+        // leading: IconButton(
+        //   onPressed: () {
+        //     Navigator.push(context,
+        //         MaterialPageRoute(builder: (context) => BottomNavigation()));
+        //   },
+        //   icon: const Icon(
+        //     FontAwesomeIcons.angleLeft,
+        //     color: Colors.white,
+        //   ),
+        // ),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.blue,
         title: Text('My team', style: AppFont.appbarfontWhite(context)),

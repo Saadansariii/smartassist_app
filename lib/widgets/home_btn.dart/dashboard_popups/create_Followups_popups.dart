@@ -445,7 +445,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                 label: 'Comments:',
                 controller: descriptionController,
                 hint: 'Add Comments'),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
