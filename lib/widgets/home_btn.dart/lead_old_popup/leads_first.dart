@@ -22,10 +22,11 @@ class LeadFirstStep extends StatefulWidget {
     required this.selectedPurchaseType,
     required this.selectedSubType,
     required this.selectedFuelType,
-    required this.selectedBrand, 
+    required this.selectedBrand,
     this.firstName,
     this.lastName,
-    this.email, this.selectedEvent,
+    this.email,
+    this.selectedEvent,
   }) : super(key: key);
 
   @override
@@ -222,7 +223,7 @@ class _LeadFirstStepState extends State<LeadFirstStep> {
                     ),
                   ),
                   const SizedBox(width: 20),
-                   Expanded(
+                  Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -433,5 +434,4 @@ class _LeadFirstStepState extends State<LeadFirstStep> {
       ),
     );
   }
-
 }

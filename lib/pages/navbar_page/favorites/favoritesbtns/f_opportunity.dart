@@ -65,8 +65,8 @@ class _FOpportunityState extends State<FOpportunity> {
   }
 
   Widget _buildTasksList(List<dynamic> tasks) {
-     // Check if both lists are empty and show "No data found"
-    if (upcomingTasks.isEmpty ) {
+    // Check if both lists are empty and show "No data found"
+    if (upcomingTasks.isEmpty) {
       return const Center(
         child: Text('No data found'),
       );

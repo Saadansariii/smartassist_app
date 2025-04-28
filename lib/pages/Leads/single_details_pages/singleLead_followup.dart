@@ -48,6 +48,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   String purchase_type = 'Loading...';
   String PMI = 'Loading....';
   String fuel_type = 'Loading....';
+  // String lead_owner = 'Loading....';
   String expected_date_purchase = 'Loading...';
 
   bool isLoading = false;
@@ -139,6 +140,17 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     }
   }
 
+  String _getFirstTwoLettersCapitalized(String input) {
+    input = input.trim(); // Remove any extra spaces
+    if (input.length >= 2) {
+      return input.substring(0, 2).toUpperCase();
+    } else if (input.isNotEmpty) {
+      return input.toUpperCase();
+    } else {
+      return '';
+    }
+  }
+
   // Toggle listening
   void _toggleListening(TextEditingController controller) async {
     if (_isListening) {
@@ -188,12 +200,13 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         address = leadData['data']['address'] ?? 'N/A';
         leadSource = leadData['data']['lead_source'] ?? 'N/A';
         fuel_type = leadData['data']['fuel_type'] ?? 'N/A';
+        lead_owner = leadData['data']['lead_owner'] ?? 'N/A';
         PMI = leadData['data']['PMI'] ?? 'N/A';
         purchase_type = leadData['data']['purchase_type'] ?? 'N/A';
         enquiry_type = leadData['data']['enquiry_type'] ?? 'N/A';
         expected_date_purchase =
             leadData['data']['expected_date_purchase'] ?? 'N/A';
-        lead_owner = leadData['data']['lead_name'] ?? 'N/A';
+        // lead_owner = leadData['data']['lead_name'] ?? 'N/A';
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -549,20 +562,13 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                   style: AppFont.mediumText14(context),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 30),
               _buildTextField(
                   // label: 'resion:',
                   controller: descriptionController,
                   hint: 'Add Comments'),
             ],
           ),
-          // content: SingleChildScrollView(
-          //   child: ListBody(
-          //     children: <Widget>[
-          //       Divider(height: 1, color: Colors.grey.shade200),
-          //     ],
-          //   ),
-          // ),
           actions: [
             TextButton(
               onPressed: () {
@@ -570,16 +576,27 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               },
               child: Text(
                 'Cancle',
-                style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+                // style: TextStyle(color: AppColors.colorsBlue),
               ),
             ),
             TextButton(
               onPressed: () {
-                submitLost(context); // Pass context to submit
+                if (descriptionController.text.trim().isEmpty) {
+                  // Show a simple error message
+                  Get.snackbar(
+                    'Error',
+                    'Please provide a reason before submitting',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                } else {
+                  submitLost(context); // Proceed if not empty
+                }
               },
               child: Text(
                 'Submit',
-                style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
               ),
             ),
           ],
@@ -695,21 +712,31 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               const SizedBox(height: 10),
             ],
           ),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Divider(height: 1, color: Colors.grey.shade200),
-              ],
-            ),
-          ),
+          // content: SingleChildScrollView(
+          //   child: ListBody(
+          //     children: <Widget>[
+          //       Divider(height: 1, color: Colors.grey.shade200),
+          //     ],
+          //   ),
+          // ),
           actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Cancle',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
             TextButton(
               onPressed: () {
                 submitQualify(context); // Pass context to submit
               },
               child: Text(
                 'Submit',
-                style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
               ),
             ),
           ],
@@ -1096,25 +1123,49 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   ),
                                 ],
                               ),
+                              const SizedBox(
+                                height: 10,
+                              ),
                               Row(
                                 children: [
                                   Row(
                                     children: [
                                       Text(
                                         'Assignee',
-                                        style: AppFont.dropDowmLabel(context),
+                                        style: AppFont.mediumText14(context),
                                       ),
-                                      IconButton(
-                                          onPressed: () {},
-                                          icon: Container(
-                                              padding: EdgeInsets.all(5),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                color: AppColors
-                                                    .backgroundLightGrey,
-                                              ),
-                                              child: Icon(Icons.add)))
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          color: AppColors.homeContainerLeads,
+                                        ),
+                                        child: Text(
+                                          _getFirstTwoLettersCapitalized(
+                                              lead_owner),
+                                          style:
+                                              AppFont.mediumText14blue(context),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      // IconButton(
+                                      //     onPressed: () {},
+                                      //     icon: Container(
+                                      //         padding: EdgeInsets.all(5),
+                                      //         decoration: BoxDecoration(
+                                      //           borderRadius:
+                                      //               BorderRadius.circular(30),
+                                      //           color: AppColors
+                                      //               .backgroundLightGrey,
+                                      //         ),
+                                      //         child: const Icon(Icons.add)))
                                     ],
                                   )
                                 ],
@@ -1246,21 +1297,6 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   ],
                                 ),
 
-                                // TextButton(
-                                //   onPressed: () {
-                                //     setState(() {
-                                //       _isHiddenMiddle = !_isHiddenMiddle;
-                                //     });
-                                //   },
-                                //   child: Text(
-                                //     _isHiddenMiddle ? 'Show' : 'Hide',
-                                //     style: GoogleFonts.poppins(
-                                //         fontSize: 15,
-                                //         fontWeight: FontWeight.w500,
-                                //         color: Colors.black),
-                                //   ),
-                                // ),
-
                                 IconButton(
                                   onPressed: () {
                                     setState(() {
@@ -1365,10 +1401,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                   ),
                 ),
               ),
-              SizedBox(width: 10),
-              Container(
+              const SizedBox(width: 10),
+              SizedBox(
                 width: 60,
-                height: 60,
+                height: 45,
                 child: _buildFloatingActionButton(context),
               ),
 
@@ -1395,8 +1431,9 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
           width: MediaQuery.of(context).size.width * .15,
           height: MediaQuery.of(context).size.height * .08,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
+              width: 1,
               color: fabController.isFabExpanded.value
                   ? Colors.red
                   : AppColors.colorsBlue,
@@ -1414,7 +1451,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                 fabController.isFabExpanded.value ? Icons.close : Icons.add,
                 color: fabController.isFabExpanded.value
                     ? Colors.red
-                    : Colors.blue,
+                    : AppColors.colorsBlue,
                 size: 30,
               ),
             ),

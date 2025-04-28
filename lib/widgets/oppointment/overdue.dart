@@ -67,7 +67,7 @@ class _OppOverdueState extends State<OppOverdue> {
     });
   }
 
-   void _handleCall(dynamic item) {
+  void _handleCall(dynamic item) {
     print("Call action triggered for ${item['name']}");
 
     String mobile = item['mobile'] ?? '';
@@ -95,7 +95,6 @@ class _OppOverdueState extends State<OppOverdue> {
       }
     }
   }
-
 
   Future<void> _toggleFavorite(String eventId, int index) async {
     final token = await Storage.getToken();
@@ -346,11 +345,8 @@ class _overdueeOppItemState extends State<overdueeOppItem> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient:const LinearGradient(
-                  colors: [
-                    Colors.green,
-                    Colors.green
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Colors.green, Colors.green],
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                 ),
@@ -396,9 +392,7 @@ class _overdueeOppItemState extends State<overdueeOppItem> {
                             : 0.9)) // Keep yellow when favorite
                     : (isFavoriteSwipe
                         ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe
-                            ? Colors.green
-                            : AppColors.sideRed)),
+                        : (isCallSwipe ? Colors.green : AppColors.sideRed)),
               ),
             ),
           ),

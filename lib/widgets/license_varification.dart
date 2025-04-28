@@ -385,7 +385,6 @@ class _LicenseVarificationState extends State<LicenseVarification> {
                                   child: Container(
                                     width: 60,
                                     height: 60,
-                                    
                                     decoration: const BoxDecoration(
                                       color: Colors.white,
                                       shape: BoxShape.circle,

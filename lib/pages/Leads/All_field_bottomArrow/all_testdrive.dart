@@ -18,7 +18,9 @@ class AllTestdrive extends StatefulWidget {
 }
 
 class _AllTestdriveState extends State<AllTestdrive> {
-  final Widget _createAppoinment =   AppointmentPopup(onFormSubmit: (){},);
+  final Widget _createAppoinment = AppointmentPopup(
+    onFormSubmit: () {},
+  );
   List<dynamic> _originalAllTasks = [];
   List<dynamic> _originalUpcomingTasks = [];
   List<dynamic> _originalOverdueTasks = [];

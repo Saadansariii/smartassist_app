@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
+
 class Message {
   final String body;
   final bool fromMe;
@@ -257,7 +258,6 @@ class _WhatsappChatState extends State<WhatsappChat> {
         }
       }
     });
-    
 
     socket.on('new_message', (data) {
       print('New message received: $data');
@@ -266,7 +266,6 @@ class _WhatsappChatState extends State<WhatsappChat> {
           final messageData = data['message'];
           if (messageData != null) {
             final newMessage = Message.fromJson(messageData);
-
 
             // Check if this message belongs to the current chat
             if (data['chatId'] == widget.chatId) {

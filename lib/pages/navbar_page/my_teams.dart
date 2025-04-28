@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
@@ -9,7 +8,7 @@ import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:http/http.dart' as http;
-import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
 
 class MyTeams extends StatefulWidget {
@@ -26,60 +25,9 @@ class _MyTeamsState extends State<MyTeams> {
   int _selectedProfileIndex = -1; // Track selected profile
   String _selectedUserId = '';
   late Future<Map<String, dynamic>> _data;
+
   final FabController fabController = Get.put(FabController());
   Map<String, dynamic> _individualPerformanceData = {};
-
-  // Sample profile data
-  // final List<Map<String, String>> teamProfiles = [
-  //   {'name': 'Abhey', 'lastName': 'Dayal'},
-  //   {'name': 'Amit', 'lastName': 'Arora'},
-  //   {'name': 'Gia', 'lastName': 'Valecha'},
-  //   {'name': 'Jigar', 'lastName': 'Shah'},
-  //   {'name': 'Pritesh', 'lastName': 'Gamali'},
-  // ];
-
-  // This will fetch the data based on the selected button
-  // Future<Map<String, dynamic>> _fetchData(String category) async {
-  //   // Replace this with your API logic
-  //   // Simulating an API call based on category
-  //   await Future.delayed(Duration(seconds: 1));
-  //   // Example mock data based on category
-  //   switch (category) {
-  //     case 'Enquiries':
-  //       return {
-  //         'Abhey Dayal': 6,
-  //         'Amit Arora': 5,
-  //         'Gia Valecha': 2,
-  //         'Jigar Shah': 7,
-  //         'Pritesh Gamali': 1
-  //       };
-  //     case 'Test Drives':
-  //       return {
-  //         'Abhey Dayal': 4,
-  //         'Amit Arora': 5,
-  //         'Gia Valecha': 3,
-  //         'Jigar Shah': 8,
-  //         'Pritesh Gamali': 2
-  //       };
-  //     case 'Net Orders':
-  //       return {
-  //         'Abhey Dayal': 3,
-  //         'Amit Arora': 4,
-  //         'Gia Valecha': 2,
-  //         'Jigar Shah': 7,
-  //         'Pritesh Gamali': 1
-  //       };
-  //     // Add more categories as needed
-  //     default:
-  //       return {
-  //         'Abhey Dayal': 0,
-  //         'Amit Arora': 0,
-  //         'Gia Valecha': 0,
-  //         'Jigar Shah': 0,
-  //         'Pritesh Gamali': 0
-  //       };
-  //   }
-  // }
 
   // Sample individual performance data
   final Map<String, dynamic> individualData = {
@@ -175,76 +123,86 @@ class _MyTeamsState extends State<MyTeams> {
   int _selectedMetricIndex = 0;
 
   Future<List<Map<String, dynamic>>> fetchTeamComparisonData() async {
-    final token = await Storage.getToken();
-    final response = await http.get(
-        Uri.parse(
-            'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        });
+    try {
+      final token = await Storage.getToken();
+      final response = await http.get(
+          Uri.parse(
+              'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          });
 
-    if (response.statusCode == 200) {
-      final decoded = json.decode(response.body);
-      List<dynamic> teams = decoded['data']['teamsData'];
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        List<dynamic> teams = decoded['data']['teamsData'];
 
-      List<Map<String, dynamic>> result = [];
+        List<Map<String, dynamic>> result = [];
 
-      for (var team in teams) {
-        // Case 1: Count at team level
-        if (team.containsKey('team_name') &&
-            team.containsKey(_getPeriodKey())) {
-          final name = team['team_name'];
-          final periodData = team[_getPeriodKey()];
-          final count = periodData[_getMetricKey()] ?? 0;
+        for (var team in teams) {
+          // Case 1: Count at team level
+          if (team.containsKey('team_name') &&
+              team.containsKey(_getPeriodKey())) {
+            final name = team['team_name'];
+            final periodData = team[_getPeriodKey()];
+            final count = periodData[_getMetricKey()] ?? 0;
 
-          result.add({"name": name, "count": count});
-        }
+            result.add({"name": name, "count": count});
+          }
 
-        // Case 2: Count at user level inside team
-        if (team.containsKey('users')) {
-          for (var user in team['users']) {
-            final name = user['name'];
-            Map<String, dynamic> periodData;
+          // Case 2: Count at user level inside team
+          if (team.containsKey('users')) {
+            for (var user in team['users']) {
+              final name = user['name'];
+              Map<String, dynamic> periodData;
 
-            switch (_periodIndex) {
-              case 1:
-                periodData = user['MTD'];
-                break;
-              case 2:
-                periodData = user['QTD'];
-                break;
-              case 3:
-                periodData = user['YTD'];
-                break;
-              default:
-                periodData = {
-                  "enquiries": (user['MTD']?['enquiries'] ?? 0) +
-                      (user['QTD']?['enquiries'] ?? 0) +
-                      (user['YTD']?['enquiries'] ?? 0),
-                  "testDrives": (user['MTD']?['testDrives'] ?? 0) +
-                      (user['QTD']?['testDrives'] ?? 0) +
-                      (user['YTD']?['testDrives'] ?? 0),
-                  "orders": (user['MTD']?['orders'] ?? 0) +
-                      (user['QTD']?['orders'] ?? 0) +
-                      (user['YTD']?['orders'] ?? 0),
-                  "cancellation": (user['MTD']?['cancellation'] ?? 0) +
-                      (user['QTD']?['cancellation'] ?? 0) +
-                      (user['YTD']?['cancellation'] ?? 0),
-                };
+              switch (_periodIndex) {
+                case 1:
+                  periodData = user['MTD'];
+                  break;
+                case 2:
+                  periodData = user['QTD'];
+                  break;
+                case 3:
+                  periodData = user['YTD'];
+                  break;
+                default:
+                  periodData = {
+                    "enquiries": (user['MTD']?['enquiries'] ?? 0) +
+                        (user['QTD']?['enquiries'] ?? 0) +
+                        (user['YTD']?['enquiries'] ?? 0),
+                    "testDrives": (user['MTD']?['testDrives'] ?? 0) +
+                        (user['QTD']?['testDrives'] ?? 0) +
+                        (user['YTD']?['testDrives'] ?? 0),
+                    "orders": (user['MTD']?['orders'] ?? 0) +
+                        (user['QTD']?['orders'] ?? 0) +
+                        (user['YTD']?['orders'] ?? 0),
+                    "cancellation": (user['MTD']?['cancellation'] ?? 0) +
+                        (user['QTD']?['cancellation'] ?? 0) +
+                        (user['YTD']?['cancellation'] ?? 0),
+                  };
+              }
+
+              result.add({
+                "name": name,
+                "count": periodData[_getMetricKey()] ?? 0,
+              });
             }
-
-            result.add({
-              "name": name,
-              "count": periodData[_getMetricKey()] ?? 0,
-            });
           }
         }
-      }
 
-      return result;
-    } else {
-      throw Exception('Failed to fetch data');
+        return result;
+      } else {
+        throw Exception('Failed to fetch data');
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return [];
     }
   }
 
@@ -288,7 +246,13 @@ class _MyTeamsState extends State<MyTeams> {
       }
     } catch (e) {
       // Catch any errors during the API call or parsing
-      print('Error occurred: $e');
+      // print('Error occurred: $e');
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return {
         'status': 500,
         'message': 'An error occurred while fetching data'
@@ -320,9 +284,12 @@ class _MyTeamsState extends State<MyTeams> {
         throw Exception('Failed to load individual performance data');
       }
     } catch (e) {
-      // Handle any errors that occur during the HTTP request or data processing
-      print('Error occurred: $e');
-      // Optionally, update the UI or show a message to the user
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -421,8 +388,7 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-  Widget _buildProfileAvatar(
-      String firstName, String lastName, int index, String userId) {
+  Widget _buildProfileAvatar(String firstName, int index, String userId) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -460,10 +426,10 @@ class _MyTeamsState extends State<MyTeams> {
           firstName,
           style: AppFont.mediumText14(context),
         ),
-        Text(
-          lastName,
-          style: AppFont.mediumText14(context),
-        ),
+        // Text(
+        //   lastName,
+        //   style: AppFont.mediumText14(context),
+        // ),
       ],
     );
   }
@@ -471,18 +437,23 @@ class _MyTeamsState extends State<MyTeams> {
   @override
   void initState() {
     super.initState();
+    _data = fetchData();
     // _data = _fetchData('Test Drives');
-    // Make sure you assign the result to the _fetchDataUserProfile() method too.
-    // You might want to await the result of _fetchDataUserProfile() before setting up the team profiles.
+    _teamComparisonData = fetchTeamComparisonData();
     _fetchDataUserProfile().then((data) {
       setState(() {
-        // You can update the team profiles or other data here based on the fetched response
+        ('Test Drives'); // You can update the team profiles or other data here based on the fetched response
       });
     }).catchError((e) {
       // Handle any error here
       print('Error: $e');
     });
-    _teamComparisonData = fetchTeamComparisonData();
+  }
+
+  Future<Map<String, dynamic>> fetchData() async {
+    // Simulate fetching data
+    await Future.delayed(Duration(seconds: 2));
+    return {"key": "value"};
   }
 
   @override
@@ -516,19 +487,7 @@ class _MyTeamsState extends State<MyTeams> {
                   // Tab selection buttons
                   _buildTabButtons(),
 
-                  // Message below tabs
-                  _tabIndex == 0
-                      ? Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                          child: Text(
-                            'Select a PS to view their statistics',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        )
-                      : SizedBox(), // If _tabIndex != 0, show nothing (empty SizedBox)
+                  // If _tabIndex != 0, show nothing (empty SizedBox)
 
                   // Profile avatars (only show for Individual Performance tab)
                   if (_tabIndex == 0) _buildProfileAvatars(),
@@ -541,7 +500,8 @@ class _MyTeamsState extends State<MyTeams> {
                       // Period Filter and Individual/Team view with condition
                       _tabIndex == 0
                           ? Padding(
-                              padding: const EdgeInsets.all(10.0),
+                              padding:
+                                  const EdgeInsets.fromLTRB(10, 10, 10, 10),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: AppColors.backgroundLightGrey,
@@ -553,6 +513,9 @@ class _MyTeamsState extends State<MyTeams> {
                                         screenWidth), // Content area - different for each tab
                                     _buildIndividualPerformanceView(
                                         context, screenWidth),
+
+                                    _buildFollowupCard(context),
+ 
                                   ],
                                 ),
                               ),
@@ -564,7 +527,7 @@ class _MyTeamsState extends State<MyTeams> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 0, vertical: 10),
                                   child: Wrap(
-                                    spacing: 1, // Space between buttons
+                                    spacing: 4,
                                     children: [
                                       FlexibleButton(
                                         title: 'Enquiries',
@@ -777,109 +740,6 @@ class _MyTeamsState extends State<MyTeams> {
                                   },
                                 ),
 
-                                // FutureBuilder<Map<String, dynamic>>(
-                                //   future: _data,
-                                //   builder: (context, snapshot) {
-                                //     if (snapshot.connectionState ==
-                                //         ConnectionState.waiting) {
-                                //       return Center(
-                                //           child: CircularProgressIndicator());
-                                //     } else if (snapshot.hasError) {
-                                //       return Center(
-                                //           child: Text('Error loading data'));
-                                //     } else if (snapshot.hasData) {
-                                //       var data = snapshot.data!;
-                                //       return Padding(
-                                //         padding: const EdgeInsets.all(10.0),
-                                //         child: Container(
-                                //           decoration: BoxDecoration(
-                                //               borderRadius:
-                                //                   BorderRadius.circular(10),
-                                //               color: AppColors
-                                //                   .backgroundLightGrey),
-                                //           child: Column(
-                                //             children: data.entries.map((entry) {
-                                //               double percentage = entry.value /
-                                //                   10.0; // Adjust as needed
-                                //               return Padding(
-                                //                 padding:
-                                //                     const EdgeInsets.symmetric(
-                                //                         vertical: 8.0),
-                                //                 child: Padding(
-                                //                   padding: const EdgeInsets
-                                //                       .symmetric(
-                                //                       horizontal: 10.0,
-                                //                       vertical: 15),
-                                //                   child: Row(
-                                //                     crossAxisAlignment:
-                                //                         CrossAxisAlignment
-                                //                             .center,
-                                //                     children: [
-                                //                       // Name Text
-                                //                       Expanded(
-                                //                         child: Text(entry.key,
-                                //                             style: AppFont
-                                //                                 .smallText(
-                                //                                     context)),
-                                //                       ),
-                                //                       // Progress Bar
-                                //                       Expanded(
-                                //                         flex: 2,
-                                //                         child: Padding(
-                                //                           padding:
-                                //                               const EdgeInsets
-                                //                                   .only(
-                                //                                   left: 10),
-                                //                           child:
-                                //                               LinearPercentIndicator(
-                                //                             lineHeight: 14.0,
-                                //                             percent: percentage,
-                                //                             backgroundColor:
-                                //                                 Colors
-                                //                                     .grey[300]!,
-                                //                             barRadius:
-                                //                                 const Radius
-                                //                                     .circular(
-                                //                                     8),
-                                //                             linearGradient:
-                                //                                 LinearGradient(
-                                //                               colors:
-                                //                                   _getGradientForProgress(
-                                //                                       percentage),
-                                //                               begin: Alignment
-                                //                                   .centerLeft,
-                                //                               end: Alignment
-                                //                                   .centerRight,
-                                //                             ),
-                                //                           ),
-                                //                         ),
-                                //                       ),
-                                //                       // Percentage Text
-                                //                       Padding(
-                                //                         padding:
-                                //                             const EdgeInsets
-                                //                                 .only(left: 0),
-                                //                         child: Text(
-                                //                           '${(percentage * 100).toStringAsFixed(0)}%',
-                                //                           style:
-                                //                               AppFont.smallText(
-                                //                                   context),
-                                //                         ),
-                                //                       ),
-                                //                     ],
-                                //                   ),
-                                //                 ),
-                                //               );
-                                //             }).toList(),
-                                //           ),
-                                //         ),
-                                //       );
-                                //     } else {
-                                //       return const Center(child: Text(''));
-                                //     }
-                                //   },
-                                // ),
-
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _data,
                                   builder: (context, snapshot) {
@@ -906,8 +766,8 @@ class _MyTeamsState extends State<MyTeams> {
                                               (index) => _buildProfileAvatar(
                                                 data['teamProfiles'][index]
                                                     ['name'],
-                                                data['teamProfiles'][index]
-                                                    ['lastName'],
+                                                // data['teamProfiles'][index]
+                                                //     ['lastName'],
                                                 index,
                                                 data['teamProfiles'][index]
                                                     ['user_id'],
@@ -1100,7 +960,11 @@ class _MyTeamsState extends State<MyTeams> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: _tabIndex == 0 ? Colors.blue : Colors.transparent,
+                      // color: _tabIndex == 0 ? Colors.blue : Colors.transparent,
+                      border: Border.all(
+                        color:
+                            _tabIndex == 0 ? Colors.blue : Colors.transparent,
+                      ),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Center(
@@ -1112,7 +976,7 @@ class _MyTeamsState extends State<MyTeams> {
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color:
-                                _tabIndex == 0 ? Colors.white : Colors.black54,
+                                _tabIndex == 0 ? Colors.blue : Colors.black54,
                           ),
                         ),
                       ),
@@ -1134,7 +998,11 @@ class _MyTeamsState extends State<MyTeams> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: _tabIndex == 1 ? Colors.blue : Colors.transparent,
+                      // color: _tabIndex == 1 ? Colors.blue : Colors.transparent,
+                      border: Border.all(
+                        color:
+                            _tabIndex == 1 ? Colors.blue : Colors.transparent,
+                      ),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Center(
@@ -1143,7 +1011,7 @@ class _MyTeamsState extends State<MyTeams> {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
-                          color: _tabIndex == 1 ? Colors.white : Colors.black54,
+                          color: _tabIndex == 1 ? Colors.blue : Colors.black54,
                         ),
                       ),
                     ),
@@ -1172,15 +1040,17 @@ class _MyTeamsState extends State<MyTeams> {
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Container(
-                height: 120,
+                margin: const EdgeInsets.only(top: 10),
+                height: 90,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(
                     teamProfiles.length,
                     (index) => _buildProfileAvatar(
                       teamProfiles[index]['name'] ?? '',
-                      teamProfiles[index]['lastName'] ?? '',
+                      // teamProfiles[index]['lastName'] ?? '',
                       index,
                       data['teamProfiles'][index]['user_id'],
                     ),
@@ -1200,18 +1070,21 @@ class _MyTeamsState extends State<MyTeams> {
 
   Widget _buildPeriodFilter(double screenWidth) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Period selector (ALL, MTD, QTD, YTD)
           Container(
-            height: 26,
+            padding: EdgeInsets.zero,
+            margin: EdgeInsets.zero,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.fontColor, width: .5),
+              border: Border.all(color: AppColors.fontColor, width: .2),
               borderRadius: BorderRadius.circular(30),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // _buildPeriodButton('All', 0),
                 _buildPeriodButton('MTD', 0),
@@ -1244,20 +1117,23 @@ class _MyTeamsState extends State<MyTeams> {
 
   Widget _comparisionButtons(double screenWidth) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Period selector (ALL, MTD, QTD, YTD)
           Container(
-            height: 26,
+            padding: EdgeInsets.zero,
+            margin: EdgeInsets.zero,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.fontColor, width: .5),
+              border: Border.all(color: AppColors.fontColor, width: .2),
               borderRadius: BorderRadius.circular(30),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _combuildPeriodButton('All', 0),
+                // _combuildPeriodButton('All', 0),
                 _combuildPeriodButton('MTD', 1),
                 _combuildPeriodButton('QTD', 2),
                 _combuildPeriodButton('YTD', 3),
@@ -1296,19 +1172,19 @@ class _MyTeamsState extends State<MyTeams> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         decoration: BoxDecoration(
           // color: isSelected ? Colors.blue : Colors.grey.shade200,
           // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
           border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent, width: 2),
+              color: isSelected ? Colors.blue : Colors.transparent, width: 1),
 
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
           text,
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: isSelected ? Colors.blue : Colors.black,
           ),
@@ -1329,19 +1205,20 @@ class _MyTeamsState extends State<MyTeams> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         decoration: BoxDecoration(
           // color: isSelected ? Colors.blue : Colors.grey.shade200,
           // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
           border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent, width: 2),
+              color: isSelected ? Colors.blue : Colors.transparent, width: 1),
 
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
           text,
+          // textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: isSelected ? Colors.blue : Colors.black,
           ),
@@ -1456,6 +1333,268 @@ class _MyTeamsState extends State<MyTeams> {
       ),
     );
   }
+
+  // data will show
+
+  Widget _buildFollowupCard(BuildContext context) {
+    // bool isFavoriteSwipe = widget.swipeOffset > 50;
+    // bool isCallSwipe = widget.swipeOffset < -50;
+
+    // Gradient background for swipe
+    // LinearGradient _buildSwipeGradient() {
+    //   if (isFavoriteSwipe) {
+    //     return const LinearGradient(
+    //       colors: [
+    //         Color.fromRGBO(239, 206, 29, 0.67),
+    //         Color.fromRGBO(239, 206, 29, 0.67)
+    //       ],
+    //       begin: Alignment.centerLeft,
+    //       end: Alignment.centerRight,
+    //     );
+    //   } else if (isCallSwipe) {
+    //     return LinearGradient(
+    //       colors: [
+    //         Colors.green.withOpacity(0.2),
+    //         Colors.green.withOpacity(0.8)
+    //       ],
+    //       begin: Alignment.centerRight,
+    //       end: Alignment.centerLeft,
+    //     );
+    //   }
+    //   return const LinearGradient(
+    //     colors: [AppColors.containerBg, AppColors.containerBg],
+    //     begin: Alignment.centerLeft,
+    //     end: Alignment.centerRight,
+    //   );
+    // }
+
+    return Stack(
+      children: [
+        // // Favorite Swipe Overlay
+        // if (isFavoriteSwipe)
+        //   Positioned.fill(
+        //     child: Container(
+        //       decoration: BoxDecoration(
+        //         gradient: LinearGradient(
+        //           colors: [
+        //             Colors.yellow.withOpacity(0.2),
+        //             Colors.yellow.withOpacity(0.8)
+        //           ],
+        //           begin: Alignment.centerLeft,
+        //           end: Alignment.centerRight,
+        //         ),
+        //         borderRadius: BorderRadius.circular(10),
+        //       ),
+        //       child: Center(
+        //         child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.start,
+        //           children: [
+        //             const SizedBox(width: 15),
+        //             Icon(
+        //                 isFav ? Icons.star_outline_rounded : Icons.star_rounded,
+        //                 color: Color.fromRGBO(226, 195, 34, 1),
+        //                 size: 40),
+        //             const SizedBox(width: 10),
+        //             Text(isFav ? 'Unfavorite' : 'Favorite',
+        //                 style: GoogleFonts.poppins(
+        //                     color: Color.fromRGBO(187, 158, 0, 1),
+        //                     fontSize: 18,
+        //                     fontWeight: FontWeight.bold)),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+
+        // // Call Swipe Overlay
+        // if (isCallSwipe)
+        //   Positioned.fill(
+        //     child: Container(
+        //       decoration: BoxDecoration(
+        //         gradient: LinearGradient(
+        //           colors: [
+        //             Colors.green.withOpacity(0.2),
+        //             Colors.green.withOpacity(0.8)
+        //           ],
+        //           begin: Alignment.centerRight,
+        //           end: Alignment.centerLeft,
+        //         ),
+        //         borderRadius: BorderRadius.circular(10),
+        //       ),
+        //       child: Center(
+        //         child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.start,
+        //           children: [
+        //             const SizedBox(
+        //               width: 10,
+        //             ),
+        //             const Icon(Icons.phone_in_talk,
+        //                 color: Colors.white, size: 30),
+        //             const SizedBox(width: 10),
+        //             Text('Call',
+        //                 style: GoogleFonts.poppins(
+        //                     color: Colors.white,
+        //                     fontSize: 18,
+        //                     fontWeight: FontWeight.bold)),
+        //             const SizedBox(width: 5),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+
+        // Main Container
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+          decoration: BoxDecoration(
+            // gradient: _buildSwipeGradient(),
+            borderRadius: BorderRadius.circular(5),
+            border: Border(
+              left: BorderSide(width: 8.0, color: AppColors.sideGreen),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildUserDetails(context),
+                          _buildVerticalDivider(15),
+                          _buildCarModel(context),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          _buildSubjectDetails(context),
+                          // _date(context),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              _buildNavigationButton(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (widget.leadId.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FollowupsDetails(leadId: widget.leadId)),
+          );
+        } else {
+          print("Invalid leadId");
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+            color: AppColors.arrowContainerColor,
+            borderRadius: BorderRadius.circular(30)),
+        child: const Icon(Icons.arrow_forward_ios_rounded,
+            size: 25, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildUserDetails(BuildContext context) {
+    return Text(widget.name,
+        textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+  }
+
+  Widget _buildSubjectDetails(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // const Icon(Icons.phone_in_talk, color: Colors.blue, size: 18),
+        // const SizedBox(width: 5),
+        Text(widget.subject, style: AppFont.smallText(context)),
+      ],
+    );
+  }
+
+  Widget _date(BuildContext context) {
+    String formattedDate = '';
+
+    try {
+      DateTime parseDate = DateTime.parse(widget.date);
+
+      // Check if the date is today
+      if (parseDate.year == DateTime.now().year &&
+          parseDate.month == DateTime.now().month &&
+          parseDate.day == DateTime.now().day) {
+        formattedDate = 'Today';
+      } else {
+        // If not today, format it as "26th March"
+        int day = parseDate.day;
+        String suffix = _getDaySuffix(day);
+        String month = DateFormat('MMM').format(parseDate); // Full month name
+        formattedDate = '${day}$suffix $month';
+      }
+    } catch (e) {
+      formattedDate = widget.date; // Fallback if date parsing fails
+    }
+
+    return Row(
+      children: [
+        const SizedBox(width: 5),
+        Text(formattedDate, style: AppFont.smallText(context)),
+      ],
+    );
+  }
+
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return 'th';
+    }
+    switch (day % 10) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
+    }
+  }
+
+  Widget _buildVerticalDivider(double height) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 3, left: 10, right: 10),
+      height: height,
+      width: 0.1,
+      decoration: const BoxDecoration(
+          border: Border(right: BorderSide(color: AppColors.fontColor))),
+    );
+  }
+
+  Widget _buildCarModel(BuildContext context) {
+    return Text(
+      widget.vehicle,
+      textAlign: TextAlign.start,
+      style: AppFont.dashboardCarName(context),
+      softWrap: true,
+      overflow: TextOverflow.visible,
+    );
+  }
 }
 
 class FlexibleButton extends StatelessWidget {
@@ -1474,6 +1613,7 @@ class FlexibleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
       height: 30,
       decoration: decoration,
       child: TextButton(
