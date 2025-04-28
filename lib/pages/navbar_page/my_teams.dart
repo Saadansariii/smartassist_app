@@ -25,7 +25,9 @@ class _MyTeamsState extends State<MyTeams> {
   int _selectedButtonIndex = 0;
   int _selectedProfileIndex = -1; // Track selected profile
   String _selectedUserId = '';
+  int _metricIndex = 0;
   late Future<Map<String, dynamic>> _data;
+  late Future<Map<String, dynamic>> _teamComparisonData;
 
   // Class level variables to store upcoming activities
   List<Map<String, dynamic>> _upcomingFollowups = [];
@@ -65,31 +67,226 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  List<Color> _getGradientForProgress(double percentage) {
-    if (percentage >= 0.8) {
-      return [
-        Color.fromRGBO(255, 237, 215, 0.9),
-        Color.fromRGBO(83, 157, 243, 1),
-        Color.fromRGBO(144, 109, 250, 1),
-      ];
-    } else if (percentage >= 0.6) {
-      return [
-        Color.fromRGBO(229, 208, 210, 1),
-        Color.fromRGBO(255, 150, 165, 1),
-        Color.fromRGBO(255, 122, 113, 1),
-      ];
-    } else if (percentage >= 0.3) {
-      return [
-        Color.fromRGBO(254, 221, 176, 1),
-        Color.fromRGBO(144, 109, 250, 1),
-        Color.fromRGBO(255, 122, 113, 1),
-      ];
-    } else {
-      return [
-        Color.fromRGBO(182, 247, 249, 1),
-        Color.fromRGBO(168, 230, 251, 1),
-        Color.fromRGBO(196, 201, 255, 1),
-      ];
+  // List<Color> _getGradientForProgress(double percentage) {
+  //   if (percentage >= 0.8) {
+  //     return [
+  //       Color.fromRGBO(255, 237, 215, 0.9),
+  //       Color.fromRGBO(83, 157, 243, 1),
+  //       Color.fromRGBO(144, 109, 250, 1),
+  //     ];
+  //   } else if (percentage >= 0.6) {
+  //     return [
+  //       Color.fromRGBO(229, 208, 210, 1),
+  //       Color.fromRGBO(255, 150, 165, 1),
+  //       Color.fromRGBO(255, 122, 113, 1),
+  //     ];
+  //   } else if (percentage >= 0.3) {
+  //     return [
+  //       Color.fromRGBO(254, 221, 176, 1),
+  //       Color.fromRGBO(144, 109, 250, 1),
+  //       Color.fromRGBO(255, 122, 113, 1),
+  //     ];
+  //   } else {
+  //     return [
+  //       Color.fromRGBO(182, 247, 249, 1),
+  //       Color.fromRGBO(168, 230, 251, 1),
+  //       Color.fromRGBO(196, 201, 255, 1),
+  //     ];
+  //   }
+  // }
+
+  // Calculate team total by summing member metrics
+  int _calculateTeamTotal(Map<String, dynamic> team) {
+    int total = 0;
+    if (team.containsKey('member') && team['member'].isNotEmpty) {
+      for (var member in team['member']) {
+        total += _getMetricValueForUser(member);
+      }
+    }
+    return total;
+  }
+
+  int _getMetricValueForUser(Map<String, dynamic> user) {
+    if (user.containsKey('stats')) {
+      final stats = user['stats'];
+      switch (_metricIndex) {
+        case 0:
+          return stats['enquiries'] ?? 0;
+        case 1:
+          return stats['testDrives'] ?? 0;
+        case 2:
+          return stats['orders'] ?? 0; // Net Orders
+        case 3:
+          return stats['orders'] ?? 0; // New Orders (using same field)
+        case 4:
+          return stats['cancellation'] ?? 0;
+        case 5:
+          return stats['retail'] ?? 0; // Retail/Sales
+        default:
+          return stats['enquiries'] ?? 0;
+      }
+    }
+    return 0;
+  }
+
+  // Widget for period selection buttons
+  Widget _buildPeriodButtons(double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300, width: 1),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                _buildPeriodButton('All', 0),
+                _buildPeriodButton('MTD', 1),
+                _buildPeriodButton('QTD', 2),
+                _buildPeriodButton('YTD', 3),
+              ],
+            ),
+          ),
+
+          // Calendar button
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today, size: 20),
+              onPressed: () {
+                // Handle calendar selection
+              },
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Individual period button
+  Widget _buildPeriodButton(String label, int index) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _periodIndex = index;
+          _teamComparisonData = fetchTeamComparisonData();
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: _periodIndex == index ? Colors.blue : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: _periodIndex == index ? Colors.white : Colors.black,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget for metric selection buttons
+  Widget _buildMetricButtons() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Row(
+        children: [
+          _buildMetricButton('Enquiries', 0),
+          _buildMetricButton('Test Drives', 1),
+          _buildMetricButton('Net Orders', 2),
+          _buildMetricButton('New Orders', 3),
+          _buildMetricButton('Cancellations', 4),
+          _buildMetricButton('Retail', 5),
+        ],
+      ),
+    );
+  }
+
+  // Individual metric button
+  Widget _buildMetricButton(String label, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _metricIndex = index;
+            _teamComparisonData = fetchTeamComparisonData();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border.all(
+              color: _metricIndex == index ? Colors.blue : Colors.grey.shade300,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: _metricIndex == index ? Colors.blue : Colors.black87,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Get gradient colors for progress bars based on index
+  List<Color> _getGradientForIndex(int index) {
+    // Creating different color schemes for different rows
+    final gradients = [
+      [const Color(0xFF4CAF50), const Color(0xFF8BC34A)], // Green
+      [const Color(0xFF2196F3), const Color(0xFF03A9F4)], // Blue
+      [const Color(0xFFFFEB3B), const Color(0xFFFFC107)], // Yellow
+      [const Color(0xFFFF9800), const Color(0xFFFF5722)], // Orange
+      [const Color(0xFFE91E63), const Color(0xFFF44336)], // Red
+    ];
+
+    return gradients[index % gradients.length];
+  }
+
+  // Fetch team comparison data from API
+  Future<Map<String, dynamic>> fetchTeamComparisonData() async {
+    try {
+      // For demo purposes, returning a mock response that matches the API format
+      await Future.delayed(
+          const Duration(seconds: 1)); // Simulate network delay
+
+      final token = await Storage.getToken();
+      final response = await http.get(
+          Uri.parse(
+              'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          });
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body)['data'];
+      } else {
+        throw Exception('Failed to fetch data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching team comparison data: $e');
+      rethrow;
     }
   }
 
@@ -123,94 +320,10 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  late Future<List<Map<String, dynamic>>> _teamComparisonData;
+  // late Future<List<Map<String, dynamic>>> _teamComparisonData;
 
   int _selectedPeriodIndex = 0; // 0: All, 1: MTD, 2: QTD, 3: YTD
   int _selectedMetricIndex = 0;
-
-  Future<List<Map<String, dynamic>>> fetchTeamComparisonData() async {
-    try {
-      final token = await Storage.getToken();
-      final response = await http.get(
-          Uri.parse(
-              'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          });
-
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        List<dynamic> teams = decoded['data']['teamsData'];
-
-        List<Map<String, dynamic>> result = [];
-
-        for (var team in teams) {
-          // Case 1: Count at team level
-          if (team.containsKey('team_name') &&
-              team.containsKey(_getPeriodKey())) {
-            final name = team['team_name'];
-            final periodData = team[_getPeriodKey()];
-            final count = periodData[_getMetricKey()] ?? 0;
-
-            result.add({"name": name, "count": count});
-          }
-
-          // Case 2: Count at user level inside team
-          if (team.containsKey('users')) {
-            for (var user in team['users']) {
-              final name = user['name'];
-              Map<String, dynamic> periodData;
-
-              switch (_periodIndex) {
-                case 1:
-                  periodData = user['MTD'];
-                  break;
-                case 2:
-                  periodData = user['QTD'];
-                  break;
-                case 3:
-                  periodData = user['YTD'];
-                  break;
-                default:
-                  periodData = {
-                    "enquiries": (user['MTD']?['enquiries'] ?? 0) +
-                        (user['QTD']?['enquiries'] ?? 0) +
-                        (user['YTD']?['enquiries'] ?? 0),
-                    "testDrives": (user['MTD']?['testDrives'] ?? 0) +
-                        (user['QTD']?['testDrives'] ?? 0) +
-                        (user['YTD']?['testDrives'] ?? 0),
-                    "orders": (user['MTD']?['orders'] ?? 0) +
-                        (user['QTD']?['orders'] ?? 0) +
-                        (user['YTD']?['orders'] ?? 0),
-                    "cancellation": (user['MTD']?['cancellation'] ?? 0) +
-                        (user['QTD']?['cancellation'] ?? 0) +
-                        (user['YTD']?['cancellation'] ?? 0),
-                  };
-              }
-
-              result.add({
-                "name": name,
-                "count": periodData[_getMetricKey()] ?? 0,
-              });
-            }
-          }
-        }
-
-        return result;
-      } else {
-        throw Exception('Failed to fetch data');
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return [];
-    }
-  }
 
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
     try {
@@ -402,103 +515,6 @@ class _MyTeamsState extends State<MyTeams> {
       ),
     );
   }
- 
-  // Widget _buildIndividualPerformanceView(
-  //     BuildContext context, double screenWidth) {
-  //   // Get the updated performance data
-  //   final data = _individualPerformanceData;
-
-  //   // Ensure that the data is available before attempting to display it
-  //   if (data.isEmpty) {
-  //     return const Padding(
-  //       padding: EdgeInsets.symmetric(vertical: 10.0),
-  //       child: Center(child: Text('No performance data available.')),
-  //     );
-  //   }
-
-  //   // Access the stats data
-  //   final stats = data['stats'];
-
-  //   // Access orders.count from MTD, QTD, and YTD
-  //   final mtdOrdersCount = data['MTD']['orders'] ?? 0;
-  //   final qtdOrdersCount = data['QTD']['orders'] ?? 0;
-  //   final ytdOrdersCount = data['YTD']['orders'] ?? 0;
-
-  //   return Padding(
-  //     padding: const EdgeInsets.all(16),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.stretch,
-  //       children: [
-  //         // First row of cards
-  //         Row(
-  //           children: [
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "${data['MTD']['enquiries']}",
-  //                 "Enquiries",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "${data['MTD']['testDrives']}",
-  //                 "Test Drive\nDone",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-
-  //         const SizedBox(height: 12),
-
-  //         // Second row of cards
-  //         Row(
-  //           children: [
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "$mtdOrdersCount", // Display orders.count for MTD
-  //                 "Order Taken",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "${data['MTD']['cancellation']}",
-  //                 "Cancellations",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-
-  //         const SizedBox(height: 10),
-
-  //         // Third row of cards
-  //         Row(
-  //           children: [
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "0", // Display orders.count for QTD
-  //                 "Net Orders ",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //             const SizedBox(width: 10),
-  //             Expanded(
-  //               child: _buildMetricCard(
-  //                 "3", // Display orders.count for YTD
-  //                 "Retails",
-  //                 Colors.blue,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildProfileAvatar(String firstName, int index, String userId) {
     return Column(
@@ -755,7 +771,21 @@ class _MyTeamsState extends State<MyTeams> {
     super.initState();
     _data = fetchData();
     // _data = _fetchData('Test Drives');
-    _teamComparisonData = fetchTeamComparisonData();
+    // _teamComparisonData = fetchTeamComparisonData();
+    _teamComparisonData = fetchTeamComparisonData().then((data) {
+      print("Data fetched successfully");
+      setState(() {
+        isLoading = false;
+      });
+      return data;
+    }).catchError((error) {
+      print("Error fetching data: $error");
+      setState(() {
+        isLoading = false;
+      });
+      throw error;
+    });
+    // _teamComparisonData = fetchTeamComparisonData();
     _fetchDataUserProfile().then((data) {
       setState(() {
         ('Test Drives'); // You can update the team profiles or other data here based on the fetched response
@@ -770,6 +800,65 @@ class _MyTeamsState extends State<MyTeams> {
     // Simulate fetching data
     await Future.delayed(Duration(seconds: 2));
     return {"key": "value"};
+  }
+
+  List<Map<String, dynamic>> processDataForDisplay(
+      Map<String, dynamic> responseData) {
+    List<Map<String, dynamic>> result = [];
+
+    // Add independent user if present
+    if (responseData.containsKey('independentUser')) {
+      final user = responseData['independentUser'];
+      if (user != null) {
+        result.add({
+          'name': user['name'] ?? 'Unknown',
+          'count': _getMetricValueForUser(user),
+          'type': 'user'
+        });
+      }
+    }
+
+    // Process teams and their members
+    if (responseData.containsKey('teamsData')) {
+      final teams = responseData['teamsData'];
+      if (teams != null && teams is List) {
+        for (var team in teams) {
+          // Add team header
+          result.add({
+            'name': team['team_name'] ?? 'Unnamed Team',
+            'count': _calculateTeamTotal(team),
+            'type': 'team'
+          });
+
+          // Add team members if present
+          if (team.containsKey('member') &&
+              team['member'] != null &&
+              team['member'] is List &&
+              team['member'].isNotEmpty) {
+            for (var member in team['member']) {
+              result.add({
+                'name': member['name'] ?? 'Unknown Member',
+                'count': _getMetricValueForUser(member),
+                'type': 'member'
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  int findMaxValue(List<Map<String, dynamic>> items) {
+    int max = 0;
+    for (var item in items) {
+      final count = item['count'];
+      if (count != null && count is int && count > max) {
+        max = count;
+      }
+    }
+    return max > 0 ? max : 1; // Avoid division by zero
   }
 
   @override
@@ -1005,60 +1094,168 @@ class _MyTeamsState extends State<MyTeams> {
                                   ),
                                 ),
 
-                                // Data and Progress Indicator
-                                FutureBuilder<List<Map<String, dynamic>>>(
+                                
+                                FutureBuilder<Map<String, dynamic>>(
                                   future: _teamComparisonData,
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState ==
                                         ConnectionState.waiting) {
-                                      return const CircularProgressIndicator();
+                                      return const Center(
+                                          child: CircularProgressIndicator());
                                     } else if (snapshot.hasError) {
-                                      return Text('Error: ${snapshot.error}');
+                                      print(
+                                          "FutureBuilder error: ${snapshot.error}");
+                                      return Center(
+                                          child:
+                                              Text('Error: ${snapshot.error}'));
                                     } else if (snapshot.hasData) {
-                                      final data = snapshot.data!;
-                                      return Column(
-                                        children: data.map((userData) {
-                                          final percentage =
-                                              (userData['count'] as int) / 10.0;
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 6.0),
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                    child:
-                                                        Text(userData['name'])),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: LinearPercentIndicator(
-                                                    percent: percentage.clamp(
-                                                        0.0, 1.0),
-                                                    lineHeight: 14.0,
-                                                    barRadius:
-                                                        const Radius.circular(
-                                                            10),
-                                                    backgroundColor:
-                                                        Colors.grey[300]!,
-                                                    linearGradient:
-                                                        LinearGradient(
-                                                      colors:
-                                                          _getGradientForProgress(
-                                                              percentage),
-                                                    ),
-                                                  ),
+                                      final responseData = snapshot.data!;
+
+                                      // Add safety check to see if the data is structured as expected
+                                      if (!responseData
+                                              .containsKey('independentUser') &&
+                                          !responseData
+                                              .containsKey('teamsData')) {
+                                        print(
+                                            "Data structure is not as expected: $responseData");
+                                        return const Center(
+                                            child: Text('Invalid data format'));
+                                      }
+
+                                      // Process data to get all items to display
+                                      List<Map<String, dynamic>> displayItems =
+                                          processDataForDisplay(responseData);
+
+                                      // Find maximum value for scaling
+                                      int maxValue = findMaxValue(displayItems);
+
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            // Show "Target" label
+                                            const Padding(
+                                              padding: EdgeInsets.only(
+                                                  right: 8.0, bottom: 16.0),
+                                              child: Text(
+                                                "Target",
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 12,
                                                 ),
-                                                Text('${userData['count']}'),
-                                              ],
+                                              ),
                                             ),
-                                          );
-                                        }).toList(),
+
+                                            // Display all items with progress bars - use a fixed height container instead of Expanded
+                                            Container(
+                                              height:
+                                                  300, // Set a fixed height for the list
+                                              child: ListView.builder(
+                                                shrinkWrap: true, // Add this
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(), // Allow scrolling
+                                                itemCount: displayItems.length,
+                                                itemBuilder: (context, index) {
+                                                  final item =
+                                                      displayItems[index];
+                                                  final count =
+                                                      item['count'] ?? 0;
+                                                  final percentage =
+                                                      maxValue > 0
+                                                          ? count / maxValue
+                                                          : 0.0;
+                                                  final isTeam =
+                                                      item['type'] == 'team';
+
+                                                  return Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 8.0),
+                                                    child: Row(
+                                                      children: [
+                                                        // Name with proper indentation for team members
+                                                        SizedBox(
+                                                          width: 100,
+                                                          child: Text(
+                                                            item['name'] ?? '',
+                                                            style: TextStyle(
+                                                              fontWeight: isTeam
+                                                                  ? FontWeight
+                                                                      .bold
+                                                                  : FontWeight
+                                                                      .normal,
+                                                              fontSize: 14,
+                                                              color: Colors
+                                                                  .black87,
+                                                            ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+
+                                                        // Progress bar
+                                                        Expanded(
+                                                          child:
+                                                              LinearPercentIndicator(
+                                                            percent: percentage
+                                                                .clamp(
+                                                                    0.0, 1.0),
+                                                            lineHeight: 20.0,
+                                                            barRadius:
+                                                                const Radius
+                                                                    .circular(
+                                                                    10),
+                                                            backgroundColor:
+                                                                Colors
+                                                                    .grey[200],
+                                                            linearGradient:
+                                                                LinearGradient(
+                                                              colors:
+                                                                  _getGradientForIndex(
+                                                                      index),
+                                                            ),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    right: 10),
+                                                          ),
+                                                        ),
+
+                                                        // Count value
+                                                        Text(
+                                                          '$count',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     } else {
-                                      return const Text('No Data Available');
+                                      return const Center(
+                                          child: Text('No Data Available'));
                                     }
                                   },
                                 ),
 
+// thir code for first button
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _data,
                                   builder: (context, snapshot) {
@@ -1481,36 +1678,36 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-  Widget _buildPeriodButton(String text, int index) {
-    bool isSelected = _periodIndex == index;
+  // Widget _buildPeriodButton(String text, int index) {
+  //   bool isSelected = _periodIndex == index;
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _periodIndex = index;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        decoration: BoxDecoration(
-          // color: isSelected ? Colors.blue : Colors.grey.shade200,
-          // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
-          border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent, width: 1),
+  //   return InkWell(
+  //     onTap: () {
+  //       setState(() {
+  //         _periodIndex = index;
+  //       });
+  //     },
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+  //       decoration: BoxDecoration(
+  //         // color: isSelected ? Colors.blue : Colors.grey.shade200,
+  //         // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
+  //         border: Border.all(
+  //             color: isSelected ? Colors.blue : Colors.transparent, width: 1),
 
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.blue : Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
+  //         borderRadius: BorderRadius.circular(30),
+  //       ),
+  //       child: Text(
+  //         text,
+  //         style: GoogleFonts.poppins(
+  //           fontSize: 12,
+  //           fontWeight: FontWeight.w500,
+  //           color: isSelected ? Colors.blue : Colors.black,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _combuildPeriodButton(String text, int index) {
     bool isSelected = _periodIndex == index;
