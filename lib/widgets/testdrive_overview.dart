@@ -23,7 +23,7 @@ class TestdriveOverview extends StatefulWidget {
 
 class _TestdriveOverviewState extends State<TestdriveOverview> {
   // Define variables to hold the data
-
+  bool _isHidden = false;
   String startTime = '';
   String distanceCovered = '';
   String mapImgUrl = '';
@@ -374,8 +374,20 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                           const SizedBox(height: 20),
                           Column(
                             children: [
-                              if (mapImgUrl.isNotEmpty)
-                                Image.network(mapImgUrl),
+                              TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isHidden = !_isHidden;
+                                    });
+                                  },
+                                  child: Text(
+                                    _isHidden ? 'Show' : 'Hide',
+                                    style: AppFont.smallText(context),
+                                  )),
+                              if (!_isHidden) ...[
+                                if (mapImgUrl.isNotEmpty)
+                                  Image.network(mapImgUrl),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -425,8 +437,12 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
       '😍', // For 5 stars
     ];
 
-    // Ensure that rating falls within a valid range (1 to 5)
-    int validRating = (rating ?? 0).clamp(1, 5);
+    // // Ensure that rating falls within a valid range (1 to 5)
+    // int validRating = (rating ?? 0).clamp(1, 5);
+
+    // Fix rating properly
+    int validRating =
+        (rating != null && rating >= 1 && rating <= 5) ? rating : 0;
 
     // Calculate the percentage for the progress bar
     double percentage = (validRating / 5.0); // rating out of 5 stars
@@ -466,11 +482,21 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
           ),
 
           // Emoji corresponding to the rating level
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 0),
+          //   child: Text(
+          //     emojiRatings[
+          //         validRating - 1], // Adjust emoji index based on rating
+          //     style: const TextStyle(fontSize: 15),
+          //   ),
+          // ),
+
           Padding(
             padding: const EdgeInsets.only(left: 0),
             child: Text(
-              emojiRatings[
-                  validRating - 1], // Adjust emoji index based on rating
+              validRating > 0
+                  ? emojiRatings[validRating - 1]
+                  : '', // ✅ Safe check
               style: const TextStyle(fontSize: 15),
             ),
           ),

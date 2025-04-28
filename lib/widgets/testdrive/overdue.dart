@@ -64,13 +64,18 @@ class _TestOverdueState extends State<TestOverdue> {
 
   void _handleTestDrive(dynamic item) {
     String email = item['updated_by'] ?? '';
+    String mobile = item['mobile'] ?? '';
     String eventId = item['event_id'] ?? '';
     String leadId = item['lead_id'] ?? '';
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TestdriveVerifyotp(
-            email: email, text: '', leadId: leadId, eventId: eventId),
+          email: email,
+          leadId: leadId,
+          eventId: eventId,
+          mobile: mobile,
+        ),
       ),
     );
     print("Call action triggered for ${item['name']}");

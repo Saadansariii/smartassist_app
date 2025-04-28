@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? leadId;
   bool _isHidden = false;
   String greeting = '';
+  String name = 'S';
   int notificationCount = 0;
   int overdueFollowupsCount = 0;
   int overdueAppointmentsCount = 0;
@@ -152,6 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
               (data.containsKey('greetings') && data['greetings'] is String)
                   ? data['greetings']
                   : 'Welcome!';
+          name = (data.containsKey('name') && data['name'] is String)
+              ? data['name']
+              : 'S';
           // if (upcomingFollowups.isNotEmpty) {
           //   leadId = upcomingFollowups[0]['lead_id'];
           // }
@@ -295,6 +299,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _getFirstTwoLettersCapitalized(String input) {
+    input = input.trim(); // Remove any extra spaces
+    if (input.length >= 1) {
+      return input.substring(0, 1).toUpperCase();
+    } else if (input.isNotEmpty) {
+      return input.toUpperCase();
+    } else {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -376,22 +391,45 @@ class _HomeScreenState extends State<HomeScreen> {
                             Row(
                               children: [
                                 Container(
-                                  margin: const EdgeInsets.all(5),
+                                  padding: const EdgeInsets.all(10),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 10),
                                   decoration: BoxDecoration(
                                       color: AppColors.backgroundLightGrey,
                                       borderRadius: BorderRadius.circular(30)),
-                                  child: IconButton(
-                                      style: ButtonStyle(),
-                                      onPressed: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ProfileScreen()));
-                                      },
-                                      icon: const Icon(
-                                        Icons.person,
-                                      )),
+                                  child: TextButton(
+                                    style: const ButtonStyle(
+                                      minimumSize:
+                                          WidgetStatePropertyAll(Size.zero),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      padding: WidgetStatePropertyAll(
+                                          EdgeInsets.zero),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ProfileScreen()));
+                                    },
+                                    child: Text(
+                                      _getFirstTwoLettersCapitalized(name),
+                                      style: AppFont.mediumText14blue(context),
+                                    ),
+                                  ),
+                                  // child: IconButton(
+                                  //     style: ButtonStyle(),
+                                  //     onPressed: () {
+                                  //       Navigator.push(
+                                  //           context,
+                                  //           MaterialPageRoute(
+                                  //               builder: (context) =>
+                                  //                   ProfileScreen()));
+                                  //     },
+                                  //     icon: const Icon(
+                                  //       Icons.person,
+                                  //     )),
                                 ),
                                 // Then in your bottom sheet code:
                                 // IconButton(

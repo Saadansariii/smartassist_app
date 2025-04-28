@@ -48,7 +48,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   String purchase_type = 'Loading...';
   String PMI = 'Loading....';
   String fuel_type = 'Loading....';
-  // String lead_owner = 'Loading....';
+  String lead_name = 'Loading....';
   String expected_date_purchase = 'Loading...';
 
   bool isLoading = false;
@@ -206,7 +206,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         enquiry_type = leadData['data']['enquiry_type'] ?? 'N/A';
         expected_date_purchase =
             leadData['data']['expected_date_purchase'] ?? 'N/A';
-        // lead_owner = leadData['data']['lead_name'] ?? 'N/A';
+        lead_name = leadData['data']['lead_name'] ?? 'N/A';
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -973,7 +973,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                         children: [
                                           Text(
                                               textAlign: TextAlign.left,
-                                              lead_owner,
+                                              lead_name,
                                               style: GoogleFonts.poppins(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,
