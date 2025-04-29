@@ -133,8 +133,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/login_steps/login_page.dart';
-import 'package:smart_assist/utils/bottom_navigation.dart'; 
-import 'package:smart_assist/utils/token_manager.dart'; 
+import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/token_manager.dart';
 import 'package:get/get.dart';
 
 class LogoutPage extends StatelessWidget {
@@ -156,12 +156,22 @@ class LogoutPage extends StatelessWidget {
           ));
 
       // Show success message
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Logged out successfully')));
+      Get.snackbar(
+        'Successful',
+        'Logout Successful',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      // ScaffoldMessenger.of(context)
+      //     .showSnackBar(SnackBar(content: Text('Logged out successfully')));
     } catch (error) {
       print('Logout error: $error');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error logging out: $error')));
+      Get.snackbar(
+        'Error',
+        'Error',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -267,5 +277,4 @@ class LogoutPage extends StatelessWidget {
       ),
     );
   }
-  
 }

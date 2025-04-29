@@ -547,15 +547,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     return isValid;
   }
 
-  // bool _validatePage3() {
-  //   bool isValid = false;
-
-  //   setState(() {
-  //     // _errors = {};
-  //   });
-  //   return isValid;
-  // }
-
   bool _validatePage3() {
     bool isValid = true;
 
@@ -629,57 +620,6 @@ class _CreateLeadsState extends State<CreateLeads> {
       }
     }
   }
-
-  // void _nextStep() {
-  //   if (_currentStep == 0) {
-  //     if (_validatePage1()) {
-  //       _pageController.nextPage(
-  //         duration: const Duration(milliseconds: 300),
-  //         curve: Curves.easeInOut,
-  //       );
-  //       setState(() => _currentStep++);
-  //     } else {
-  //       // ScaffoldMessenger.of(context).showSnackBar(
-  //       //   const SnackBar(
-  //       //     content: Text('Please correct the errors before continuing'),
-  //       //     backgroundColor: Colors.red,
-  //       //   ),
-  //       // );
-  //       Get.snackbar(
-  //         'Error',
-  //         'Error from first screen',
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //       );
-  //     }
-  //   } else if (_currentStep == 1) {
-  //     if (_validatePage2()) {
-  //       _pageController.nextPage(
-  //         duration: const Duration(milliseconds: 300),
-  //         curve: Curves.easeInOut,
-  //       );
-  //       setState(() => _currentStep++);
-  //     } else {
-  //       Get.snackbar(
-  //         'Error',
-  //         'Error from second screen',
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //       );
-  //     }
-  //   } else {
-  //     if (_validatePage3()) {
-  //       _submitForm(); // ✅ API will hit now
-  //     } else {
-  //       Get.snackbar(
-  //         'Error',
-  //         'Error from third screen',
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //       );
-  //     }
-  //   }
-  // }
 
   void _submitForm() {
     submitForm();
@@ -1325,16 +1265,6 @@ class _CreateLeadsState extends State<CreateLeads> {
                       size: 15,
                       color: AppColors.iconGrey,
                     ),
-                    // suffixIcon: IconButton(
-                    //   icon: const Icon(
-                    //     FontAwesomeIcons.microphone,
-                    //     color: AppColors.iconGrey,
-                    //     size: 15,
-                    //   ),
-                    //   onPressed: () {
-                    //     print('Microphone button pressed');
-                    //   },
-                    // ),
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
                     border: OutlineInputBorder(
@@ -2218,10 +2148,10 @@ class _CreateLeadsState extends State<CreateLeads> {
       Map<String, dynamic>? response = await LeadsSrv.submitLead(leadData);
 
       if (response != null) {
-        print("Response received: $response"); // ✅ Print full response
-        print(leadData);
+        print("Response received: $response");
 
         if (response.containsKey('data')) {
+          // ✅ Form submitted successfully
           String leadId = response['data']['lead_id'];
 
           if (context.mounted) {
@@ -2234,46 +2164,60 @@ class _CreateLeadsState extends State<CreateLeads> {
             );
           }
 
-          String errorMsg = response['message'];
-
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(content: Text('Form Submit Successful.')),
-          // );
+          String successMessage =
+              response['message'] ?? 'Form submitted successfully';
           Get.snackbar(
             'Success',
-            errorMsg.toString(),
+            successMessage,
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
-          widget.onFormSubmit();
-        } else if (response.containsKey('message')) {
-          String errorMsg = response['error'];
-          Get.snackbar(
-            'Error',
-            errorMsg.toString(),
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
-          print("API Error: $errorMsg"); // ✅ Log API error
 
-          Get.snackbar(
-            'Error',
-            'An error occurred: ${errorMsg.toString()}',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          widget.onFormSubmit();
+        } else if (response.containsKey('error') ||
+            response.containsKey('message')) {
+          String errorMessage = response['error'] ??
+              response['message'] ??
+              'Something went wrong';
+
+          if (response['errors'] != null && response['errors'] is Map) {
+            Map<String, dynamic> errorDetails = response['errors'];
+
+            if (errorDetails.isNotEmpty) {
+              setState(() {
+                _errors = errorDetails
+                    .map((key, value) => MapEntry(key, value.toString()));
+              });
+
+              // Show first error message
+              String firstFieldError =
+                  errorDetails.entries.first.value.toString();
+              Get.snackbar(
+                'Validation Error',
+                firstFieldError,
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+            }
+          } else {
+            // If it's a generic error (like "Not a valid email")
+            Get.snackbar(
+              'Error',
+              errorMessage,
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+          }
         }
       } else {
-        print("Error: API response is null"); // ✅ Log null response
-        String errorMsg = response?['message'];
-        // ScaffoldMessenger.of(context).showSnackBar(
+        print("Error: API response is null");
+
         Get.snackbar(
           'Error',
-          'An error occurred: ${errorMsg.toString()}',
+          'Something went wrong. Please try again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-        // );
       }
     } catch (e, stackTrace) {
       print("Exception Occurred: $e"); // ✅ Log any unexpected exceptions

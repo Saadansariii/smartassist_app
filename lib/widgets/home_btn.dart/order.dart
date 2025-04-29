@@ -18,19 +18,44 @@ class Order extends StatefulWidget {
 }
 
 class _OrderState extends State<Order> {
+  // int _childButtonIndex = 0;
+
+  // Map<String, dynamic> getSelectedData() {
+  //   switch (_childButtonIndex) {
+  //     case 0:
+  //       return widget.MtdData;
+  //     case 1:
+  //       return widget.QtdData;
+  //     case 2:
+  //       return widget.YtdData;
+  //     default:
+  //       return {};
+  //   }
+  // }
+
   int _childButtonIndex = 0;
+  final PageController _pageController = PageController();
 
   Map<String, dynamic> getSelectedData() {
+    Map<String, dynamic> periodData;
+
+    // Select the appropriate period data
     switch (_childButtonIndex) {
       case 0:
-        return widget.MtdData;
+        periodData = widget.MtdData;
+        break;
       case 1:
-        return widget.QtdData;
+        periodData = widget.QtdData;
+        break;
       case 2:
-        return widget.YtdData;
+        periodData = widget.YtdData;
+        break;
       default:
-        return {};
+        periodData = {};
     }
+
+    // Make sure allData exists, otherwise return empty map
+    return periodData['allData'] ?? {};
   }
 
   @override

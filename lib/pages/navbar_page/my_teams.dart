@@ -303,15 +303,17 @@ class _MyTeamsState extends State<MyTeams> {
         print(url.toString());
         return json.decode(response.body)['data'];
       } else {
-        throw Exception('Failed to fetch data: ${response.statusCode}');
+        throw Exception('Failed to fetch datas: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching team comparison data: $e');
       rethrow;
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -794,37 +796,46 @@ class _MyTeamsState extends State<MyTeams> {
   @override
   void initState() {
     super.initState();
-    _data = fetchData();
-    // _data = _fetchData('Test Drives');
-    // _teamComparisonData = fetchTeamComparisonData();
-    _teamComparisonData = fetchTeamComparisonData().then((data) {
-      print("Data fetched successfully");
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      _data = fetchData();
+
+      _teamComparisonData = fetchTeamComparisonData();
+      await _teamComparisonData; // properly await
+
+      _fetchDataUserProfile().then((data) {
+        // Update any fields based on user profile data
+        print('User profile fetched successfully');
+      }).catchError((e) {
+        print('Error fetching user profile: $e');
+      });
+
+      print("Team comparison data fetched successfully");
+    } catch (error) {
+      print("Error during initialization: $error");
+    } finally {
       setState(() {
         isLoading = false;
       });
-      return data;
-    }).catchError((error) {
-      print("Error fetching data: $error");
-      setState(() {
-        isLoading = false;
-      });
-      throw error;
-    });
-    // _teamComparisonData = fetchTeamComparisonData();
-    _fetchDataUserProfile().then((data) {
-      setState(() {
-        ('Test Drives'); // You can update the team profiles or other data here based on the fetched response
-      });
-    }).catchError((e) {
-      // Handle any error here
-      print('Error: $e');
-    });
+    }
   }
 
   Future<Map<String, dynamic>> fetchData() async {
     // Simulate fetching data
-    await Future.delayed(Duration(seconds: 2));
-    return {"key": "value"};
+    try {
+      await Future.delayed(Duration(seconds: 2));
+      return {"key": "value"};
+    } catch (e) {
+      print(e);
+      return {};
+    }
   }
 
   List<Map<String, dynamic>> processDataForDisplay(

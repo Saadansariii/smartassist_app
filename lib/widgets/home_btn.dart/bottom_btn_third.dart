@@ -336,6 +336,7 @@ class BottomBtnThird extends StatefulWidget {
 }
 
 class _BottomBtnThirdState extends State<BottomBtnThird> {
+  int _periodIndex = 0;
   int _childButtonIndex = 0;
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
@@ -354,19 +355,33 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
   @override
   void initState() {
     super.initState();
-    _fetchDashboardData(); //uncomment this
+    _fetchDashboardData();
   }
 
   Future<void> _fetchDashboardData() async {
-    final token = await Storage.getToken();
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final token = await Storage.getToken();
+
+      // Determine period parameter based on selection
+      String periodParam = '';
+      switch (_childButtonIndex) {
+        case 1:
+          periodParam = '?type=QTD';
+          break;
+        case 2:
+          periodParam = '?type=YTD';
+          break;
+        default:
+          periodParam = '?type=MTD';
+      }
+
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/users/dashboard/analytics'),
+            'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -403,134 +418,16 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       } else {
         debugPrint('Unexpected error: $e');
       }
-
-      // Fallback to mock data in case of error
-      _loadMockData();
     }
   }
 
-  void _loadMockData() {
-    // This is a fallback in case the API call fails
-    _dashboardData = {
-      "MTDDealerShipRank": {
-        "enquiriesRank": 5,
-        "testDrivesRank": 7,
-        "newOrdersRank": 3,
-        "cancellationsRank": 1,
-        "enquiriesCount": 4,
-        "testDrivesCount": 1,
-        "newOrdersCount": 1,
-        "cancellationsCount": 0,
-        "netOrdersRank": 2,
-        "retailRank": 3,
-        "netOrdersCount": 1,
-        "retailCount": 0,
-        "lostEnquiriesRank": 4,
-        "lostEnquiriesCount": 3
-      },
-      "QTDDealerShipRank": {
-        "enquiriesRank": 6,
-        "testDrivesRank": 8,
-        "newOrdersRank": 4,
-        "cancellationsRank": 2,
-        "enquiriesCount": 7,
-        "testDrivesCount": 2,
-        "newOrdersCount": 2,
-        "cancellationsCount": 1,
-        "netOrdersRank": 3,
-        "retailRank": 4,
-        "netOrdersCount": 2,
-        "retailCount": 1,
-        "lostEnquiriesRank": 5,
-        "lostEnquiriesCount": 5
-      },
-      "YTDDealerShipRank": {
-        "enquiriesRank": 7,
-        "testDrivesRank": 9,
-        "newOrdersRank": 5,
-        "cancellationsRank": 3,
-        "enquiriesCount": 10,
-        "testDrivesCount": 3,
-        "newOrdersCount": 3,
-        "cancellationsCount": 2,
-        "netOrdersRank": 4,
-        "retailRank": 5,
-        "netOrdersCount": 3,
-        "retailCount": 2,
-        "lostEnquiriesRank": 6,
-        "lostEnquiriesCount": 7
-      },
-      "MTDAllIndiaRank": {
-        "enquiriesRank": 25,
-        "testDrivesRank": 4,
-        "newOrdersRank": 2,
-        "cancellationsRank": 1,
-        "enquiriesCount": 11,
-        "testDrivesCount": 5,
-        "newOrdersCount": 3,
-        "cancellationsCount": 0,
-        "netOrdersRank": 3,
-        "retailRank": 1,
-        "netOrdersCount": 3,
-        "retailCount": 2,
-        "lostEnquiriesRank": 3,
-        "lostEnquiriesCount": 1
-      },
-      "QTDAllIndiaRank": {
-        "enquiriesRank": 30,
-        "testDrivesRank": 6,
-        "newOrdersRank": 3,
-        "cancellationsRank": 2,
-        "enquiriesCount": 15,
-        "testDrivesCount": 7,
-        "newOrdersCount": 4,
-        "cancellationsCount": 1,
-        "netOrdersRank": 4,
-        "retailRank": 2,
-        "netOrdersCount": 4,
-        "retailCount": 3,
-        "lostEnquiriesRank": 4,
-        "lostEnquiriesCount": 2
-      },
-      "YTDAllIndiaRank": {
-        "enquiriesRank": 35,
-        "testDrivesRank": 8,
-        "newOrdersRank": 4,
-        "cancellationsRank": 3,
-        "enquiriesCount": 20,
-        "testDrivesCount": 9,
-        "newOrdersCount": 5,
-        "cancellationsCount": 2,
-        "netOrdersRank": 5,
-        "retailRank": 3,
-        "netOrdersCount": 5,
-        "retailCount": 4,
-        "lostEnquiriesRank": 5,
-        "lostEnquiriesCount": 3
-      }
-    };
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  // Get current data based on selected time period
+  // Get current data based on selected period
   Map<String, dynamic> get currentDealershipRank {
     if (_dashboardData == null) {
       // Return empty data if API data isn't available yet
       return {};
     }
-
-    switch (_childButtonIndex) {
-      case 0:
-        return _dashboardData!['MTDDealerShipRank'];
-      case 1:
-        return _dashboardData!['QTDDealerShipRank'];
-      case 2:
-        return _dashboardData!['YTDDealerShipRank'];
-      default:
-        return _dashboardData!['MTDDealerShipRank'];
-    }
+    return _dashboardData!['dealershipRank'] ?? {};
   }
 
   Map<String, dynamic> get currentAllIndiaRank {
@@ -539,16 +436,8 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       return {};
     }
 
-    switch (_childButtonIndex) {
-      case 0:
-        return _dashboardData!['MTDAllIndiaRank'];
-      case 1:
-        return _dashboardData!['QTDAllIndiaRank'];
-      case 2:
-        return _dashboardData!['YTDAllIndiaRank'];
-      default:
-        return _dashboardData!['MTDAllIndiaRank'];
-    }
+    // Using allINDRank from API response
+    return _dashboardData!['allINDRank'] ?? {};
   }
 
   // Generate dynamic table rows based on API data
@@ -571,10 +460,10 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Lost Enquiries row
     data.add([
       'Lost Enquiries',
-      currentDealershipRank['lostEnquiriesCount']?.toString() ?? '0',
-      currentAllIndiaRank['lostEnquiriesCount']?.toString() ?? '0',
-      currentDealershipRank['lostEnquiriesRank']?.toString() ?? '0',
-      currentAllIndiaRank['lostEnquiriesRank']?.toString() ?? '0',
+      _dashboardData!['allData']['lostEnquiries']?.toString() ?? '0',
+      '0', // No data in API response for all India lost enquiries
+      '0', // No rank data for lost enquiries
+      '0', // No rank data for lost enquiries
     ]);
 
     // Add Test drives row
@@ -605,21 +494,34 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     ]);
 
     // Add Net Orders row
+    int myNetOrders = (int.tryParse(
+                currentDealershipRank['newOrdersCount']?.toString() ?? '0') ??
+            0) -
+        (int.tryParse(currentDealershipRank['cancellationsCount']?.toString() ??
+                '0') ??
+            0);
+    int allIndiaNetOrders = (int.tryParse(
+                currentAllIndiaRank['newOrdersCount']?.toString() ?? '0') ??
+            0) -
+        (int.tryParse(
+                currentAllIndiaRank['cancellationsCount']?.toString() ?? '0') ??
+            0);
+
     data.add([
       'Net Orders',
-      currentDealershipRank['netOrdersCount']?.toString() ?? '0',
-      currentAllIndiaRank['netOrdersCount']?.toString() ?? '0',
-      currentDealershipRank['netOrdersRank']?.toString() ?? '0',
-      currentAllIndiaRank['netOrdersRank']?.toString() ?? '0',
+      myNetOrders.toString(),
+      allIndiaNetOrders.toString(),
+      '0', // No specific rank data for net orders
+      '0', // No specific rank data for net orders
     ]);
 
-    // Add Retail row
+    // Add Retail row - assuming allData.ConvertedOrder contains retail data
     data.add([
       'Retail',
-      currentDealershipRank['retailCount']?.toString() ?? '0',
-      currentAllIndiaRank['retailCount']?.toString() ?? '0',
-      currentDealershipRank['retailRank']?.toString() ?? '0',
-      currentAllIndiaRank['retailRank']?.toString() ?? '0',
+      _dashboardData!['allData']['ConvertedOrder']?.toString() ?? '0',
+      '0', // No data in API response for all India retail
+      '0', // No rank data for retail
+      '0', // No rank data for retail
     ]);
 
     return data;
@@ -675,7 +577,6 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
             ],
           ),
         ),
-        // const SizedBox(width: 5),
         // Performance and Rank headers
         Expanded(
           child: Column(
@@ -711,7 +612,6 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                     ],
                   ),
                   Container(
-                    // margin: const EdgeInsets.symmetric(horizontal: 10),
                     height: MediaQuery.of(context).size.height * .07,
                     width: 0.1,
                     decoration: BoxDecoration(
@@ -807,6 +707,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
           onPressed: () {
             setState(() {
               _childButtonIndex = index;
+              _fetchDashboardData(); // Reload data when period changes
             });
           },
           style: TextButton.styleFrom(
@@ -831,3 +732,406 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     );
   }
 }
+
+// class _BottomBtnThirdState extends State<BottomBtnThird> {
+//    int _periodIndex = 0;
+//   int _childButtonIndex = 0;
+//   bool _isLoading = true;
+//   Map<String, dynamic>? _dashboardData;
+
+//   // Define table metrics - these match what's shown in the image
+//   final List<String> tableMetrics = [
+//     'Enquiries',
+//     'Lost Enquiries',
+//     'Test drives',
+//     'New Orders',
+//     'Cancellations',
+//     'Net Orders',
+//     'Retail',
+//   ];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchDashboardData(); //uncomment this
+//   }
+
+//   Future<void> _fetchDashboardData() async {
+//     try {
+//       setState(() {
+//         _isLoading = true;
+//       });
+
+//       final token = await Storage.getToken();
+
+//        String periodParam = '';
+//       switch (_childButtonIndex) {
+//         case 1:
+//           periodParam = '?type=QTD';
+//           break;
+//         case 2:
+//           periodParam = '?type=YTD';
+//           break;
+//         default:
+//           periodParam = '?type=MTD';
+//       }
+
+//       final response = await http.get(
+//         Uri.parse(
+//             'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam'),
+//         headers: {
+//           'Authorization': 'Bearer $token',
+//           'Content-Type': 'application/json',
+//         },
+//       );
+
+//       if (response.statusCode == 200) {
+//         final jsonData = json.decode(response.body);
+//         // Check if the widget is still in the widget tree before calling setState
+//         if (mounted) {
+//           setState(() {
+//             _dashboardData = jsonData['data'];
+//             _isLoading = false;
+//           });
+//         }
+//       } else {
+//         // Handle unsuccessful status codes
+//         throw Exception(
+//             'Failed to load dashboard data. Status code: ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       // Check if the widget is still in the widget tree before calling setState
+//       if (mounted) {
+//         setState(() {
+//           _isLoading = false;
+//         });
+//       }
+
+//       // Handle different types of errors
+//       if (e is http.ClientException) {
+//         debugPrint('Network error: $e');
+//       } else if (e is FormatException) {
+//         debugPrint('Error parsing data: $e');
+//       } else {
+//         debugPrint('Unexpected error: $e');
+//       }
+//     }
+//   }
+
+//   // Get current data based on selected time period
+//   Map<String, dynamic> get currentDealershipRank {
+//     if (_dashboardData == null) {
+//       // Return empty data if API data isn't available yet
+//       return {};
+//     }
+
+//     switch (_childButtonIndex) {
+//       case 0:
+//         return _dashboardData!['dealerShipRank'];
+//       case 1:
+//         return _dashboardData!['dealerShipRank'];
+//       case 2:
+//         return _dashboardData!['dealerShipRank'];
+//       default:
+//         return _dashboardData!['dealerShipRank'];
+//     }
+//   }
+
+//   Map<String, dynamic> get currentAllIndiaRank {
+//     if (_dashboardData == null) {
+//       // Return empty data if API data isn't available yet
+//       return {};
+//     }
+
+//     switch (_childButtonIndex) {
+//       case 0:
+//         return _dashboardData!['MTDAllIndiaRank'];
+//       case 1:
+//         return _dashboardData!['QTDAllIndiaRank'];
+//       case 2:
+//         return _dashboardData!['YTDAllIndiaRank'];
+//       default:
+//         return _dashboardData!['MTDAllIndiaRank'];
+//     }
+//   }
+
+//   // Generate dynamic table rows based on API data
+//   List<List<String>> get tableData {
+//     final List<List<String>> data = [];
+
+//     if (_dashboardData == null) {
+//       return [];
+//     }
+
+//     // Add Enquiries row
+//     data.add([
+//       'Enquiries',
+//       currentDealershipRank['enquiriesCount']?.toString() ?? '0',
+//       currentAllIndiaRank['enquiriesCount']?.toString() ?? '0',
+//       currentDealershipRank['enquiriesRank']?.toString() ?? '0',
+//       currentAllIndiaRank['enquiriesRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add Lost Enquiries row
+//     data.add([
+//       'Lost Enquiries',
+//       currentDealershipRank['lostEnquiriesCount']?.toString() ?? '0',
+//       currentAllIndiaRank['lostEnquiriesCount']?.toString() ?? '0',
+//       currentDealershipRank['lostEnquiriesRank']?.toString() ?? '0',
+//       currentAllIndiaRank['lostEnquiriesRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add Test drives row
+//     data.add([
+//       'Test drives',
+//       currentDealershipRank['testDrivesCount']?.toString() ?? '0',
+//       currentAllIndiaRank['testDrivesCount']?.toString() ?? '0',
+//       currentDealershipRank['testDrivesRank']?.toString() ?? '0',
+//       currentAllIndiaRank['testDrivesRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add New Orders row
+//     data.add([
+//       'New Orders',
+//       currentDealershipRank['newOrdersCount']?.toString() ?? '0',
+//       currentAllIndiaRank['newOrdersCount']?.toString() ?? '0',
+//       currentDealershipRank['newOrdersRank']?.toString() ?? '0',
+//       currentAllIndiaRank['newOrdersRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add Cancellations row
+//     data.add([
+//       'Cancellations',
+//       currentDealershipRank['cancellationsCount']?.toString() ?? '0',
+//       currentAllIndiaRank['cancellationsCount']?.toString() ?? '0',
+//       currentDealershipRank['cancellationsRank']?.toString() ?? '0',
+//       currentAllIndiaRank['cancellationsRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add Net Orders row
+//     data.add([
+//       'Net Orders',
+//       currentDealershipRank['netOrdersCount']?.toString() ?? '0',
+//       currentAllIndiaRank['netOrdersCount']?.toString() ?? '0',
+//       currentDealershipRank['netOrdersRank']?.toString() ?? '0',
+//       currentAllIndiaRank['netOrdersRank']?.toString() ?? '0',
+//     ]);
+
+//     // Add Retail row
+//     data.add([
+//       'Retail',
+//       currentDealershipRank['retailCount']?.toString() ?? '0',
+//       currentAllIndiaRank['retailCount']?.toString() ?? '0',
+//       currentDealershipRank['retailRank']?.toString() ?? '0',
+//       currentAllIndiaRank['retailRank']?.toString() ?? '0',
+//     ]);
+
+//     return data;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     double screenWidth = MediaQuery.of(context).size.width;
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(
+//         horizontal: 10.0,
+//       ),
+//       child: Container(
+//         margin: const EdgeInsets.symmetric(vertical: 0),
+//         padding: const EdgeInsets.all(5),
+//         decoration: BoxDecoration(
+//             borderRadius: BorderRadius.circular(5),
+//             border: Border.all(
+//               color: Colors.black38,
+//             )),
+//         child: _isLoading
+//             ? const Center(child: CircularProgressIndicator())
+//             : Column(
+//                 children: [
+//                   const SizedBox(height: 10),
+//                   _buildHeaderRow(screenWidth),
+//                   const SizedBox(height: 20),
+//                   _buildTable(),
+//                 ],
+//               ),
+//       ),
+//     );
+//   }
+
+//   Widget _buildHeaderRow(double screenWidth) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         // MTD, QTD, YTD toggle buttons
+//         Container(
+//           width: screenWidth * 0.28,
+//           height: screenWidth * 0.05,
+//           decoration: BoxDecoration(
+//             border: Border.all(color: Colors.grey, width: .5),
+//             color: Colors.white,
+//             borderRadius: BorderRadius.circular(30),
+//           ),
+//           child: Row(
+//             children: [
+//               _buildButton('MTD', 0),
+//               _buildButton('QTD', 1),
+//               _buildButton('YTD', 2),
+//             ],
+//           ),
+//         ),
+//         // const SizedBox(width: 5),
+//         // Performance and Rank headers
+//         Expanded(
+//           child: Column(
+//             children: [
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                 children: [
+//                   // Performance Column
+//                   Column(
+//                     children: [
+//                       Text(
+//                         'Performance',
+//                         style: AppFont.mediumText14(context)
+//                             .copyWith(fontWeight: FontWeight.w400),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                         children: [
+//                           Text(
+//                             'My',
+//                             style: AppFont.tinyText(context)
+//                                 .copyWith(fontWeight: FontWeight.w500),
+//                           ),
+//                           const SizedBox(width: 10),
+//                           Text(
+//                             'All India Best',
+//                             style: AppFont.tinyText(context)
+//                                 .copyWith(fontWeight: FontWeight.w500),
+//                           ),
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                   Container(
+//                     // margin: const EdgeInsets.symmetric(horizontal: 10),
+//                     height: MediaQuery.of(context).size.height * .07,
+//                     width: 0.1,
+//                     decoration: BoxDecoration(
+//                       border: Border(
+//                           right:
+//                               BorderSide(color: Colors.grey.withOpacity(0.3))),
+//                     ),
+//                   ),
+
+//                   // Rank Column
+//                   Column(
+//                     children: [
+//                       Text(
+//                         'Rank',
+//                         style: AppFont.mediumText14(context),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       Row(
+//                         children: [
+//                           Text(
+//                             'Dealership',
+//                             style: AppFont.tinyText(context)
+//                                 .copyWith(fontWeight: FontWeight.w500),
+//                           ),
+//                           const SizedBox(width: 4),
+//                           Text(
+//                             'All India',
+//                             style: AppFont.tinyText(context)
+//                                 .copyWith(fontWeight: FontWeight.w500),
+//                           ),
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildTable() {
+//     double screenWidth = MediaQuery.of(context).size.width;
+
+//     return Table(
+//       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+//       border: TableBorder.symmetric(
+//         inside: BorderSide(color: Colors.grey.withOpacity(0.3), width: 0.5),
+//       ),
+//       columnWidths: {
+//         0: FixedColumnWidth(screenWidth * 0.3), // Metric name
+//         1: FixedColumnWidth(screenWidth * 0.15), // My Performance
+//         2: FixedColumnWidth(screenWidth * 0.15), // All India Best
+//         3: FixedColumnWidth(screenWidth * 0.15), // Dealership Rank
+//         4: FixedColumnWidth(screenWidth * 0.15), // All India Rank
+//       },
+//       children: tableData.map((rowData) => _buildTableRow(rowData)).toList(),
+//     );
+//   }
+
+//   TableRow _buildTableRow(List<String> values) {
+//     return TableRow(
+//       children: values.map((value) {
+//         return Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+//           child: Text(
+//             value,
+//             style: GoogleFonts.poppins(
+//               fontSize: 12,
+//               fontWeight: FontWeight.w500,
+//               color: Colors.black87,
+//             ),
+//             textAlign:
+//                 values.indexOf(value) == 0 ? TextAlign.left : TextAlign.center,
+//             overflow: TextOverflow.ellipsis,
+//           ),
+//         );
+//       }).toList(),
+//     );
+//   }
+
+//   Widget _buildButton(String text, int index) {
+//     bool isSelected = _childButtonIndex == index;
+
+//     return Expanded(
+//       child: Container(
+//         decoration: BoxDecoration(
+//           borderRadius: BorderRadius.circular(30),
+//         ),
+//         child: TextButton(
+//           onPressed: () {
+//             setState(() {
+//               _childButtonIndex = index;
+//             });
+//           },
+//           style: TextButton.styleFrom(
+//             alignment: Alignment.center,
+//             foregroundColor: isSelected ? Colors.white : Colors.black,
+//             backgroundColor: isSelected ? Colors.blue : Colors.transparent,
+//             padding: const EdgeInsets.symmetric(vertical: 0),
+//             shape: RoundedRectangleBorder(
+//               borderRadius: BorderRadius.circular(30),
+//             ),
+//           ),
+//           child: Text(
+//             text,
+//             style: GoogleFonts.poppins(
+//               fontSize: 10,
+//               fontWeight: FontWeight.w500,
+//               color: isSelected ? Colors.white : Colors.black,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }

@@ -22,16 +22,25 @@ class _LeadsState extends State<Leads> {
   final PageController _pageController = PageController();
 
   Map<String, dynamic> getSelectedData() {
+    Map<String, dynamic> periodData;
+
+    // Select the appropriate period data
     switch (_childButtonIndex) {
       case 0:
-        return widget.MtdData;
+        periodData = widget.MtdData;
+        break;
       case 1:
-        return widget.QtdData;
+        periodData = widget.QtdData;
+        break;
       case 2:
-        return widget.YtdData;
+        periodData = widget.YtdData;
+        break;
       default:
-        return {};
+        periodData = {};
     }
+
+    // Make sure allData exists, otherwise return empty map
+    return periodData['allData'] ?? {};
   }
 
   @override

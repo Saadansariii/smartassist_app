@@ -50,6 +50,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   String fuel_type = 'Loading....';
   String lead_name = 'Loading....';
   String expected_date_purchase = 'Loading...';
+  String pincode = 'Loading..';
 
   bool isLoading = false;
   int _childButtonIndex = 0;
@@ -218,6 +219,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         expected_date_purchase =
             leadData['data']['expected_date_purchase'] ?? 'N/A';
         lead_name = leadData['data']['lead_name'] ?? 'N/A';
+        pincode = leadData['data']['pincode']?.toString() ?? 'N/A';
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -586,7 +588,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                 Navigator.pop(context); // Pass context to submit
               },
               child: Text(
-                'Cancle',
+                'Cancel',
                 style: AppFont.mediumText14blue(context),
                 // style: TextStyle(color: AppColors.colorsBlue),
               ),
@@ -723,20 +725,13 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               const SizedBox(height: 10),
             ],
           ),
-          // content: SingleChildScrollView(
-          //   child: ListBody(
-          //     children: <Widget>[
-          //       Divider(height: 1, color: Colors.grey.shade200),
-          //     ],
-          //   ),
-          // ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               child: Text(
-                'Cancle',
+                'Cancel',
                 // style: TextStyle(color: AppColors.colorsBlue),
                 style: AppFont.mediumText14blue(context),
               ),
@@ -1036,7 +1031,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   Expanded(
                                     child: _buildContactRow(
                                       icon: Icons.phone,
-                                      title: 'Phone Number',
+                                      title: 'Mobile',
                                       subtitle: mobile,
                                     ),
                                   ),
@@ -1044,8 +1039,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   Expanded(
                                     child: _buildContactRow(
                                       icon: Icons.location_on,
-                                      title: 'Company',
-                                      subtitle: company,
+                                      title: 'Location',
+                                      subtitle: pincode,
                                     ),
                                   ),
                                 ],
@@ -1064,9 +1059,9 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   Expanded(
                                     child: _buildContactRow(
                                       icon: Icons.person,
-                                      title: 'Address',
+                                      title: 'Lead Source',
                                       subtitle:
-                                          'Malad', // Replace with the actual address variable
+                                          leadSource, // Replace with the actual address variable
                                     ),
                                   ),
                                 ],
@@ -1078,8 +1073,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                     child: _buildContactRow(
                                       icon:
                                           Icons.account_balance_wallet_outlined,
-                                      title: 'Car budget',
-                                      subtitle: '2xxxxxxx',
+                                      title: 'Email',
+                                      subtitle: email,
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -1087,32 +1082,33 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                     child: _buildContactRow(
                                       icon: Icons.directions_car,
                                       title: 'Brand',
-                                      subtitle: PMI,
+                                      subtitle: company,
                                     ),
                                   ),
                                 ],
                               ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildContactRow(
-                                      icon: Icons.directions_car,
-                                      title: 'Purchase type',
-                                      subtitle:
-                                          purchase_type, // Replace with the actual address variable
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: _buildContactRow(
-                                      icon: Icons.local_gas_station,
-                                      title: 'Fuel type',
-                                      subtitle:
-                                          fuel_type, // Replace with the actual address variable
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              // Row(
+                              //   children: [
+                              //     Expanded(
+                              //       child: _buildContactRow(
+                              //         icon: Icons.directions_car,
+                              //         title: 'Purchase type',
+                              //         subtitle:
+                              //             purchase_type, // Replace with the actual address variable
+                              //       ),
+                              //     ),
+                              //     const SizedBox(width: 10),
+                              //     Expanded(
+                              //       child: _buildContactRow(
+                              //         icon: Icons.local_gas_station,
+                              //         title: 'Fuel type',
+                              //         subtitle:
+                              //             fuel_type, // Replace with the actual address variable
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+
                               Row(
                                 children: [
                                   // Left Section: Phone Number and Company
@@ -1372,18 +1368,18 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               // Lost Button
               Expanded(
                 child: GestureDetector(
-                  onTap: areButtonsEnabled()
-                      ? () {
-                          handleLostAction();
-                        }
-                      : null,
+                  onTap: () {
+                    if (areButtonsEnabled()) {
+                      handleLostAction();
+                    } else {
+                      showLostRequiredDialog(context);
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(
-                          color: areButtonsEnabled() ? Colors.red : Colors.grey,
-                          width: 1),
+                      border: Border.all(color: Colors.red, width: 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1399,17 +1395,18 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               // Qualify Button
               Expanded(
                 child: GestureDetector(
-                  onTap: areButtonsEnabled()
-                      ? () {
-                          handleQualifyAction();
-                        }
-                      : null,
+                  onTap: () {
+                    if (areButtonsEnabled()) {
+                      handleQualifyAction();
+                    } else {
+                      showTaskRequiredDialog(context);
+                    }
+                  },
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: areButtonsEnabled()
-                          ? const Color(0xFF35CB64)
-                          : Colors.grey, // Green color from image
+                      color: const Color(0xFF35CB64),
+                      // Green color from image
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1486,16 +1483,98 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Action Required'),
-          content: const Text(
-              'Please perform a task first before using this action.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'Perform atleast one Test Drive before qualifying this enquiry.',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               },
-              child: const Text('OK'),
+              child: Text(
+                'Ok',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
             ),
+            // TextButton(
+            //   onPressed: () {
+            //     submitQualify(context); // Pass context to submit
+            //   },
+            //   child: Text(
+            //     'Submit',
+            //     style: AppFont.mediumText14blue(context),
+            //   ),
+            // ),
+          ],
+        );
+      },
+    );
+  }
+
+// Function to show dialog when disabled buttons are clicked
+  void showLostRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'Cannot mark this Enquiry as lost without performing any actions ',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Ok',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+            // TextButton(
+            //   onPressed: () {
+            //     submitQualify(context); // Pass context to submit
+            //   },
+            //   child: Text(
+            //     'Submit',
+            //     style: AppFont.mediumText14blue(context),
+            //   ),
+            // ),
           ],
         );
       },

@@ -388,7 +388,10 @@ class LeadsSrv {
       } else {
         final errorData = jsonDecode(response.body);
         print('Error response: $errorData');
-        return {'isSuccess': false, 'data': errorData};
+        return {
+          'isSuccess': false,
+          'data': errorData,
+        };
       }
     } catch (error) {
       // Log any error that occurs during the API call
