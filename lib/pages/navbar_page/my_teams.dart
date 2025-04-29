@@ -36,6 +36,8 @@ class _MyTeamsState extends State<MyTeams> {
 
   final FabController fabController = Get.put(FabController());
   Map<String, dynamic> _individualPerformanceData = {};
+  // Map<String, dynamic> _allPerformanceData = {};
+  Map<String, dynamic> _allPerformanceData = {};
 
   // Sample individual performance data
   final Map<String, dynamic> individualData = {
@@ -66,34 +68,6 @@ class _MyTeamsState extends State<MyTeams> {
       return teamData;
     }
   }
-
-  // List<Color> _getGradientForProgress(double percentage) {
-  //   if (percentage >= 0.8) {
-  //     return [
-  //       Color.fromRGBO(255, 237, 215, 0.9),
-  //       Color.fromRGBO(83, 157, 243, 1),
-  //       Color.fromRGBO(144, 109, 250, 1),
-  //     ];
-  //   } else if (percentage >= 0.6) {
-  //     return [
-  //       Color.fromRGBO(229, 208, 210, 1),
-  //       Color.fromRGBO(255, 150, 165, 1),
-  //       Color.fromRGBO(255, 122, 113, 1),
-  //     ];
-  //   } else if (percentage >= 0.3) {
-  //     return [
-  //       Color.fromRGBO(254, 221, 176, 1),
-  //       Color.fromRGBO(144, 109, 250, 1),
-  //       Color.fromRGBO(255, 122, 113, 1),
-  //     ];
-  //   } else {
-  //     return [
-  //       Color.fromRGBO(182, 247, 249, 1),
-  //       Color.fromRGBO(168, 230, 251, 1),
-  //       Color.fromRGBO(196, 201, 255, 1),
-  //     ];
-  //   }
-  // }
 
   // Calculate team total by summing member metrics
   int _calculateTeamTotal(Map<String, dynamic> team) {
@@ -130,46 +104,46 @@ class _MyTeamsState extends State<MyTeams> {
   }
 
   // Widget for period selection buttons
-  Widget _buildPeriodButtons(double screenWidth) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              children: [
-                _buildPeriodButton('All', 0),
-                _buildPeriodButton('MTD', 1),
-                _buildPeriodButton('QTD', 2),
-                _buildPeriodButton('YTD', 3),
-              ],
-            ),
-          ),
+  // Widget _buildPeriodButtons(double screenWidth) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       children: [
+  //         Container(
+  //           decoration: BoxDecoration(
+  //             border: Border.all(color: Colors.grey.shade300, width: 1),
+  //             borderRadius: BorderRadius.circular(30),
+  //           ),
+  //           child: Row(
+  //             children: [
+  //               _buildPeriodButton('All', 0),
+  //               _buildPeriodButton('MTD', 1),
+  //               _buildPeriodButton('QTD', 2),
+  //               _buildPeriodButton('YTD', 3),
+  //             ],
+  //           ),
+  //         ),
 
-          // Calendar button
-          Container(
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.calendar_today, size: 20),
-              onPressed: () {
-                // Handle calendar selection
-              },
-              padding: EdgeInsets.zero,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  //         // Calendar button
+  //         Container(
+  //           height: 40,
+  //           width: 40,
+  //           decoration: BoxDecoration(
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: IconButton(
+  //             icon: const Icon(Icons.calendar_today, size: 20),
+  //             onPressed: () {
+  //               // Handle calendar selection
+  //             },
+  //             padding: EdgeInsets.zero,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // Individual period button
   Widget _buildPeriodButton(String label, int index) {
@@ -277,6 +251,9 @@ class _MyTeamsState extends State<MyTeams> {
       // Determine period parameter based on selection
       String periodParam = '';
       switch (_periodIndex) {
+        case 0:
+          periodParam = '?type=ALL';
+          break;
         case 1:
           periodParam = '?type=MTD';
           break;
@@ -287,7 +264,7 @@ class _MyTeamsState extends State<MyTeams> {
           periodParam = '?type=YTD';
           break;
         default:
-          periodParam = '';
+          periodParam = 'All';
       }
 
       Uri url = Uri.parse(
@@ -317,40 +294,82 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  String _getMetricKey() {
-    switch (_selectedButtonIndex) {
-      case 1:
-        return 'testDrives';
-      case 2:
-        return 'orders';
-      case 3:
-        return 'newOrders'; // Update if your backend uses 'orders' or 'newOrders'
-      case 4:
-        return 'cancellation';
-      case 5:
-        return 'retails'; // if applicable
-      default:
-        return 'enquiries';
-    }
-  }
+// First, add a method to fetch the All performance data
+  Future<void> _fetchAllTeamPerformance() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
 
-  String _getPeriodKey() {
-    switch (_periodIndex) {
-      case 1:
-        return 'MTD';
-      case 2:
-        return 'QTD';
-      case 3:
-        return 'YTD';
-      default:
-        return 'ALL'; // if backend returns separate ALL block, else skip
+      final token = await Storage.getToken();
+      final response = await http.get(
+        Uri.parse(
+            'https://api.smartassistapp.in/api/users/sm/dashboard/all-performance'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        // Store the all performance data
+        setState(() {
+          _allPerformanceData = data['data'];
+        });
+
+        print("All team performance data fetched successfully");
+      } else {
+        throw Exception('Failed to load all team performance data');
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+  // String _getMetricKey() {
+  //   switch (_selectedButtonIndex) {
+  //     case 1:
+  //       return 'testDrives';
+  //     case 2:
+  //       return 'orders';
+  //     case 3:
+  //       return 'newOrders'; // Update if your backend uses 'orders' or 'newOrders'
+  //     case 4:
+  //       return 'cancellation';
+  //     case 5:
+  //       return 'retails'; // if applicable
+  //     default:
+  //       return 'enquiries';
+  //   }
+  // }
+
+  // String _getPeriodKey() {
+  //   switch (_periodIndex) {
+  //     case 1:
+  //       return 'MTD';
+  //     case 2:
+  //       return 'QTD';
+  //     case 3:
+  //       return 'YTD';
+  //     default:
+  //       return 'ALL'; // if backend returns separate ALL block, else skip
+  //   }
+  // }
 
   // late Future<List<Map<String, dynamic>>> _teamComparisonData;
 
-  int _selectedPeriodIndex = 0; // 0: All, 1: MTD, 2: QTD, 3: YTD
-  int _selectedMetricIndex = 0;
+  // int _selectedPeriodIndex = 0; // 0: All, 1: MTD, 2: QTD, 3: YTD
+  // int _selectedMetricIndex = 0;
 
   Future<Map<String, dynamic>> _fetchDataUserProfile() async {
     try {
@@ -375,7 +394,7 @@ class _MyTeamsState extends State<MyTeams> {
           for (var member in team['teamMembers']) {
             teamProfiles.add({
               'name': member['name'],
-              'name': member['fname'],
+              'fname': member['fname'],
               'lname': member['lname'],
               'user_id': member['user_id'],
               'team_name': team['team_name'],
@@ -453,19 +472,41 @@ class _MyTeamsState extends State<MyTeams> {
 // Individual Performance View
   Widget _buildIndividualPerformanceView(
       BuildContext context, double screenWidth) {
-    // Get the updated performance data
-    final data = _individualPerformanceData;
+    // Determine which data to use based on selection
+    Map<String, dynamic> performanceData;
+    Map<String, dynamic> stats;
 
-    // Ensure that the data is available before attempting to display it
-    if (data.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10.0),
-        child: Center(child: Text('No performance data available.')),
-      );
+    if (_selectedProfileIndex == 0) {
+      // Using All performance data
+      if (_allPerformanceData.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 10.0),
+          child: Center(child: Text('No performance data available.')),
+        );
+      }
+
+      // Format the data to match the expected structure
+      stats = {
+        'Enquiries': _allPerformanceData['enquiries'] ?? 0,
+        'TestDrives': _allPerformanceData['testDrives'] ?? 0,
+        'Orders': _allPerformanceData['orders'] ?? 0,
+        'Cancellation': _allPerformanceData['cancellation'] ?? 0,
+      };
+
+      performanceData = {'stats': stats};
+    } else {
+      // Using individual performance data
+      if (_individualPerformanceData.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 10.0),
+          child: Center(child: Text('No performance data available.')),
+        );
+      }
+
+      // Access the stats data from individual performance
+      performanceData = _individualPerformanceData;
+      stats = performanceData['stats'];
     }
-
-    // Access the stats data
-    final stats = data['stats'];
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -518,12 +559,12 @@ class _MyTeamsState extends State<MyTeams> {
 
           const SizedBox(height: 10),
 
-          // Third row of cards (You might need to adjust this based on available data)
+          // Third row of cards
           Row(
             children: [
               Expanded(
                 child: _buildMetricCard(
-                  "${stats['Orders'] - stats['Cancellation']}", // Net orders calculation
+                  "${(stats['Orders'] ?? 0) - (stats['Cancellation'] ?? 0)}", // Net orders calculation
                   "Net Orders",
                   Colors.blue,
                 ),
@@ -542,6 +583,97 @@ class _MyTeamsState extends State<MyTeams> {
       ),
     );
   }
+  // Widget _buildIndividualPerformanceView(
+  //     BuildContext context, double screenWidth) {
+  //   // Get the updated performance data
+  //   final data = _individualPerformanceData;
+
+  //   // Ensure that the data is available before attempting to display it
+  //   if (data.isEmpty) {
+  //     return const Padding(
+  //       padding: EdgeInsets.symmetric(vertical: 10.0),
+  //       child: Center(child: Text('No performance data available.')),
+  //     );
+  //   }
+
+  //   // Access the stats data
+  //   final stats = data['stats'];
+
+  //   return Padding(
+  //     padding: const EdgeInsets.all(16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.stretch,
+  //       children: [
+  //         // First row of cards
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "${stats['Enquiries']}",
+  //                 "Enquiries",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "${stats['TestDrives']}",
+  //                 "Test Drive\nDone",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+
+  //         const SizedBox(height: 12),
+
+  //         // Second row of cards
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "${stats['Orders']}",
+  //                 "Order Taken",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "${stats['Cancellation']}",
+  //                 "Cancellations",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+
+  //         const SizedBox(height: 10),
+
+  //         // Third row of cards (You might need to adjust this based on available data)
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "${stats['Orders'] - stats['Cancellation']}", // Net orders calculation
+  //                 "Net Orders",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 10),
+  //             Expanded(
+  //               child: _buildMetricCard(
+  //                 "0", // Replace with actual data if available
+  //                 "Retails",
+  //                 Colors.blue,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildProfileAvatar(String firstName, int index, String userId) {
     return Column(
@@ -557,7 +689,7 @@ class _MyTeamsState extends State<MyTeams> {
             });
           },
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10),
+            margin: const EdgeInsets.only(right: 10),
             width: 50,
             height: 50,
             decoration: BoxDecoration(
@@ -796,6 +928,7 @@ class _MyTeamsState extends State<MyTeams> {
   @override
   void initState() {
     super.initState();
+    _selectedProfileIndex = 0;
     _initialize();
   }
 
@@ -805,10 +938,13 @@ class _MyTeamsState extends State<MyTeams> {
     });
 
     try {
+      //  _data = fetchData();
       _data = fetchData();
-
       _teamComparisonData = fetchTeamComparisonData();
       await _teamComparisonData; // properly await
+
+      // Fetch team performance data for all users first
+      await _fetchAllTeamPerformance();
 
       _fetchDataUserProfile().then((data) {
         // Update any fields based on user profile data
@@ -821,9 +957,11 @@ class _MyTeamsState extends State<MyTeams> {
     } catch (error) {
       print("Error during initialization: $error");
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -931,7 +1069,20 @@ class _MyTeamsState extends State<MyTeams> {
                   // If _tabIndex != 0, show nothing (empty SizedBox)
 
                   // Profile avatars (only show for Individual Performance tab)
-                  if (_tabIndex == 0) _buildProfileAvatars(),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        if (_tabIndex == 0) ...[
+                          _buildProfileAvatarStaticsAll(
+                            'All',
+                            0,
+                          ),
+                          _buildProfileAvatars(),
+                        ]
+                      ],
+                    ),
+                  ),
 
                   // Period filter and date selection
 
@@ -1102,7 +1253,7 @@ class _MyTeamsState extends State<MyTeams> {
                                         ),
                                       ),
                                       FlexibleButton(
-                                        title: 'Retails',
+                                        title: 'Retailss',
                                         onPressed: () {
                                           setState(() {
                                             _selectedButtonIndex = 5;
@@ -1593,19 +1744,28 @@ class _MyTeamsState extends State<MyTeams> {
               child: Container(
                 margin: const EdgeInsets.only(top: 10),
                 height: 90,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    teamProfiles.length,
-                    (index) => _buildProfileAvatar(
-                      teamProfiles[index]['name'] ?? '',
-                      // teamProfiles[index]['lastName'] ?? '',
-                      index,
-                      data['teamProfiles'][index]['user_id'],
-                    ),
-                  ),
+                  // children: List.generate(
+                  //   teamProfiles.length,
+                  //   (index) => _buildProfileAvatar(
+                  //     teamProfiles[index]['name'] ?? '',
+                  //     // teamProfiles[index]['lastName'] ?? '',
+                  //     index,
+                  //     data['teamProfiles'][index]['user_id'],
+                  //   ),
+                  // ),
+                  children: [
+                    for (int i = 0; i < teamProfiles.length; i++)
+                      _buildProfileAvatar(
+                        // teamProfiles[i]['name'] ?? '',
+                        teamProfiles[i]['fname'] ?? '',
+                        i + 1, // Index starts from 1 because 0 is for "All"
+                        teamProfiles[i]['user_id'] ?? '',
+                      ),
+                  ],
                 ),
               ),
             );
@@ -1619,15 +1779,65 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
+  Widget _buildProfileAvatarStaticsAll(
+    String firstName,
+    int index,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _selectedProfileIndex = index;
+              // _selectedUserId = null;
+              // _selectedUserId = userId; // Store the selected user_id
+              // _fetchIndividualPerformance(
+              //     userId);
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.backgroundLightGrey,
+              border: _selectedProfileIndex == index
+                  ? Border.all(color: Colors.blue, width: 2)
+                  : null,
+            ),
+            child: Center(
+              child: Icon(
+                Icons.person,
+                color: Colors.grey.shade400,
+                size: 32,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'All',
+          style: AppFont.mediumText14(context),
+        ),
+        // Text(
+        //   lastName,
+        //   style: AppFont.mediumText14(context),
+        // ),
+      ],
+    );
+  }
+
   Widget _buildPeriodFilter(double screenWidth) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
             padding: EdgeInsets.zero,
-            margin: EdgeInsets.zero,
+            margin: const EdgeInsets.only(left: 10.0),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.fontColor, width: .2),
               borderRadius: BorderRadius.circular(30),
@@ -1663,282 +1873,6 @@ class _MyTeamsState extends State<MyTeams> {
         ],
       ),
     );
-  }
-
-  // Widget _buildPeriodButton(String text, int index) {
-  //   bool isSelected = _periodIndex == index;
-
-  //   return InkWell(
-  //     onTap: () {
-  //       setState(() {
-  //         _periodIndex = index;
-  //       });
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-  //       decoration: BoxDecoration(
-  //         // color: isSelected ? Colors.blue : Colors.grey.shade200,
-  //         // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
-  //         border: Border.all(
-  //             color: isSelected ? Colors.blue : Colors.transparent, width: 1),
-
-  //         borderRadius: BorderRadius.circular(30),
-  //       ),
-  //       child: Text(
-  //         text,
-  //         style: GoogleFonts.poppins(
-  //           fontSize: 12,
-  //           fontWeight: FontWeight.w500,
-  //           color: isSelected ? Colors.blue : Colors.black,
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  Widget _combuildPeriodButton(String text, int index) {
-    bool isSelected = _periodIndex == index;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _periodIndex = index;
-
-          _teamComparisonData = fetchTeamComparisonData();
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        decoration: BoxDecoration(
-          // color: isSelected ? Colors.blue : Colors.grey.shade200,
-          // border: Border.all(color:  isSelected Colors.blue : Colors.grey.shade200),
-          border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent, width: 1),
-
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Text(
-          text,
-          // textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.blue : Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTeamComparisonView(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _teamComparisonData,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          print("FutureBuilder error: ${snapshot.error}");
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (snapshot.hasData) {
-          final responseData = snapshot.data!;
-
-          // Safety check for data structure
-          if (!responseData.containsKey('independentUser') &&
-              !responseData.containsKey('teamsData')) {
-            return const Center(child: Text('Invalid data format'));
-          }
-
-          // Get the metric key based on selected button
-          String metricKey = _getMetricKeyForComparison();
-
-          // Process and prepare data for display
-          List<Map<String, dynamic>> allMembers =
-              _extractAllMembersForComparison(responseData, metricKey);
-
-          // Sort members by value (descending)
-          allMembers
-              .sort((a, b) => (b['value'] as int).compareTo(a['value'] as int));
-
-          // Find max value for scaling
-          int maxValue = allMembers.isEmpty ? 10 : allMembers.first['value'];
-          if (maxValue == 0) maxValue = 10; // Prevent division by zero
-
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // "Target" label on right side
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0, bottom: 8.0),
-                  child: Text(
-                    "Target",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-
-                // Display team members with progress bars
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allMembers.length,
-                  itemBuilder: (context, index) {
-                    final member = allMembers[index];
-                    final name = member['name'] ?? 'Unknown';
-                    final value = member['value'] as int;
-                    final percentage = value / maxValue;
-
-                    // Get color based on index position
-                    final barColor = _getBarColorForIndex(index);
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        children: [
-                          // Member name (fixed width)
-                          SizedBox(
-                            width: 90,
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-
-                          // Progress bar
-                          Expanded(
-                            child: Stack(
-                              children: [
-                                // Background bar
-                                Container(
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-
-                                // Colored progress bar
-                                FractionallySizedBox(
-                                  widthFactor: percentage.clamp(0.0, 1.0),
-                                  child: Container(
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: barColor,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Value display
-                          SizedBox(
-                            width: 30,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Text(
-                                '$value',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
-        } else {
-          return const Center(child: Text('No Data Available'));
-        }
-      },
-    );
-  }
-
-// Helper method to get the metric key based on button selection
-  String _getMetricKeyForComparison() {
-    switch (_selectedButtonIndex) {
-      case 0:
-        return 'enquiries';
-      case 1:
-        return 'testDrives';
-      case 2:
-        return 'orders'; // Net Orders
-      case 3:
-        return 'orders'; // New Orders (same field)
-      case 4:
-        return 'cancellation';
-      case 5:
-        return 'retail'; // or whatever field is used for retail
-      default:
-        return 'enquiries';
-    }
-  }
-
-// Extract all members including independent user into a flat list
-  List<Map<String, dynamic>> _extractAllMembersForComparison(
-      Map<String, dynamic> data, String metricKey) {
-    List<Map<String, dynamic>> result = [];
-
-    // Add independent user if present
-    if (data.containsKey('independentUser') &&
-        data['independentUser'] != null) {
-      final user = data['independentUser'];
-      if (user != null && user.containsKey('stats')) {
-        result.add({
-          'name': user['name'] ?? 'Unknown',
-          'value': user['stats'][metricKey] ?? 0,
-        });
-      }
-    }
-
-    // Process team members
-    if (data.containsKey('teamsData') && data['teamsData'] != null) {
-      for (var team in data['teamsData']) {
-        if (team.containsKey('member') && team['member'] != null) {
-          for (var member in team['member']) {
-            if (member != null && member.containsKey('stats')) {
-              result.add({
-                'name': member['name'] ?? 'Unknown',
-                'value': member['stats'][metricKey] ?? 0,
-              });
-            }
-          }
-        }
-      }
-    }
-
-    return result;
-  }
-
-// Get color for bar based on index position
-  Color _getBarColorForIndex(int index) {
-    final colors = [
-      Colors.green,
-      Colors.blue,
-      Colors.amber,
-      Colors.orange,
-      Colors.red,
-    ];
-
-    return colors[index % colors.length];
   }
 
 // Individual period button for comparison tab
@@ -1977,6 +1911,7 @@ class _MyTeamsState extends State<MyTeams> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
+            margin: const EdgeInsets.only(left: 10.0),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300, width: 1),
               borderRadius: BorderRadius.circular(30),
@@ -2006,25 +1941,6 @@ class _MyTeamsState extends State<MyTeams> {
               padding: EdgeInsets.zero,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-// Button group for metrics selection that matches design
-  Widget _buildMetricButtonsRow() {
-    return Container(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        children: [
-          _buildMetricToggleButton('Enquiries', 0),
-          _buildMetricToggleButton('Test Drives', 1),
-          _buildMetricToggleButton('Net Orders', 2),
-          _buildMetricToggleButton('New Orders', 3),
-          _buildMetricToggleButton('Cancellations', 4),
-          _buildMetricToggleButton('Retail', 5),
         ],
       ),
     );
@@ -2376,6 +2292,10 @@ class _MyTeamsState extends State<MyTeams> {
   //     overflow: TextOverflow.visible,
   //   );
   // }
+}
+
+extension on EdgeInsets {
+  only({required double left}) {}
 }
 
 class FlexibleButton extends StatelessWidget {

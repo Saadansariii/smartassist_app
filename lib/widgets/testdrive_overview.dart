@@ -30,7 +30,7 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
   bool isLoading = true;
   String potentialPurchase = '';
   String purchase_potential = '';
-  String avg_rating = '4';
+  String avg_rating = '';
   Map<String, dynamic> ratings = {};
 
   @override
@@ -55,15 +55,22 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('Decoded JSON:');
+        print(const JsonEncoder.withIndent('  ').convert(data));
         setState(() {
           startTime = data['data']['start_time'];
           distanceCovered = data['data']['distance'] + ' km';
           mapImgUrl = data['data']['map_img'] ?? '';
           potentialPurchase = data['data']['purchase_potential'];
           purchase_potential = data['data']['purchase_potential'];
-          avg_rating = data['data']['avg_rating'];
+          // avg_rating = data['data']['avg_rating'].toString();
+          avg_rating = double.parse(data['data']['avg_rating'].toString())
+              .toStringAsFixed(1);
+
           ratings = data['data']['drive_feedback'];
         });
+        print('this is sthe data');
+        print(data);
       } else {
         setState(() {
           isLoading =
@@ -169,8 +176,9 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(avg_rating,
-                                                  style: AppFont.dropDowmLabel(
-                                                      context)),
+                                                  style:
+                                                      AppFont.popupTitleBlack(
+                                                          context)),
                                               Text(purchase_potential,
                                                   style: AppFont.mediumText14(
                                                       context)),
@@ -374,16 +382,22 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                           const SizedBox(height: 20),
                           Column(
                             children: [
-                              TextButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _isHidden = !_isHidden;
-                                    });
-                                  },
-                                  child: Text(
-                                    _isHidden ? 'Show' : 'Hide',
-                                    style: AppFont.smallText(context),
-                                  )),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isHidden = !_isHidden;
+                                      });
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 5),
+                                      child: Text(
+                                        _isHidden ? 'Show' : 'Hide',
+                                        style: AppFont.smallText(context),
+                                      ),
+                                    )),
+                              ),
                               if (!_isHidden) ...[
                                 if (mapImgUrl.isNotEmpty)
                                   Image.network(mapImgUrl),

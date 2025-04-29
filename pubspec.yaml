@@ -72,6 +72,7 @@ dependencies:
   speech_to_text: ^7.0.0
   screenshot: ^3.0.0
   image: ^4.5.4
+  shimmer: ^3.0.0
 
 
 dev_dependencies:

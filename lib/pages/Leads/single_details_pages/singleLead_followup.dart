@@ -51,6 +51,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   String lead_name = 'Loading....';
   String expected_date_purchase = 'Loading...';
   String pincode = 'Loading..';
+  String lead_status = 'Not Converted';
 
   bool isLoading = false;
   int _childButtonIndex = 0;
@@ -220,6 +221,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             leadData['data']['expected_date_purchase'] ?? 'N/A';
         lead_name = leadData['data']['lead_name'] ?? 'N/A';
         pincode = leadData['data']['pincode']?.toString() ?? 'N/A';
+        lead_status = leadData['data']['opportunity_status'] ?? 'Not Converted';
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -371,6 +373,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             child: FollowupsIds(
               leadId: leadId,
               onFormSubmit: eventandtask,
+              onSubmitStatus: fetchSingleIdData,
             ),
           ),
         );
@@ -795,6 +798,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
           colorText: Colors.white,
         );
         Navigator.pop(context); // Dismiss the dialog after success
+        await fetchSingleIdData(widget.leadId);
       } else {
         // Error handling
         final errorMessage =
@@ -911,13 +915,27 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       // backgroundColor: AppColors.backgroundLightGrey,
       appBar: AppBar(
         backgroundColor: AppColors.colorsBlueButton,
-        title: Text('Enquiry', style: AppFont.appbarfontWhite(context)),
-        actions: const [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [],
-          ),
-        ],
+        // title: Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+            Text('Opportunity Status : $lead_status',
+                style: AppFont.smallTextWhite1(context)),
+          ],
+        ),
+        // actions: [
+        // Align(
+        //   alignment: Alignment.centerLeft,
+        //   child: Column(
+        //     mainAxisAlignment: MainAxisAlignment.start,
+        //     children: [
+        //       Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+        //       Text('data', style: AppFont.mediumText14white(context))
+        //     ],
+        //   ),
+        // ),
+        // ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_outlined,
               color: AppColors.white),

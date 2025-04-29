@@ -393,8 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 0, horizontal: 10),
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 10),
+                                  margin: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                       color: AppColors.backgroundLightGrey,
                                       borderRadius: BorderRadius.circular(30)),
@@ -610,10 +609,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               overdueTestDrivesCount: overdueTestDrivesCount,
                             ),
                             BottomBtnSecond(
-                              // MtdData: MtdData,
-                              // QtdData: QtdData,
-                              // YtdData: YtdData,
-                            ),
+                                // MtdData: MtdData,
+                                // QtdData: QtdData,
+                                // YtdData: YtdData,
+                                ),
 
                             Padding(
                               padding:

@@ -17,8 +17,14 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 class FollowupsIds extends StatefulWidget {
   final Function onFormSubmit;
   final String leadId;
+  // final String onSubmitStatus;
+  final Future<void> Function(String) onSubmitStatus;
+
   const FollowupsIds(
-      {super.key, required this.leadId, required this.onFormSubmit});
+      {super.key,
+      required this.leadId,
+      required this.onFormSubmit,
+      required this.onSubmitStatus});
 
   @override
   State<FollowupsIds> createState() => _FollowupsIdsState();
@@ -305,6 +311,7 @@ class _FollowupsIdsState extends State<FollowupsIds> {
         const SnackBar(content: Text('Follow-up submitted successfully!')),
       );
       widget.onFormSubmit(widget.leadId);
+      widget.onSubmitStatus(widget.leadId);
     } else {
       showErrorMessage(context, message: 'Submission failed. Try again.');
     }

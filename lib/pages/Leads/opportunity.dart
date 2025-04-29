@@ -114,9 +114,9 @@ class _OpportunityState extends State<Opportunity> {
               ),
 
               BottomBtnSecond(
-                MtdData: MtdData,
-                QtdData: QtdData,
-                YtdData: YtdData,
+                // MtdData: MtdData,
+                // QtdData: QtdData,
+                // YtdData: YtdData,
               ),
             ],
           ),

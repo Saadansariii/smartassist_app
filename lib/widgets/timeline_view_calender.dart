@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/widgets/calender/calender.dart';
+import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/appointment_popup.dart';
+import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_Followups_popups.dart';
+import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_leads.dart';
+import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_testDrive.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -130,6 +136,104 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     _fetchTasks(selectedDate);
   }
 
+  // Initialize the controller
+  final FabController fabController = Get.put(FabController());
+
+  void _showFollowupPopup(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: CreateFollowupsPopups(
+              onFormSubmit: () {}, // Pass the function here
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAppointmentPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero, // Remove default padding
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: AppointmentPopup(
+              onFormSubmit: () {},
+            ), // Appointment modal
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTestdrivePopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero, // Remove default padding
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: CreateTestdrive(
+              onFormSubmit: () {},
+            ), // Appointment modal
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLeadPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add some margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: CreateLeads(
+              onFormSubmit: () {},
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,34 +265,47 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
               icon: const Icon(Icons.search, color: Colors.white)),
         ],
       ),
-      body: Column(
-        children: [
-          // Calendar at the top
-          CalenderWidget(
-            key: ValueKey(_calendarFormat),
-            calendarFormat: _calendarFormat,
-            onDateSelected: _handleDateSelected,
-          ),
-          // Date header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            width: double.infinity,
-            child: Text(
-              DateFormat('EEEE, MMMM d').format(_selectedDay ?? _focusedDay),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: Stack(children: [
+        Column(
+          children: [
+            // Calendar at the top
+            CalenderWidget(
+              key: ValueKey(_calendarFormat),
+              calendarFormat: _calendarFormat,
+              onDateSelected: _handleDateSelected,
             ),
-          ),
-          // Timeline view
-          _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                      color: Colors.blue)) // Show loading spinner
-              : Expanded(
-                  child:
-                      _buildTimelineView()), // Show the timeline once the data is fetched
-          // Show the timeline once the data is fetched
-        ],
-      ),
+            // Date header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              width: double.infinity,
+              child: Text(
+                DateFormat('EEEE, MMMM d').format(_selectedDay ?? _focusedDay),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            // Timeline view
+            _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        color: Colors.blue)) // Show loading spinner
+                : Expanded(
+                    child:
+                        _buildTimelineView()), // Show the timeline once the data is fetched
+            // Show the timeline once the data is fetched
+          ],
+        ),
+
+        Positioned(
+          bottom: 26,
+          right: 18,
+          child: _buildFloatingActionButton(context),
+        ),
+
+        // Popup Menu (Conditionally Rendered)
+        Obx(() => fabController.isFabExpanded.value
+            ? _buildPopupMenu(context)
+            : const SizedBox.shrink()),
+      ]),
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () {
       //     // Add new appointment or task logic here
@@ -197,6 +314,142 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       //   backgroundColor: Colors.blue,
       // ),
     );
+  }
+
+  Widget _buildFloatingActionButton(BuildContext context) {
+    return Obx(
+      () => GestureDetector(
+        onTap: fabController.toggleFab,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: MediaQuery.of(context).size.width * .15,
+          height: MediaQuery.of(context).size.height * .08,
+          decoration: BoxDecoration(
+            color: fabController.isFabExpanded.value
+                ? Colors.red
+                : AppColors.colorsBlue,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: AnimatedRotation(
+              turns: fabController.isFabExpanded.value ? 0.25 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                fabController.isFabExpanded.value ? Icons.close : Icons.add,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context) {
+    return GestureDetector(
+      onTap: fabController.closeFab,
+      child: Stack(
+        children: [
+          // Background overlay
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.7),
+            ),
+          ),
+
+          // Popup Items Container aligned bottom right
+          Positioned(
+            bottom: 90,
+            right: 20,
+            child: SizedBox(
+              width: 200,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildPopupItem(
+                      Icons.calendar_month_outlined, "Appointment", -80,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showAppointmentPopup(context);
+                  }),
+                  _buildPopupItem(Icons.people_alt_rounded, "Enquiry", -60,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showLeadPopup(context);
+                  }),
+                  _buildPopupItem(Icons.call, "Followup", -40, onTap: () {
+                    fabController.closeFab();
+                    _showFollowupPopup(context);
+                  }),
+                  _buildPopupItem(Icons.directions_car, "Test Drive", -20,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showTestdrivePopup(context);
+                  }),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ FAB positioned above the overlay
+          Positioned(
+            bottom: 26,
+            right: 18,
+            child: _buildFloatingActionButton(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Popup Item Builder
+  Widget _buildPopupItem(IconData icon, String label, double offsetY,
+      {required Function() onTap}) {
+    return Obx(() => TweenAnimationBuilder(
+          tween: Tween<double>(
+              begin: 0, end: fabController.isFabExpanded.value ? 1 : 0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutBack,
+          builder: (context, double value, child) {
+            return Transform.translate(
+              offset: Offset(0, offsetY * (1 - value)),
+              child: Opacity(
+                opacity: value.clamp(0.0, 1.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: onTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.colorsBlue,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 24),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ));
   }
 
   Widget _buildTimelineView() {

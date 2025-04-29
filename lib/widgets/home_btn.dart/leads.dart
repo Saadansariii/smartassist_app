@@ -18,6 +18,8 @@ class Leads extends StatefulWidget {
 }
 
 class _LeadsState extends State<Leads> {
+  // final selectedData = getSelectedData();
+
   int _childButtonIndex = 0;
   final PageController _pageController = PageController();
 
@@ -47,6 +49,7 @@ class _LeadsState extends State<Leads> {
   Widget build(BuildContext context) {
     // Get screen width and height for responsiveness
     double screenWidth = MediaQuery.of(context).size.width;
+    final selectedData = getSelectedData();
 
     return Column(
       children: [
