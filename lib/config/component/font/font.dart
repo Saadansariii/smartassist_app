@@ -307,6 +307,18 @@ class AppFont {
     );
   }
 
+  static TextStyle mediumText14bluebold(
+    BuildContext context, {
+    double fontSize = 26,
+    Color color = AppColors.colorsBlue,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w600,
+    );
+  }
+
   static TextStyle tinyText(
     BuildContext context, {
     double fontSize = 8,

@@ -181,15 +181,17 @@ class _MyTeamsState extends State<MyTeams> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         decoration: BoxDecoration(
-          color: _periodIndex == index ? Colors.blue : Colors.transparent,
+          // color: _periodIndex == index ? Colors.blue : Colors.transparent,
+          border: Border.all(
+              color: _periodIndex == index ? Colors.blue : Colors.transparent),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: _periodIndex == index ? Colors.white : Colors.black,
+            color: _periodIndex == index ? Colors.blue : Colors.black,
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
@@ -263,23 +265,42 @@ class _MyTeamsState extends State<MyTeams> {
     return gradients[index % gradients.length];
   }
 
-  // Fetch team comparison data from API
+// Update this method to handle different period filters in API request
   Future<Map<String, dynamic>> fetchTeamComparisonData() async {
     try {
-      // For demo purposes, returning a mock response that matches the API format
-      await Future.delayed(
-          const Duration(seconds: 1)); // Simulate network delay
+      setState(() {
+        isLoading = true;
+      });
 
       final token = await Storage.getToken();
-      final response = await http.get(
-          Uri.parse(
-              'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          });
 
+      // Determine period parameter based on selection
+      String periodParam = '';
+      switch (_periodIndex) {
+        case 1:
+          periodParam = '?type=MTD';
+          break;
+        case 2:
+          periodParam = '?type=QTD';
+          break;
+        case 3:
+          periodParam = '?type=YTD';
+          break;
+        default:
+          periodParam = '';
+      }
+
+      Uri url = Uri.parse(
+          'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison$periodParam');
+
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      });
+      print('Request URL: ${url.toString()}');
+      print(url.toString());
       if (response.statusCode == 200) {
+        print(url.toString());
         return json.decode(response.body)['data'];
       } else {
         throw Exception('Failed to fetch data: ${response.statusCode}');
@@ -287,6 +308,10 @@ class _MyTeamsState extends State<MyTeams> {
     } catch (e) {
       print('Error fetching team comparison data: $e');
       rethrow;
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -1094,7 +1119,6 @@ class _MyTeamsState extends State<MyTeams> {
                                   ),
                                 ),
 
-                                
                                 FutureBuilder<Map<String, dynamic>>(
                                   future: _teamComparisonData,
                                   builder: (context, snapshot) {
@@ -1590,7 +1614,6 @@ class _MyTeamsState extends State<MyTeams> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Period selector (ALL, MTD, QTD, YTD)
           Container(
             padding: EdgeInsets.zero,
             margin: EdgeInsets.zero,
@@ -1606,53 +1629,6 @@ class _MyTeamsState extends State<MyTeams> {
                 _buildPeriodButton('MTD', 0),
                 _buildPeriodButton('QTD', 1),
                 _buildPeriodButton('YTD', 2),
-              ],
-            ),
-          ),
-
-          // Calendar button
-          Container(
-            height: 36,
-            width: 36,
-            decoration: BoxDecoration(
-              // color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.calendar_today, size: 18),
-              onPressed: () {
-                // Handle calendar selection
-              },
-              padding: EdgeInsets.zero,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _comparisionButtons(double screenWidth) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: EdgeInsets.zero,
-            margin: EdgeInsets.zero,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.fontColor, width: .2),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // _combuildPeriodButton('All', 0),
-                _combuildPeriodButton('MTD', 1),
-                _combuildPeriodButton('QTD', 2),
-                _combuildPeriodButton('YTD', 3),
               ],
             ),
           ),
@@ -1743,59 +1719,337 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-  // Team Comparison View
-  Widget _buildTeamComparisonView(BuildContext context, double screenWidth) {
-    final data = getSelectedData();
+  Widget _buildTeamComparisonView(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _teamComparisonData,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          print("FutureBuilder error: ${snapshot.error}");
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData) {
+          final responseData = snapshot.data!;
+
+          // Safety check for data structure
+          if (!responseData.containsKey('independentUser') &&
+              !responseData.containsKey('teamsData')) {
+            return const Center(child: Text('Invalid data format'));
+          }
+
+          // Get the metric key based on selected button
+          String metricKey = _getMetricKeyForComparison();
+
+          // Process and prepare data for display
+          List<Map<String, dynamic>> allMembers =
+              _extractAllMembersForComparison(responseData, metricKey);
+
+          // Sort members by value (descending)
+          allMembers
+              .sort((a, b) => (b['value'] as int).compareTo(a['value'] as int));
+
+          // Find max value for scaling
+          int maxValue = allMembers.isEmpty ? 10 : allMembers.first['value'];
+          if (maxValue == 0) maxValue = 10; // Prevent division by zero
+
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // "Target" label on right side
+                const Padding(
+                  padding: EdgeInsets.only(right: 8.0, bottom: 8.0),
+                  child: Text(
+                    "Target",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+
+                // Display team members with progress bars
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: allMembers.length,
+                  itemBuilder: (context, index) {
+                    final member = allMembers[index];
+                    final name = member['name'] ?? 'Unknown';
+                    final value = member['value'] as int;
+                    final percentage = value / maxValue;
+
+                    // Get color based on index position
+                    final barColor = _getBarColorForIndex(index);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          // Member name (fixed width)
+                          SizedBox(
+                            width: 90,
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          // Progress bar
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                // Background bar
+                                Container(
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+
+                                // Colored progress bar
+                                FractionallySizedBox(
+                                  widthFactor: percentage.clamp(0.0, 1.0),
+                                  child: Container(
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: barColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Value display
+                          SizedBox(
+                            width: 30,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(
+                                '$value',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        } else {
+          return const Center(child: Text('No Data Available'));
+        }
+      },
+    );
+  }
+
+// Helper method to get the metric key based on button selection
+  String _getMetricKeyForComparison() {
+    switch (_selectedButtonIndex) {
+      case 0:
+        return 'enquiries';
+      case 1:
+        return 'testDrives';
+      case 2:
+        return 'orders'; // Net Orders
+      case 3:
+        return 'orders'; // New Orders (same field)
+      case 4:
+        return 'cancellation';
+      case 5:
+        return 'retail'; // or whatever field is used for retail
+      default:
+        return 'enquiries';
+    }
+  }
+
+// Extract all members including independent user into a flat list
+  List<Map<String, dynamic>> _extractAllMembersForComparison(
+      Map<String, dynamic> data, String metricKey) {
+    List<Map<String, dynamic>> result = [];
+
+    // Add independent user if present
+    if (data.containsKey('independentUser') &&
+        data['independentUser'] != null) {
+      final user = data['independentUser'];
+      if (user != null && user.containsKey('stats')) {
+        result.add({
+          'name': user['name'] ?? 'Unknown',
+          'value': user['stats'][metricKey] ?? 0,
+        });
+      }
+    }
+
+    // Process team members
+    if (data.containsKey('teamsData') && data['teamsData'] != null) {
+      for (var team in data['teamsData']) {
+        if (team.containsKey('member') && team['member'] != null) {
+          for (var member in team['member']) {
+            if (member != null && member.containsKey('stats')) {
+              result.add({
+                'name': member['name'] ?? 'Unknown',
+                'value': member['stats'][metricKey] ?? 0,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+// Get color for bar based on index position
+  Color _getBarColorForIndex(int index) {
+    final colors = [
+      Colors.green,
+      Colors.blue,
+      Colors.amber,
+      Colors.orange,
+      Colors.red,
+    ];
+
+    return colors[index % colors.length];
+  }
+
+// Individual period button for comparison tab
+  Widget _buildPeriodButtonForComparison(String label, int index) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _periodIndex = index;
+          _teamComparisonData = fetchTeamComparisonData();
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: _periodIndex == index ? Colors.blue : Colors.transparent),
+          // color: _periodIndex == index ? Colors.blue : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: _periodIndex == index ? Colors.blue : Colors.black,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _comparisionButtons(double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300, width: 1),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                _buildPeriodButtonForComparison('All', 0),
+                _buildPeriodButtonForComparison('MTD', 1),
+                _buildPeriodButtonForComparison('QTD', 2),
+                _buildPeriodButtonForComparison('YTD', 3),
+              ],
+            ),
+          ),
+
+          // Calendar button
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today, size: 20),
+              onPressed: () {
+                // Handle calendar selection
+              },
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Button group for metrics selection that matches design
+  Widget _buildMetricButtonsRow() {
+    return Container(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        children: [
+          _buildMetricToggleButton('Enquiries', 0),
+          _buildMetricToggleButton('Test Drives', 1),
+          _buildMetricToggleButton('Net Orders', 2),
+          _buildMetricToggleButton('New Orders', 3),
+          _buildMetricToggleButton('Cancellations', 4),
+          _buildMetricToggleButton('Retail', 5),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricToggleButton(String title, int index) {
+    bool isSelected = _selectedButtonIndex == index;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // First row of cards
-          // Row(
-          //   children: [
-          //     Expanded(
-          //       child: _buildMetricCard(
-          //         "${data['totalTeamEnquiries'] ?? 0}",
-          //         "Team Total\nEnquiries",
-          //         Colors.blue,
-          //       ),
-          //     ),
-          //     const SizedBox(width: 12),
-          //     Expanded(
-          //       child: _buildMetricCard(
-          //         "${data['teamConversion'] ?? 0}%",
-          //         "Team Conversion\nRate",
-          //         Colors.blue,
-          //       ),
-          //     ),
-          //   ],
-          // ),
-
-          // const SizedBox(height: 12),
-
-          // // Second row of cards
-          // Row(
-          //   children: [
-          //     Expanded(
-          //       child: _buildMetricCard(
-          //         data['topPerformer'] ?? 'N/A',
-          //         "Top\nPerformer",
-          //         Colors.blue,
-          //       ),
-          //     ),
-          //     const SizedBox(width: 10),
-          //     Expanded(
-          //       child: _buildMetricCard(
-          //         data['averageResponse'] ?? 'N/A',
-          //         "Avg. Response\nTime",
-          //         Colors.blue,
-          //       ),
-          //     ),
-          //   ],
-          // ),
-        ],
+      padding: const EdgeInsets.only(right: 8.0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedButtonIndex = index;
+            _teamComparisonData = fetchTeamComparisonData();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+            border: Border.all(
+              color: isSelected ? Colors.blue : Colors.grey.shade300,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.blue : Colors.black87,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+              fontSize: 14,
+            ),
+          ),
+        ),
       ),
     );
   }

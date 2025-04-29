@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class FollowupsIds extends StatefulWidget {
   final Function onFormSubmit;
@@ -30,6 +31,7 @@ class _FollowupsIdsState extends State<FollowupsIds> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   TextEditingController modelInterestController = TextEditingController();
+  // final TextEditingController descriptionController = TextEditingController();
 
   List<dynamic> _searchResults = [];
   bool _isLoadingSearch = false;
@@ -38,6 +40,8 @@ class _FollowupsIdsState extends State<FollowupsIds> {
   String? selectedLeadsName;
   String _selectedSubject = '';
   String? selectedStatus;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -45,6 +49,8 @@ class _FollowupsIdsState extends State<FollowupsIds> {
     print(
         'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj');
     print(widget.leadId);
+    _speech = stt.SpeechToText();
+    _initSpeech();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -52,6 +58,57 @@ class _FollowupsIdsState extends State<FollowupsIds> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
   }
 
   /// Fetch search results from API
@@ -142,6 +199,80 @@ class _FollowupsIdsState extends State<FollowupsIds> {
     if (_validation()) {
       submitForm();
     }
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.fontBlack,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              // Expanded TextField that adjusts height
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              // Microphone icon with speech recognition
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _toggleListening(controller),
+                  icon: Icon(
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
+                    color: _isListening ? Colors.red : AppColors.fontColor,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   /// Submit form
@@ -376,75 +507,6 @@ class _FollowupsIdsState extends State<FollowupsIds> {
                 ),
               ],
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.fontBlack,
-            ),
-          ),
-        ),
-        Container(
-          height:
-              MediaQuery.of(context).size.height * .055, // Set a fixed height
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
-            color: AppColors.containerBg,
-          ),
-          child: Row(
-            children: [
-              // TextField itself
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    border: InputBorder.none,
-                  ),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              // Suffix icon (microphone)
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    FontAwesomeIcons.microphone,
-                    color: AppColors.fontColor,
-                    size: 15, // Adjust the size for better alignment
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ],

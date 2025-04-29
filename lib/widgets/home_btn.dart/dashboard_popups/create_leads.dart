@@ -599,7 +599,7 @@ class _CreateLeadsState extends State<CreateLeads> {
       } else {
         Get.snackbar(
           'Error',
-          'Error from first screen',
+          'please check the contact details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -611,7 +611,7 @@ class _CreateLeadsState extends State<CreateLeads> {
       } else {
         Get.snackbar(
           'Error',
-          'Error from second screen',
+          'please check the Vehicle details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -622,7 +622,7 @@ class _CreateLeadsState extends State<CreateLeads> {
       } else {
         Get.snackbar(
           'Error',
-          'Error from third screen',
+          'please check the more details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -966,7 +966,10 @@ class _CreateLeadsState extends State<CreateLeads> {
                           "Email": "Email",
                           "Walk-in": "Walk-in",
                           "Social": "Social",
-                          "Referral": "Referral"
+                          "Referral": "Referral",
+                          "Walk-inn": "Walk-inn",
+                          "Sociall": "Sociall",
+                          "Referrall": "Referrall"
                         },
                         groupValue: _selectedType,
                         errorText: _errors['leadSource'],
@@ -1134,7 +1137,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                     children: [
                       _buildSearchField(),
                       const SizedBox(
-                        height: 5,
+                        height: 10,
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1146,7 +1149,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                               style: AppFont.dropDowmLabel(context),
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 10),
                           // Wrap your button widget here
                           Container(
                             width: double.infinity,
@@ -1212,7 +1215,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                         const SizedBox(height: 15),
                       ],
                       const SizedBox(
-                        height: 5,
+                        height: 10,
                       ),
                       _consentTick(
                         text: "Agreed with these terms",
@@ -1591,75 +1594,6 @@ class _CreateLeadsState extends State<CreateLeads> {
       ],
     );
   }
-
-  // Widget _buildNumberWidget({
-  //   required TextEditingController controller,
-  //   required String hintText,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   bool isRequired = false,
-  //   String? errorText,
-  // }) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(
-  //         height: 5,
-  //       ),
-  //       Padding(
-  //         padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
-  //         child: RichText(
-  //           text: TextSpan(
-  //             style: GoogleFonts.poppins(
-  //               fontSize: 14,
-  //               fontWeight: FontWeight.w500,
-  //               color: AppColors.fontBlack,
-  //             ),
-  //             children: [
-  //               TextSpan(text: label),
-  //               if (isRequired)
-  //                 const TextSpan(
-  //                   text: " *",
-  //                   style: TextStyle(color: Colors.red),
-  //                 ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(
-  //         height: 5,
-  //       ),
-  //       Container(
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: const Color.fromARGB(255, 248, 247, 247),
-  //           border: errorText != null
-  //               ? Border.all(color: Colors.red, width: 1.0)
-  //               : null,
-  //         ),
-  //         child: Align(
-  //           alignment: Alignment.centerLeft,
-  //           child: TextField(
-  //             keyboardType: TextInputType.number,
-  //             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-  //             controller: controller,
-  //             style: AppFont.dropDowmLabel(context),
-  //             decoration: InputDecoration(
-  //               hintText: hintText,
-  //               hintStyle:
-  //                   GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-  //               contentPadding:
-  //                   const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-  //               border: InputBorder.none,
-  //             ),
-  //             onChanged: onChanged,
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _consentTick({
     required String text,
@@ -2068,84 +2002,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Widget _buildButtonFuel({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * .06,
-  //         decoration: BoxDecoration(
-  //             color: const Color.fromARGB(255, 248, 247, 247),
-  //             borderRadius: const BorderRadius.all(
-  //               Radius.circular(5),
-  //             ),
-  //             border: errorText != null
-  //                 ? Border.all(color: Colors.red, width: 1.0)
-  //                 : null),
-  //         child: Padding(
-  //           padding: const EdgeInsets.all(8.0),
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Row(
-  //                 crossAxisAlignment: CrossAxisAlignment.center,
-  //                 children: [
-  //                   SizedBox(
-  //                     child: Align(
-  //                       alignment:
-  //                           Alignment.centerRight, // ✅ Ensures proper alignment
-  //                       child: Text(
-  //                         label,
-  //                         style: AppFont.dropDowmLabel(context),
-  //                         textAlign: TextAlign.left,
-  //                       ),
-  //                     ),
-  //                   ),
-
-  //                   const SizedBox(width: 10),
-
-  //                   // 🔹 Right Side: Brand Options in Two Rows
-  //                   Expanded(
-  //                     child: Column(
-  //                       crossAxisAlignment:
-  //                           CrossAxisAlignment.start, // Align buttons left
-  //                       children: [
-  //                         Row(
-  //                           mainAxisAlignment:
-  //                               MainAxisAlignment.end, // ✅ Align left
-  //                           children: [
-  //                             _buildOptionFuel(optionKeys[0], options,
-  //                                 groupValue, onChanged),
-  //                             const SizedBox(width: 5),
-  //                             _buildOptionFuel(optionKeys[1], options,
-  //                                 groupValue, onChanged),
-  //                             // const SizedBox(width: 5),
-  //                             // _buildOptionFuel(
-  //                             //     optionKeys[2], options, groupValue, onChanged),
-  //                           ],
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
 // ✅ Button Builder Function
   Widget _buildOptionButton(String shortText, Map<String, String> options,
       String groupValue, ValueChanged<String> onChanged) {
@@ -2181,247 +2037,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Widget _buildEnquiryType({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Container(
-  //     height: MediaQuery.of(context).size.height * .06,
-  //     decoration: BoxDecoration(
-  //       color: const Color.fromARGB(255, 248, 247, 247),
-  //       borderRadius: BorderRadius.all(Radius.circular(5)),
-  //       border: errorText != null
-  //           ? Border.all(color: Colors.red, width: 1.0)
-  //           : null,
-  //     ),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             crossAxisAlignment: CrossAxisAlignment
-  //                 .center, // ✅ Aligns label and buttons properly
-  //             children: [
-  //               // 🔹 Brand Label (Left Side, Vertically Centered)
-  //               SizedBox(
-  //                 // width: 80, // ✅ Fixed width to align properly
-  //                 child: Align(
-  //                   alignment:
-  //                       Alignment.centerRight, // ✅ Ensures proper alignment
-  //                   child: Text(
-  //                     label,
-  //                     style: AppFont.dropDowmLabel(context),
-  //                     textAlign: TextAlign.left,
-  //                   ),
-  //                 ),
-  //               ),
-
-  //               const SizedBox(width: 10),
-
-  //               // 🔹 Right Side: Brand Options in Two Rows
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment:
-  //                       CrossAxisAlignment.start, // Align buttons left
-  //                   children: [
-  //                     Row(
-  //                       mainAxisAlignment:
-  //                           MainAxisAlignment.end, // ✅ Align left
-  //                       children: [
-  //                         _buildOptionButtonEnquiry(
-  //                             optionKeys[0], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                         _buildOptionButtonEnquiry(
-  //                             optionKeys[1], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildPurchaseType({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Container(
-  //     height: MediaQuery.of(context).size.height * .06,
-  //     decoration: BoxDecoration(
-  //         color: const Color.fromARGB(255, 248, 247, 247),
-  //         borderRadius: const BorderRadius.all(Radius.circular(5)),
-  //         border: errorText != null
-  //             ? Border.all(color: Colors.red, width: 1.0)
-  //             : null),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             crossAxisAlignment: CrossAxisAlignment.center,
-  //             children: [
-  //               SizedBox(
-  //                 child: Align(
-  //                   alignment: Alignment.centerRight,
-  //                   child: Text(
-  //                     label,
-  //                     style: AppFont.dropDowmLabel(context),
-  //                     textAlign: TextAlign.left,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 10),
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Row(
-  //                       mainAxisAlignment: MainAxisAlignment.end,
-  //                       children: [
-  //                         _buildOptionButtonPurchase(
-  //                             optionKeys[0], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                         _buildOptionButtonPurchase(
-  //                             optionKeys[1], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionFuel(String shortText, Map<String, String> options,
-  //     String groupValue, ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionButtonEnquiry(
-  //     String shortText,
-  //     Map<String, String> options,
-  //     String groupValue,
-  //     ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionButtonPurchase(
-  //     String shortText,
-  //     Map<String, String> options,
-  //     String groupValue,
-  //     ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildButtons({
     required Map<String, String>
         options, // ✅ Use a Map for short display & actual value
@@ -2442,7 +2057,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         ),
         const SizedBox(height: 5),
         Wrap(
-          spacing: 5, // Space between buttons
+          spacing: 2, // Space between buttons
           runSpacing: 10,
           // mainAxisAlignment: MainAxisAlignment.start,
           children: options.keys.map((shortText) {
@@ -2454,8 +2069,8 @@ class _CreateLeadsState extends State<CreateLeads> {
               },
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
-                margin: const EdgeInsets.only(right: 10),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                margin: const EdgeInsets.only(right: 5),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color:
@@ -2633,11 +2248,13 @@ class _CreateLeadsState extends State<CreateLeads> {
           widget.onFormSubmit();
         } else if (response.containsKey('message')) {
           String errorMsg = response['error'];
+          Get.snackbar(
+            'Error',
+            errorMsg.toString(),
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
           print("API Error: $errorMsg"); // ✅ Log API error
-
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
-          // );
 
           Get.snackbar(
             'Error',

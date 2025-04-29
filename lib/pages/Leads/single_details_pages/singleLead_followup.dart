@@ -140,6 +140,17 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     }
   }
 
+// Check if there's any data to determine if buttons should be enabled
+  bool areButtonsEnabled() {
+    // Return true if any of the lists have data, false if all are empty
+    return overdueTasks.isNotEmpty ||
+        overdueEvents.isNotEmpty ||
+        upcomingTasks.isNotEmpty ||
+        upcomingEvents.isNotEmpty ||
+        completedTasks.isNotEmpty ||
+        completedEvents.isNotEmpty;
+  }
+
   String _getFirstTwoLettersCapitalized(String input) {
     input = input.trim(); // Remove any extra spaces
     if (input.length >= 2) {
@@ -705,7 +716,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                 alignment: Alignment.bottomLeft,
                 child: Text(
                   textAlign: TextAlign.center,
-                  'Are you sure..!',
+                  'Are you sure you want to qualify this lead to an opportunity?',
                   style: AppFont.mediumText14(context),
                 ),
               ),
@@ -1340,10 +1351,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       bottomNavigationBar: Stack(alignment: Alignment.bottomCenter, children: [
         Container(
           height: 80,
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),
@@ -1361,14 +1372,18 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               // Lost Button
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    handleLostAction();
-                  },
+                  onTap: areButtonsEnabled()
+                      ? () {
+                          handleLostAction();
+                        }
+                      : null,
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(color: Colors.red, width: 1.5),
+                      border: Border.all(
+                          color: areButtonsEnabled() ? Colors.red : Colors.grey,
+                          width: 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1379,18 +1394,22 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                   ),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
 
               // Qualify Button
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    handleQualifyAction();
-                  },
+                  onTap: areButtonsEnabled()
+                      ? () {
+                          handleQualifyAction();
+                        }
+                      : null,
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: Color(0xFF35CB64), // Green color from image
+                      color: areButtonsEnabled()
+                          ? const Color(0xFF35CB64)
+                          : Colors.grey, // Green color from image
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1458,6 +1477,28 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
           ),
         ),
       ),
+    );
+  }
+
+// Function to show dialog when disabled buttons are clicked
+  void showTaskRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Action Required'),
+          content: const Text(
+              'Please perform a task first before using this action.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -391,7 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 0, horizontal: 10),
                                   margin: const EdgeInsets.symmetric(
                                       horizontal: 10),
                                   decoration: BoxDecoration(
@@ -415,7 +416,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                     child: Text(
                                       _getFirstTwoLettersCapitalized(name),
-                                      style: AppFont.mediumText14blue(context),
+                                      style:
+                                          AppFont.mediumText14bluebold(context),
                                     ),
                                   ),
                                   // child: IconButton(
