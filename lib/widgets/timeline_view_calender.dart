@@ -283,7 +283,8 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                 _buildCompactTimeGridLines(sortedHours),
 
                 // Render tasks
-                ...tasks.map((task) => _buildTaskItem(task)).toList(),
+                // ...tasks.map((task) => _buildTaskItem(task)).toList(),
+                ..._buildPositionedTaskItems(tasks),
 
                 // Render appointments
                 ...appointments
@@ -329,7 +330,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
               top: BorderSide(
                 color: Colors.grey.shade200,
                 width: 1,
-              ),  
+              ),
             ),
           ),
         );
@@ -464,8 +465,48 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
-  Widget _buildTaskItem(dynamic item,
-      {double widthFactor = 1.0, double leftOffset = 0.0}) {
+  List<Widget> _buildPositionedTaskItems(List<dynamic> tasks) {
+    // Group tasks by their due date string
+    Map<String, List<dynamic>> groupedTasks = {};
+
+    for (var task in tasks) {
+      final key = task['due_date'] ?? '00:00';
+      groupedTasks.putIfAbsent(key, () => []).add(task);
+    }
+
+    List<Widget> widgets = [];
+
+    const double verticalSpacing = 62;
+
+    for (var group in groupedTasks.entries) {
+      final groupTasks = group.value;
+      final count = groupTasks.length;
+
+      for (int i = 0; i < count; i++) {
+        final task = groupTasks[i];
+
+        // Calculate how much width each should take
+        final widthFactor = 1.0 / count;
+        final leftOffset = i * widthFactor;
+
+        widgets.add(_buildTaskItem(
+          task,
+          verticalOffset: i * verticalSpacing,
+          // widthFactor: widthFactor,
+          // leftOffset: leftOffset,
+        ));
+      }
+    }
+
+    return widgets;
+  }
+
+  Widget _buildTaskItem(
+    dynamic item, {
+    double widthFactor = 1.0,
+    double leftOffset = 0.0,
+    double verticalOffset = 0.0,
+  }) {
     // Parse due_date properly
     String dueDate = item['due_date'] ?? '00:00';
 
@@ -492,7 +533,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     final taskPosition = hourIndex * 60 + (taskTime.minute / 60) * 60;
 
     // Set a fixed height for tasks
-    final double taskHeight = 80.0;
+    final double taskHeight = 60.0;
 
     // Get the lead_id from the item - ensure proper access
     String leadId = item['lead_id']?.toString() ?? '';
@@ -504,7 +545,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     String priority = item['priority'] ?? 'Normal';
 
     return Positioned(
-      top: taskPosition,
+      top: taskPosition + verticalOffset,
       left: 8 + (MediaQuery.of(context).size.width - 59) * leftOffset,
       width: (MediaQuery.of(context).size.width - 59) * widthFactor - 16,
       height: taskHeight,
@@ -586,14 +627,14 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                     ),
                   ],
                 ),
-                SizedBox(height: 2),
-                Text(
-                  'Due: ${item['due_date'] ?? 'No date'}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
-                ),
+                // SizedBox(height: 2),
+                // Text(
+                //   'Due: ${item['due_date'] ?? 'No date'}',
+                //   style: TextStyle(
+                //     fontSize: 12,
+                //     color: Colors.white70,
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -692,6 +733,36 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     }
   }
 
+  List<Widget> _buildTimelineItems(List<dynamic> appointmentsAndTasks) {
+    final groupedItems = _groupOverlappingItems(appointmentsAndTasks);
+
+    List<Widget> positionedItems = [];
+
+    for (var group in groupedItems) {
+      final count = group.length;
+      for (int i = 0; i < count; i++) {
+        var item = group[i];
+
+        double widthFactor = 1.0 / count;
+        double leftOffset = i * widthFactor;
+
+        // Determine if it's an appointment or task
+        if (item.containsKey('start_time')) {
+          positionedItems.add(
+            _buildAppointmentItem(item,
+                widthFactor: widthFactor, leftOffset: leftOffset),
+          );
+        } else {
+          positionedItems.add(
+            _buildTaskItem(item,
+                widthFactor: widthFactor, leftOffset: leftOffset),
+          );
+        }
+      }
+    }
+
+    return positionedItems;
+  }
 
   // Widget _buildCurrentTimeIndicator() {
   //   final now = DateTime.now();
