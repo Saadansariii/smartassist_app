@@ -437,7 +437,7 @@ class _BottomBtnSecondState extends State<BottomBtnSecond> {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: SizedBox(
-                      height: 32,
+                      height: MediaQuery.sizeOf(context).height * .05,
                       width: double.infinity,
                       child: Row(
                         children: [
@@ -510,6 +510,8 @@ class _BottomBtnSecondState extends State<BottomBtnSecond> {
   // Button Style
   ButtonStyle _buttonStyle(bool isSelected) {
     return TextButton.styleFrom(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      minimumSize: const Size(0, 0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       backgroundColor:
           isSelected ? const Color(0xFF1380FE) : Colors.transparent,

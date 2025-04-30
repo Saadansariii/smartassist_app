@@ -541,32 +541,101 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(5),
               border: Border.all(
-                color: Colors.black38,
+                color: Colors.black.withOpacity(.1),
               )),
-          child: _isLoading
-              ? _buildSkeletonLoader()
-              : Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    _buildHeaderRow(screenWidth),
-                    const SizedBox(height: 20),
-                    _buildTable(),
-                  ],
-                ),
+          // child: _isLoading
+          //     ? _buildSkeletonLoader()
+          //     : Column(
+          //         children: [
+          //           const SizedBox(height: 10),
+          //           _buildHeaderRow(screenWidth),
+          //           const SizedBox(height: 5),
+          //           _buildAnalyticsTable()
+          //           // // const SizedBox(height: 20),
+          //           // _buildTable(),
+          //         ],
+          //       ),
+
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              _buildHeaderRow(screenWidth),
+
+              _isLoading ? _buildSkeletonLoader() : const SizedBox(height: 5),
+              _buildAnalyticsTable()
+              
+            ],
+          ),
         )
 
         // child: _buildSkeletonLoader()),
         );
   }
 
+  Widget _buildAnalyticsTable() {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Table(
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      border: TableBorder(
+          horizontalInside: BorderSide(
+            color: Colors.grey.withOpacity(0.3),
+            width: 0.5,
+          ),
+          verticalInside: BorderSide.none
+          // verticalInside: BorderSide(
+          //   color: Colors.grey.withOpacity(0.3),
+          //   width: 0.5,
+          // ),
+          ),
+      columnWidths: {
+        0: FixedColumnWidth(screenWidth * 0.3), // Metric
+        1: FixedColumnWidth(screenWidth * 0.15), // My
+        2: FixedColumnWidth(screenWidth * 0.15), // All India Best
+        3: FixedColumnWidth(screenWidth * 0.15), // Dealership
+        4: FixedColumnWidth(screenWidth * 0.15), // All India
+      },
+      children: [
+        // Header Row
+        // TableRow(
+        //   decoration: BoxDecoration(
+        //     color: Colors.grey[100],
+        //   ),
+        //   children: [
+        //     const SizedBox(), // Empty cell for top-left
+        //     Center(
+        //         child:
+        //             Text('Performance', style: AppFont.mediumText14(context))),
+        //     const SizedBox(), // Spanned cell - visually handled by alignment
+        //     Center(child: Text('Rank', style: AppFont.mediumText14(context))),
+        //     const SizedBox(),
+        //   ],
+        // ),
+        TableRow(
+          children: [
+            const SizedBox(), // Empty cell
+            Center(child: Text('My', style: AppFont.tinyText(context))),
+            Center(
+                child: Text('All India Best',
+                    textAlign: TextAlign.center,
+                    style: AppFont.tinyText(context))),
+            Center(child: Text('Dealership', style: AppFont.tinyText(context))),
+            Center(child: Text('All India', style: AppFont.tinyText(context))),
+          ],
+        ),
+        ...tableData.map((row) => _buildTableRow(row)).toList(),
+      ],
+    );
+  }
+
   Widget _buildHeaderRow(double screenWidth) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // MTD, QTD, YTD toggle buttons
         Container(
-          width: screenWidth * 0.28,
-          height: screenWidth * 0.05,
+          width: screenWidth * 0.30,
+          height: screenWidth * 0.06,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey, width: .5),
             color: Colors.white,
@@ -589,6 +658,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                 children: [
                   // Performance Column
                   Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Performance',
@@ -596,33 +666,17 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                             .copyWith(fontWeight: FontWeight.w400),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'My',
-                            style: AppFont.tinyText(context)
-                                .copyWith(fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'All India Best',
-                            style: AppFont.tinyText(context)
-                                .copyWith(fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
-                  Container(
-                    height: MediaQuery.of(context).size.height * .07,
-                    width: 0.1,
-                    decoration: BoxDecoration(
-                      border: Border(
-                          right:
-                              BorderSide(color: Colors.grey.withOpacity(0.3))),
-                    ),
-                  ),
+                  // Container(
+                  //   height: MediaQuery.of(context).size.height * .07,
+                  //   width: 0.1,
+                  //   decoration: BoxDecoration(
+                  //     border: Border(
+                  //         right:
+                  //             BorderSide(color: Colors.grey.withOpacity(0.3))),
+                  //   ),
+                  // ),
 
                   // Rank Column
                   Column(
@@ -632,21 +686,6 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                         style: AppFont.mediumText14(context),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            'Dealership',
-                            style: AppFont.tinyText(context)
-                                .copyWith(fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'All India',
-                            style: AppFont.tinyText(context)
-                                .copyWith(fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ],
@@ -658,37 +697,37 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     );
   }
 
-  Widget _buildTable() {
-    double screenWidth = MediaQuery.of(context).size.width;
+  // Widget _buildTable() {
+  //   double screenWidth = MediaQuery.of(context).size.width;
 
-    return Table(
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      border: TableBorder.symmetric(
-        inside: BorderSide(color: Colors.grey.withOpacity(0.3), width: 0.5),
-      ),
-      columnWidths: {
-        0: FixedColumnWidth(screenWidth * 0.3), // Metric name
-        1: FixedColumnWidth(screenWidth * 0.15), // My Performance
-        2: FixedColumnWidth(screenWidth * 0.15), // All India Best
-        3: FixedColumnWidth(screenWidth * 0.15), // Dealership Rank
-        4: FixedColumnWidth(screenWidth * 0.15), // All India Rank
-      },
-      children: tableData.map((rowData) => _buildTableRow(rowData)).toList(),
-    );
-  }
+  //   return Table(
+  //     defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+  //     border: TableBorder(
+  //       horizontalInside: BorderSide(
+  //           color: Colors.grey.withOpacity(0.3),
+  //           width: 0.5,
+  //           strokeAlign: BorderSide.strokeAlignCenter),
+  //       verticalInside: BorderSide.none,
+  //     ),
+  //     columnWidths: {
+  //       0: FixedColumnWidth(screenWidth * 0.3), // Metric name
+  //       1: FixedColumnWidth(screenWidth * 0.15), // My Performance
+  //       2: FixedColumnWidth(screenWidth * 0.15), // All India Best
+  //       3: FixedColumnWidth(screenWidth * 0.15), // Dealership Rank
+  //       4: FixedColumnWidth(screenWidth * 0.15), // All India Rank
+  //     },
+  //     children: tableData.map((rowData) => _buildTableRow(rowData)).toList(),
+  //   );
+  // }
 
   TableRow _buildTableRow(List<String> values) {
     return TableRow(
       children: values.map((value) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5.0),
           child: Text(
             value,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
+            style: AppFont.smallText(context),
             textAlign:
                 values.indexOf(value) == 0 ? TextAlign.left : TextAlign.center,
             overflow: TextOverflow.ellipsis,

@@ -214,8 +214,8 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'Follow-ups done by you per lost enquiry',
                     'Follow-ups recommended for order',
+                    'Follow-ups done by you per lost enquiry',
                     '2',
                     '2',
                     // '${selectedData['enquiryBank'] ?? 0}',
@@ -228,10 +228,9 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'Follow-ups done by you per lost digital enquiry',
-                    // '${selectedData['enquiryBank'] ?? 0}',
+                    'Follow-ups done by you per lost digital enquiry', 
                     'Follow-ups recommended for order',
-                    '2',
+                    '3',
                     '2',
                     screenWidth,
                     Colors.red,

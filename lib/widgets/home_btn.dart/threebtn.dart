@@ -1,11 +1,11 @@
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
-import 'package:smart_assist/config/component/font/font.dart'; 
+import 'package:smart_assist/config/component/font/font.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_appointment.dart';
 import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_followups.dart';
-import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_testdrive.dart'; 
+import 'package:smart_assist/pages/Leads/All_field_bottomArrow/all_testdrive.dart';
 import 'package:smart_assist/widgets/followups/overdue_followup.dart';
 import 'package:smart_assist/widgets/followups/upcoming_row.dart';
 import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/appointment_popup.dart';
@@ -117,7 +117,7 @@ class _ThreebtnState extends State<Threebtn> {
               borderRadius: BorderRadius.circular(5),
             ),
             child: SizedBox(
-              height: 32,
+              height: MediaQuery.sizeOf(context).height * .05,
               width: double.infinity,
               child: Row(
                 children: [
@@ -133,6 +133,9 @@ class _ThreebtnState extends State<Threebtn> {
                         followUps(_upcomingBtnFollowups);
                       },
                       style: TextButton.styleFrom(
+                        // alignment: ,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: const Size(0, 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -162,6 +165,8 @@ class _ThreebtnState extends State<Threebtn> {
                         oppointment(_upcomingBtnAppointments);
                       },
                       style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: const Size(0, 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -189,6 +194,8 @@ class _ThreebtnState extends State<Threebtn> {
                         testDrive(_upcomingBtnTestdrive);
                       },
                       style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: const Size(0, 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

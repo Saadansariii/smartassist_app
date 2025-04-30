@@ -321,13 +321,13 @@ class AppFont {
 
   static TextStyle mediumText14bluebold(
     BuildContext context, {
-    double fontSize = 26,
-    Color color = AppColors.colorsBlue,
+    double fontSize = 20,
+    Color color = AppColors.white,
   }) {
     return GoogleFonts.poppins(
       fontSize: scaleFont(context, fontSize),
       color: color,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w500,
     );
   }
 
@@ -345,7 +345,7 @@ class AppFont {
 
   static TextStyle buttonwhite(
     BuildContext context, {
-    double fontSize = 12,
+    double fontSize = 14,
   }) {
     return GoogleFonts.poppins(
       fontSize: scaleFont(context, fontSize),

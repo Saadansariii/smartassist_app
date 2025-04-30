@@ -387,51 +387,54 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             const SizedBox(height: 5),
 
-                            /// ✅ Row with Menu, Search Bar, and Microphone
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 0, horizontal: 10),
-                                  margin: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                      color: AppColors.backgroundLightGrey,
-                                      borderRadius: BorderRadius.circular(30)),
-                                  child: TextButton(
-                                    style: const ButtonStyle(
-                                      minimumSize:
-                                          WidgetStatePropertyAll(Size.zero),
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      padding: WidgetStatePropertyAll(
-                                          EdgeInsets.zero),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ProfileScreen()));
-                                    },
-                                    child: Text(
-                                      _getFirstTwoLettersCapitalized(name),
-                                      style:
-                                          AppFont.mediumText14bluebold(context),
-                                    ),
-                                  ),
-                                  // child: IconButton(
-                                  //     style: ButtonStyle(),
-                                  //     onPressed: () {
-                                  //       Navigator.push(
-                                  //           context,
-                                  //           MaterialPageRoute(
-                                  //               builder: (context) =>
-                                  //                   ProfileScreen()));
-                                  //     },
-                                  //     icon: const Icon(
-                                  //       Icons.person,
-                                  //     )),
+                                const SizedBox(
+                                  height: 10,
                                 ),
+                                // Container(
+                                //   padding: const EdgeInsets.symmetric(
+                                //       vertical: 0, horizontal: 10),
+                                //   margin: const EdgeInsets.all(8),
+                                //   decoration: BoxDecoration(
+                                //       color: AppColors.backgroundLightGrey,
+                                //       borderRadius: BorderRadius.circular(30)),
+                                //   child: TextButton(
+                                //     style: const ButtonStyle(
+                                //       minimumSize:
+                                //           WidgetStatePropertyAll(Size.zero),
+                                //       tapTargetSize:
+                                //           MaterialTapTargetSize.shrinkWrap,
+                                //       padding: WidgetStatePropertyAll(
+                                //           EdgeInsets.zero),
+                                //     ),
+                                //     onPressed: () {
+                                //       Navigator.push(
+                                //           context,
+                                //           MaterialPageRoute(
+                                //               builder: (context) =>
+                                //                   ProfileScreen()));
+                                //     },
+                                //     child: Text(
+                                //       _getFirstTwoLettersCapitalized(name),
+                                //       style:
+                                //           AppFont.mediumText14bluebold(context),
+                                //     ),
+                                //   ),
+                                //   // child: IconButton(
+                                //   //     style: ButtonStyle(),
+                                //   //     onPressed: () {
+                                //   //       Navigator.push(
+                                //   //           context,
+                                //   //           MaterialPageRoute(
+                                //   //               builder: (context) =>
+                                //   //                   ProfileScreen()));
+                                //   //     },
+                                //   //     icon: const Icon(
+                                //   //       Icons.person,
+                                //   //     )),
+                                // ),
+
                                 // Then in your bottom sheet code:
                                 // IconButton(
                                 //   icon: const Icon(Icons.menu,
@@ -534,56 +537,94 @@ class _HomeScreenState extends State<HomeScreen> {
                                 // ),
 
                                 Expanded(
-                                  child: SizedBox(
-                                    height: 35,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        Get.to(() => const GlobalSearch());
-                                      },
-                                      child: AbsorbPointer(
-                                        child: TextField(
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          decoration: InputDecoration(
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                borderSide: BorderSide.none,
+                                  child: Container(
+                                    margin: const EdgeInsetsDirectional.all(10),
+                                    child: SizedBox(
+                                      height:
+                                          MediaQuery.sizeOf(context).height *
+                                              .06,
+                                      child: TextField(
+                                        onTap: () {
+                                          Get.to(() => const GlobalSearch());
+                                        },
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        readOnly:
+                                            true, // prevents typing but still allows onTap
+                                        decoration: InputDecoration(
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.fromLTRB(
+                                                  0, 0, 0, 0),
+                                          filled: true,
+                                          fillColor: AppColors.containerBg,
+                                          hintText: 'Search',
+                                          hintStyle: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: AppColors.fontColor,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                          prefixIcon: const Icon(
+                                            FontAwesomeIcons.magnifyingGlass,
+                                            color: AppColors.iconGrey,
+                                            size: 15,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          suffixIcon: Container(
+                                            // padding: const EdgeInsets.symmetric(
+                                            //     vertical: 5, horizontal: 7),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                5, 0, 5, 0),
+                                            margin: const EdgeInsets.all(5),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.colorsBlueButton,
+                                              // color:
+                                              //     AppColors.backgroundLightGrey,
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                            ),
+                                            child: TextButton(
+                                              style: const ButtonStyle(
+                                                minimumSize:
+                                                    WidgetStatePropertyAll(
+                                                        Size.zero),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                padding: WidgetStatePropertyAll(
+                                                    EdgeInsets.zero),
                                               ),
-                                              contentPadding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      0, 0, 0, 0),
-                                              filled: true,
-                                              fillColor: AppColors.containerBg,
-                                              hintText: 'Search',
-                                              hintStyle: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                color: AppColors.fontColor,
-                                                fontWeight: FontWeight.w400,
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const ProfileScreen()),
+                                                );
+                                              },
+                                              child: Text(
+                                                _getFirstTwoLettersCapitalized(
+                                                    name),
+                                                style: AppFont
+                                                    .mediumText14bluebold(
+                                                        context),
                                               ),
-                                              prefixIcon: const Icon(
-                                                FontAwesomeIcons
-                                                    .magnifyingGlass,
-                                                color: AppColors.iconGrey,
-                                                size: 15,
-                                              ),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                borderSide: BorderSide.none,
-                                              ),
-                                              suffixIcon: const Icon(
-                                                  FontAwesomeIcons.microphone,
-                                                  size: 18,
-                                                  color: AppColors.iconGrey)),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
+
                                 // IconButton(
                                 //   icon: const Icon(FontAwesomeIcons.microphone,
                                 //       size: 18, color: AppColors.fontColor),
@@ -593,7 +634,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
 
                             /// ✅ Other UI Components (Follow-ups, Buttons, etc.)
-                            const SizedBox(height: 3),
+                            // const SizedBox(height: 10),
                             Threebtn(
                               leadId: leadId ?? 'empty',
                               upcomingFollowups: upcomingFollowups,
@@ -608,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   overdueAppointmentsCount,
                               overdueTestDrivesCount: overdueTestDrivesCount,
                             ),
-                            BottomBtnSecond(
+                            const BottomBtnSecond(
                                 // MtdData: MtdData,
                                 // QtdData: QtdData,
                                 // YtdData: YtdData,
