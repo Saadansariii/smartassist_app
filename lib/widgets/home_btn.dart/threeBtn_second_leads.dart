@@ -510,7 +510,7 @@ class _BottomBtnSecondState extends State<BottomBtnSecond> {
   // Button Style
   ButtonStyle _buttonStyle(bool isSelected) {
     return TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       minimumSize: const Size(0, 0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       backgroundColor:

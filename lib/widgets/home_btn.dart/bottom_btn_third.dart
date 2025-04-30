@@ -560,10 +560,9 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
             children: [
               const SizedBox(height: 10),
               _buildHeaderRow(screenWidth),
-
               _isLoading ? _buildSkeletonLoader() : const SizedBox(height: 5),
+              // _buildPeriodToggle(),
               _buildAnalyticsTable()
-              
             ],
           ),
         )
@@ -582,12 +581,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
             color: Colors.grey.withOpacity(0.3),
             width: 0.5,
           ),
-          verticalInside: BorderSide.none
-          // verticalInside: BorderSide(
-          //   color: Colors.grey.withOpacity(0.3),
-          //   width: 0.5,
-          // ),
-          ),
+          verticalInside: BorderSide.none),
       columnWidths: {
         0: FixedColumnWidth(screenWidth * 0.3), // Metric
         1: FixedColumnWidth(screenWidth * 0.15), // My
@@ -628,6 +622,30 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     );
   }
 
+  // Widget _buildPeriodToggle(double screenWidth) {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.start,
+  //     children: [
+  //       Container(
+  //         width: screenWidth * 0.30,
+  //         height: screenWidth * 0.06,
+  //         decoration: BoxDecoration(
+  //           border: Border.all(color: Colors.grey, width: .5),
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.circular(30),
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             _buildButton('MTD', 0),
+  //             _buildButton('QTD', 1),
+  //             _buildButton('YTD', 2),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildHeaderRow(double screenWidth) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -654,7 +672,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
           child: Column(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   // Performance Column
                   Column(
@@ -665,7 +683,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                         style: AppFont.mediumText14(context)
                             .copyWith(fontWeight: FontWeight.w400),
                       ),
-                      const SizedBox(height: 8),
+                      // const SizedBox(height: 8),
                     ],
                   ),
                   // Container(
@@ -685,7 +703,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
                         'Rank',
                         style: AppFont.mediumText14(context),
                       ),
-                      const SizedBox(height: 8),
+                      // const SizedBox(height: 8),
                     ],
                   ),
                 ],
