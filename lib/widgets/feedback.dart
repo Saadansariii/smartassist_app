@@ -178,9 +178,11 @@ import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/pages/home/single_id_screens/single_leads.dart';
+import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_assist/widgets/testdrive_overview.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class Feedbackscreen extends StatefulWidget {
   final String eventId;
@@ -194,6 +196,9 @@ class Feedbackscreen extends StatefulWidget {
 
 class _FeedbackscreenState extends State<Feedbackscreen> {
   String _selectedType = '';
+  String _selectedDateType = '';
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   // Maps to store ratings for each category
   Map<String, int> ratings = {
@@ -205,9 +210,64 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
     'Driving Experience': 0,
   };
 
+  final TextEditingController descriptionController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
+    _initSpeech();
+  }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
   }
 
   Future<void> submitFeedback() async {
@@ -222,6 +282,7 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
       final requestBody = {
         'sp_id': spId,
         'purchase_potential': _selectedType,
+        'feedback_comments': descriptionController.text,
         "drive_feedback": {
           'ambience': ratings['Overall Ambience'],
           'features': ratings['Features'],
@@ -229,7 +290,8 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
           'quality': ratings['Quality'],
           'dynamics': ratings['Dynamics'],
           'driving_experience': ratings['Driving Experience'],
-        }
+        },
+        'time_frame': _selectedDateType
       };
 
       // Print the data to console for debugging
@@ -256,11 +318,21 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => TestdriveOverview(
-                    leadId: widget.leadId, eventId: widget.eventId)));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => TestdriveOverview(
+              leadId: widget.leadId,
+              eventId: widget.eventId,
+            ),
+          ),
+        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => TestdriveOverview(
+        //         leadId: widget.leadId, eventId: widget.eventId),
+        //   ),
+        // );
       } else {
         // Error handling
         // print('Failed to submit feedback');
@@ -283,91 +355,97 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
     }
   }
 
-  // Future<void> submitFeedback() async {
-  //   try {
-  //     SharedPreferences prefs = await SharedPreferences.getInstance();
-  //     String? spId = prefs.getString('user_id');
-  //     final url = Uri.parse(
-  //         'https://api.smartassistapp.in/api/events/${widget.eventId}/submit-feedback');
-  //     final token = await Storage.getToken();
-
-  //     // Create the request body
-  //     final requestBody = {
-  //       'sp_id': spId,
-  //       'purchase_potential': _selectedType,
-  //       "drive_feedback": {
-  //         'ambience': ratings['Overall Ambience'],
-  //         'features': ratings['Features'],
-  //         'ride_comfort': ratings['Ride and comfort'],
-  //         'quality': ratings['Quality'],
-  //         'dynamics': ratings['Dynamics'],
-  //         'driving_experience': ratings['Driving Experience'],
-  //       }
-  //     };
-
-  //     // Print the data to console for debugging
-  //     print('Submitting feedback data:');
-  //     print(requestBody);
-
-  //     final response = await http.put(url,
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': 'Bearer $token',
-  //         },
-  //         body: json.encode(requestBody));
-
-  //     // Print the response
-  //     print('API Response status: ${response.statusCode}');
-  //     print('API Response body: ${response.body}');
-
-  //     if (response.statusCode == 200) {
-  //       // Success handling
-  //       print('Feedback submitted successfully');
-  //       Get.snackbar(
-  //         'Success',
-  //         'Feedback submitted successfully',
-  //         backgroundColor: Colors.green,
-  //         colorText: Colors.white,
-  //       );
-  //       Navigator.push(
-  //           context,
-  //           MaterialPageRoute(
-  //               builder: (context) => FollowupsDetails(leadId: widget.leadId)));
-  //     } else {
-  //       // Error handling
-  //       // print('Failed to submit feedback');
-  //       Get.snackbar(
-  //         'Error',
-  //         'Failed to submit feedback',
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //       );
-  //     }
-  //   } catch (e) {
-  //     // Exception handling
-  //     print('Exception occurred: ${e.toString()}');
-  //     Get.snackbar(
-  //       'Error',
-  //       'An error occurred: ${e.toString()}',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   }
-  // }
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.fontBlack,
+            ),
+          ),
+        ),
+        const SizedBox(
+          height: 5,
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              // Expanded TextField that adjusts height
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              // Microphone icon with speech recognition
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _toggleListening(controller),
+                  icon: Icon(
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
+                    color: _isListening ? Colors.red : AppColors.fontColor,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: const Icon(
-            FontAwesomeIcons.angleLeft,
-            color: Colors.white,
-          ),
-        ),
-        title: Text('Feedback form', style: AppFont.appbarfontWhite(context)),
-        backgroundColor: Colors.blue,
+        // leading: IconButton(
+        //   onPressed: () => Get.back(),
+        //   icon: const Icon(
+        //     FontAwesomeIcons.angleLeft,
+        //     color: Colors.white,
+        //   ),
+        // ),
+        title: Text('Test drive Feedback form',
+            style: AppFont.appbarfontblack(context)),
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -376,8 +454,9 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('Rate your driving experience',
-                  style: AppFont.popupTitleBlack16(context)),
+              child: Text(
+                  'On a scale of 1 to 5, 1 begin the lowest and being the highest, how would you rate us on Driving Experience?',
+                  style: AppFont.mediumText14Black(context)),
             ),
 
             // Star rating section
@@ -396,20 +475,20 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
                   .toList(),
             ),
 
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-              child: Text(
-                'Potential of purchase',
-                style: AppFont.popupTitleBlack16(context),
-              ),
-            ),
+            const SizedBox(height: 10),
+            // Padding(
+            //   padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+            //   child: Text(
+            //     'Potential of purchase',
+            //     style: AppFont.mediumText14Black(context),
+            //   ),
+            // ),
 
             Row(
               children: [
                 Expanded(
                   child: _buildButtons(
-                    label: '',
+                    label: 'Potential of purchase',
                     options: {
                       "Definitely": "Definitely",
                       "Very Likely": "Very Likely",
@@ -426,6 +505,50 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
                 ),
               ],
             ),
+            // const SizedBox(
+            //   height: 10,
+            // ),
+
+            // Padding(
+            //   padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+            //   child: Text(
+            //     'Time frame',
+            //     style: AppFont.mediumText14Black(context),
+            //   ),
+            // ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildButtons(
+                    label: 'Time frame',
+                    options: {
+                      "15 days": "15 days",
+                      "15 days - 3 month": "15 days - 3 month",
+                      "3 - 6 months": "3 - 6 months",
+                      "6 months": "6 months"
+                    },
+                    groupValue: _selectedDateType,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDateType = value;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: _buildTextField(
+                  label: 'Comments:',
+                  controller: descriptionController,
+                  hint: 'Add Comments'),
+            ),
+            const SizedBox(height: 10),
 
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -495,8 +618,9 @@ class _FeedbackscreenState extends State<Feedbackscreen> {
                   index < rating
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
-                  color: index < rating ? Colors.amber : Colors.grey,
-                  size: 38,
+                  color:
+                      index < rating ? AppColors.starBorderColor : Colors.grey,
+                  size: 30,
                 ),
               );
             }),

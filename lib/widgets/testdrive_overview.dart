@@ -45,8 +45,6 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse('https://api.smartassistapp.in/api/events/${widget.eventId}'),
-        // Uri.parse(
-        //     'https://api.smartassistapp.in/api/events/883dbb2e-e571-4cb3-acdb-06621d4a3319'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -58,7 +56,7 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
         print('Decoded JSON:');
         print(const JsonEncoder.withIndent('  ').convert(data));
         setState(() {
-          startTime = data['data']['start_time'];
+          startTime = data['data']['duration'];
           distanceCovered = data['data']['distance'] + ' km';
           mapImgUrl = data['data']['map_img'] ?? '';
           potentialPurchase = data['data']['purchase_potential'];
@@ -68,6 +66,7 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
               .toStringAsFixed(1);
 
           ratings = data['data']['drive_feedback'];
+          isLoading = false;
         });
         print('this is sthe data');
         print(data);
@@ -102,14 +101,22 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
     }
   }
 
+  String getRatingLabel(double rating) {
+    if (rating >= 4.5) return 'Excellent';
+    if (rating >= 3.5) return 'Good';
+    if (rating >= 2.5) return 'Average';
+    if (rating >= 1.5) return 'Below Average';
+    return 'Poor';
+  }
+
   @override
   Widget build(BuildContext context) {
     String formattedTime = formatTime(startTime);
     return Scaffold(
-        // backgroundColor: AppColors.backgroundLightGrey,
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          title: Text('Summary', style: AppFont.popupTitleWhite(context)),
+          title: Text('Test Drive summary',
+              style: AppFont.popupTitleWhite(context)),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_outlined,
                 color: Colors.white),
@@ -126,7 +133,7 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
           elevation: 0,
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : Scaffold(
                 backgroundColor: AppColors.backgroundLightGrey,
                 body: Container(
@@ -175,11 +182,25 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(avg_rating,
-                                                  style:
-                                                      AppFont.popupTitleBlack(
-                                                          context)),
-                                              Text(purchase_potential,
+                                              Row(
+                                                children: [
+                                                  Text(avg_rating,
+                                                      style: AppFont
+                                                          .popupTitleBlack(
+                                                              context)),
+                                                  const Icon(
+                                                    Icons.star_rounded,
+                                                    color: AppColors
+                                                        .starBorderColor,
+                                                    size: 20,
+                                                  )
+                                                ],
+                                              ),
+                                              Text(
+                                                  getRatingLabel(
+                                                      double.tryParse(
+                                                              avg_rating) ??
+                                                          0),
                                                   style: AppFont.mediumText14(
                                                       context)),
                                             ],
@@ -225,61 +246,8 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                                   ),
                                 ),
                               ),
-
-                              // Potential of purchase
-                              // const SizedBox(height: 20),
-                              // Padding(
-                              //   padding: const EdgeInsets.symmetric(
-                              //       horizontal: 10.0),
-                              //   child: Text('Potential of Purchase: ',
-                              //       style: AppFont.dropDowmLabel(context)),
-                              // ),
-                              // const SizedBox(height: 10),
-                              // Padding(
-                              //   padding: const EdgeInsets.symmetric(
-                              //       horizontal: 10.0),
-                              //   child: Container(
-                              //     padding: const EdgeInsets.symmetric(
-                              //         horizontal: 10, vertical: 5),
-                              //     decoration: BoxDecoration(
-                              //       color: AppColors.searchBar,
-                              //       border: Border.all(color: Colors.blue),
-                              //       borderRadius: BorderRadius.circular(30),
-                              //     ),
-                              //     child: Text(
-                              //       potentialPurchase, // The text or result for the potential purchase
-                              //       style: AppFont.mediumText14blue(context),
-                              //     ),
-                              //   ),
-                              // ),
                             ],
                           ),
-                          // Potential of purchase
-                          // const SizedBox(height: 20),
-                          // Padding(
-                          //   padding:
-                          //       const EdgeInsets.symmetric(horizontal: 10.0),
-                          //   child: Text('Potential of Purchase: ',
-                          //       style: AppFont.dropDowmLabel(context)),
-                          // ),
-                          // const SizedBox(height: 10),
-                          // Padding(
-                          //   padding:
-                          //       const EdgeInsets.symmetric(horizontal: 10.0),
-                          //   child: Container(
-                          //     padding: const EdgeInsets.symmetric(
-                          //         horizontal: 10, vertical: 5),
-                          //     decoration: BoxDecoration(
-                          //       color: AppColors.searchBar,
-                          //       border: Border.all(color: Colors.blue),
-                          //       borderRadius: BorderRadius.circular(30),
-                          //     ),
-                          //     child: Text(
-                          //       potentialPurchase,
-                          //       style: AppFont.mediumText14blue(context),
-                          //     ),
-                          //   ),
-                          // ),
 
                           // Start time
                           Container(
@@ -323,10 +291,10 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text('Start Time',
+                                        Text('Duration',
                                             style:
                                                 AppFont.dropDowmLabel(context)),
-                                        Text(formattedTime,
+                                        Text(startTime,
                                             style:
                                                 AppFont.mediumText14(context)),
                                       ],
@@ -380,30 +348,65 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          Column(
-                            children: [
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _isHidden = !_isHidden;
-                                      });
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 5),
+
+                          Container(
+                            margin: const EdgeInsets.fromLTRB(10, 30, 10, 0),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 15.0),
                                       child: Text(
-                                        _isHidden ? 'Show' : 'Hide',
-                                        style: AppFont.smallText(context),
+                                        'Map',
+                                        style:
+                                            AppFont.popupTitleBlack16(context),
                                       ),
-                                    )),
-                              ),
-                              if (!_isHidden) ...[
-                                if (mapImgUrl.isNotEmpty)
-                                  Image.network(mapImgUrl),
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _isHidden = !_isHidden;
+                                          });
+                                        },
+                                        icon: Icon(
+                                          _isHidden
+                                              ? Icons
+                                                  .keyboard_arrow_down_rounded
+                                              : Icons.keyboard_arrow_up_rounded,
+                                          size: 30, color: AppColors.fontColor,
+                                          // style: AppFont.smallText(context),
+                                        )),
+                                  ],
+                                ),
+                                if (!_isHidden) ...[
+                                  if (mapImgUrl.isNotEmpty)
+                                    Column(
+                                      children: [
+                                        Container(
+                                            margin: const EdgeInsets.symmetric(
+                                                horizontal: 10),
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(30)),
+                                            child: Image.network(mapImgUrl)),
+                                      ],
+                                    ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
+
                           const SizedBox(height: 10),
                         ],
                       ),
@@ -464,35 +467,41 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Rating label
           Text('$label', style: AppFont.smallText(context)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Text(' $validRating', style: AppFont.mediumText14(context)),
-          ),
-          const Row(
-            children: [
-              Icon(
-                Icons.star_rounded,
-                size: 20,
-                color: Colors.amber,
-              )
-            ],
-          ),
+
+          // const Row(
+          //   children: [
+          //     Icon(
+          //       Icons.star_rounded,
+          //       size: 20,
+          //       color: Colors.amber,
+          //     )
+          //   ],
+          // ),
           // The progress line using LinearPercentIndicator
-          Container(
-            width: MediaQuery.of(context).size.width * 0.4,
-            child: LinearPercentIndicator(
-              lineHeight: 8.0, // Height of the progress line
-              percent: percentage, // Fill percentage
-              backgroundColor:
-                  Colors.grey[300]!, // Background color for the line
-              progressColor:
-                  Colors.amber, // Color for the filled portion of the line
-              barRadius: Radius.circular(10),
-            ),
+          Row(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width * 0.4,
+                child: LinearPercentIndicator(
+                  lineHeight: 8.0, // Height of the progress line
+                  percent: percentage, // Fill percentage
+                  backgroundColor:
+                      Colors.grey[300]!, // Background color for the line
+                  progressColor:
+                      Colors.amber, // Color for the filled portion of the line
+                  barRadius: Radius.circular(10),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child:
+                    Text(' $validRating', style: AppFont.mediumText14(context)),
+              ),
+            ],
           ),
 
           // Emoji corresponding to the rating level
@@ -505,15 +514,15 @@ class _TestdriveOverviewState extends State<TestdriveOverview> {
           //   ),
           // ),
 
-          Padding(
-            padding: const EdgeInsets.only(left: 0),
-            child: Text(
-              validRating > 0
-                  ? emojiRatings[validRating - 1]
-                  : '', // ✅ Safe check
-              style: const TextStyle(fontSize: 15),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 0),
+          //   child: Text(
+          //     validRating > 0
+          //         ? emojiRatings[validRating - 1]
+          //         : '', // ✅ Safe check
+          //     style: const TextStyle(fontSize: 15),
+          //   ),
+          // ),
 
           // Static stars (5 stars)
         ],

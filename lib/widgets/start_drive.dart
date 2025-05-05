@@ -696,14 +696,13 @@ class _StartDriveMapState extends State<StartDriveMap> {
   // Improved screenshot capture function with better error handling
   Future<void> _captureAndUploadImage() async {
     // Longer delay before capture to ensure UI is fully rendered
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     try {
       final image = await _screenshotController.capture();
       if (image == null) {
         print("Screenshot capture returned null - trying alternative method");
         // Try alternative capture method - use UI only
-        // await _uploadDriveSummary(); // Fall back to uploading route data only
         return;
       }
 
@@ -716,7 +715,6 @@ class _StartDriveMapState extends State<StartDriveMap> {
     } catch (e) {
       print("Error in screenshot capture: $e");
       // Fall back to drive summary upload
-      // await _uploadDriveSummary();
       // Don't rethrow - we've handled it with the fallback
     }
   }

@@ -485,6 +485,18 @@ class AppFont {
     );
   }
 
+  static TextStyle appbarfontblack(
+    BuildContext context, {
+    double fontSize = 18,
+    Color color = AppColors.fontBlack,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w500,
+    );
+  }
+
   static TextStyle searchFontTitle(
     BuildContext context, {
     double fontSize = 12,
