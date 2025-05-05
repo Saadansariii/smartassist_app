@@ -536,8 +536,8 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
               // options: ['Call', 'Provide Quotation', 'Send Email'],
               options: {
                 "Call": "Call",
-                'Provide quotation': "Provide Quotation",
-                "Send Email": "Send Email",
+                // 'Provide quotation': "Provide Quotation",
+                // "Send Email": "Send Email",
                 "Send SMS": "Send SMS"
               },
               groupValue: _selectedSubject,
@@ -960,7 +960,6 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
       ],
     );
   }
-
 
   Widget _buildDatePicker({
     required TextEditingController controller,
