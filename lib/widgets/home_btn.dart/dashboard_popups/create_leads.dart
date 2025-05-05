@@ -1006,20 +1006,20 @@ class _CreateLeadsState extends State<CreateLeads> {
                               }
                             });
                           }),
-                      const SizedBox(height: 5),
-                      _buildNumberWidget(
-                          label: 'Pin Code',
-                          controller: pinController,
-                          // errorText: _errors['PIN Code'],
-                          hintText: '11220',
-                          onChanged: (value) {
-                            if (_errors.containsKey('pin')) {
-                              setState(() {
-                                // _errors.remove('pin');
-                              });
-                            }
-                            print("pin : $value");
-                          }),
+                      // const SizedBox(height: 5),
+                      // _buildNumberWidget(
+                      //     label: 'Pin Code',
+                      //     controller: pinController,
+                      //     // errorText: _errors['PIN Code'],
+                      //     hintText: '11220',
+                      //     onChanged: (value) {
+                      //       if (_errors.containsKey('pin')) {
+                      //         setState(() {
+                      //           // _errors.remove('pin');
+                      //         });
+                      //       }
+                      //       print("pin : $value");
+                      //     }),
                       // Align(
                       //   alignment: Alignment.centerLeft,
                       //   child: Padding(
@@ -2127,10 +2127,9 @@ class _CreateLeadsState extends State<CreateLeads> {
 
 // Ensure the mobile number always includes the country code
       if (!mobileNumber.startsWith('+91')) {
-        print(mobileNumber);
+        // print(mobileNumber);
 
         mobileNumber = '+91' + mobileNumber;
-        print('ittt hitttttttttttttttt');
       }
 
       final double highestBudgetValue = _rangeAmount.end;
@@ -2146,7 +2145,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'type': 'Product',
         'sub_type': selectedSubType,
         'sp_id': spId,
-        'chat_id': "91" + mobileController.text + "@c.us",
+        'chat_id': "91${mobileController.text}@c.us",
         'PMI': selectedVehicleName,
         'expected_date_purchase': endDateController.text,
         'fuel_type': _selectedFuel,
@@ -2154,7 +2153,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'lead_source': _selectedType,
         'consent': consentValue,
         'budget': highestBudgetValue,
-        'pincode': pinController.text,
+        // 'pincode': pinController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor
       };

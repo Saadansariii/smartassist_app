@@ -25,6 +25,10 @@ class CreateFollowupsPopups extends StatefulWidget {
 
 class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
   Map<String, String> _errors = {};
+  TextEditingController startTimeController = TextEditingController();
+  TextEditingController startDateController = TextEditingController();
+  TextEditingController endTimeController = TextEditingController();
+  TextEditingController endDateController = TextEditingController();
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
@@ -176,25 +180,25 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     }
   }
 
-  bool _validation() {
-    bool isValid = true;
+  // bool _validation() {
+  //   bool isValid = true;
 
-    setState(() {
-      _errors = {};
+  //   setState(() {
+  //     _errors = {};
 
-      if (dateController.text.trim().isEmpty) {
-        _errors['date'] = 'Date is required';
-        isValid = false;
-      }
-    });
+  //     if (dateController.text.trim().isEmpty) {
+  //       _errors['date'] = 'Date is required';
+  //       isValid = false;
+  //     }
+  //   });
 
-    return isValid;
-  }
+  //   return isValid;
+  // }
 
   void _submit() {
-    if (_validation()) {
-      submitForm();
-    }
+    // if (_validation()) {
+    submitForm();
+    // }
   }
 
   /// Submit form
@@ -208,11 +212,31 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
       return;
     }
 
+    // Parse and format the selected dates/times.
+    final rawStartDate =
+        DateFormat('dd MMM yyyy').parse(startDateController.text);
+    final rawEndDate = DateFormat('dd MMM yyyy')
+        .parse(endDateController.text); // Automatically set
+
+    final rawStartTime = DateFormat('hh:mm a').parse(startTimeController.text);
+    final rawEndTime = DateFormat('hh:mm a')
+        .parse(endTimeController.text); // Automatically set
+
+    // Format for API
+    final formattedStartDate = DateFormat('dd/MM/yyyy').format(rawStartDate);
+    final formattedEndDate =
+        DateFormat('dd/MM/yyyy').format(rawEndDate); // Automatically set
+
+    final formattedStartTime = DateFormat('HH:mm:ss').format(rawStartTime);
+    final formattedEndTime =
+        DateFormat('HH:mm:ss').format(rawEndTime); // Automatically set
+
     final newTaskForLead = {
       'subject': _selectedSubject,
       'status': 'Not Started',
       'priority': 'High',
-      'due_date': dateController.text,
+      'time': formattedStartTime,
+      'due_date': formattedStartDate,
       'comments': descriptionController.text,
       'sp_id': spId,
       'lead_id': selectedLeads,
@@ -374,6 +398,89 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     );
   }
 
+  Future<void> _pickStartDate() async {
+    FocusScope.of(context).unfocus();
+
+    // Get current start date or use today
+    DateTime initialDate;
+    try {
+      if (startDateController.text.isNotEmpty) {
+        initialDate = DateFormat('dd MMM yyyy').parse(startDateController.text);
+      } else {
+        initialDate = DateTime.now();
+      }
+    } catch (e) {
+      initialDate = DateTime.now();
+    }
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      String formattedDate = DateFormat('dd MMM yyyy').format(pickedDate);
+
+      setState(() {
+        // Set start date
+        startDateController.text = formattedDate;
+
+        // Set end date to the same as start date but not visible in the UI
+        // (Only passed to API)
+        endDateController.text = formattedDate;
+      });
+    }
+  }
+
+  Future<void> _pickStartTime() async {
+    FocusScope.of(context).unfocus();
+
+    // Get current time from startTimeController or use current time
+    TimeOfDay initialTime;
+    try {
+      if (startTimeController.text.isNotEmpty) {
+        final parsedTime =
+            DateFormat('hh:mm a').parse(startTimeController.text);
+        initialTime =
+            TimeOfDay(hour: parsedTime.hour, minute: parsedTime.minute);
+      } else {
+        initialTime = TimeOfDay.now();
+      }
+    } catch (e) {
+      initialTime = TimeOfDay.now();
+    }
+
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+
+    if (pickedTime != null) {
+      // Create a temporary DateTime to format the time
+      final now = DateTime.now();
+      final time = DateTime(
+          now.year, now.month, now.day, pickedTime.hour, pickedTime.minute);
+      String formattedTime = DateFormat('hh:mm a').format(time);
+
+      // Calculate end time (1 hour later)
+      final endHour = (pickedTime.hour + 1) % 24;
+      final endTime =
+          DateTime(now.year, now.month, now.day, endHour, pickedTime.minute);
+      String formattedEndTime = DateFormat('hh:mm a').format(endTime);
+
+      setState(() {
+        // Set start time
+        startTimeController.text = formattedTime;
+
+        // Set end time to 1 hour later but not visible in the UI
+        // (Only passed to API)
+        endTimeController.text = formattedEndTime;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -408,12 +515,12 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
             ),
             _buildSearchField(),
             const SizedBox(height: 10),
-            _buildDatePicker(
-                label: 'Select date:',
-                controller: dateController,
-                errorText: _errors['date'],
-                onTap: _pickDate),
-            const SizedBox(height: 10),
+            // _buildDatePicker(
+            //     label: 'Select date:',
+            //     controller: dateController,
+            //     // errorText: _errors['date'],
+            //     onTap: _pickDate),
+            // const SizedBox(height: 10),
             // Row(
             //   mainAxisAlignment: MainAxisAlignment.start,
             //   children: [
@@ -423,6 +530,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
             //     ),
             //   ],
             // ),
+
             _buildButtons(
               label: 'Action:',
               // options: ['Call', 'Provide Quotation', 'Send Email'],
@@ -430,7 +538,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                 "Call": "Call",
                 'Provide quotation': "Provide Quotation",
                 "Send Email": "Send Email",
-                "Send SMS": "Send Email"
+                "Send SMS": "Send SMS"
               },
               groupValue: _selectedSubject,
               onChanged: (value) {
@@ -438,6 +546,36 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                   _selectedSubject = value;
                 });
               },
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Row(
+              children: [
+                Text(
+                  'Time',
+                  style: AppFont.dropDowmLabel(context),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Expanded(
+                  child: _buildDatePicker(
+                    controller: startDateController,
+                    onTap: _pickStartDate,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildDatePicker1(
+                    controller: startTimeController,
+                    onTap: _pickStartTime,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 10,
             ),
             _buildTextField(
                 label: 'Comments:',
@@ -517,66 +655,66 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     );
   }
 
-  Widget _buildDatePicker({
-    required String label,
-    required TextEditingController controller,
-    required VoidCallback onTap,
-    String? errorText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // const SizedBox(height: 1),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(5.0, 0, 0, 5),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.fontBlack),
-          ),
-        ),
-        // const SizedBox(height: 2),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            height: 45,
-            width: double.infinity,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                // color: AppColors.containerPopBg,
-                border: errorText != null
-                    ? Border.all(color: Colors.redAccent)
-                    : Border.all(color: Colors.black, width: .5)),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    controller.text.isEmpty ? "DD / MM / YY" : controller.text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: controller.text.isEmpty
-                          ? AppColors.fontColor
-                          : AppColors.fontColor,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.calendar_month,
-                  color: AppColors.fontColor,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildDatePicker({
+  //   required String label,
+  //   required TextEditingController controller,
+  //   required VoidCallback onTap,
+  //   String? errorText,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       // const SizedBox(height: 1),
+  //       Padding(
+  //         padding: const EdgeInsets.fromLTRB(5.0, 0, 0, 5),
+  //         child: Text(
+  //           label,
+  //           style: GoogleFonts.poppins(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w500,
+  //               color: AppColors.fontBlack),
+  //         ),
+  //       ),
+  //       // const SizedBox(height: 2),
+  //       GestureDetector(
+  //         onTap: onTap,
+  //         child: Container(
+  //           height: 45,
+  //           width: double.infinity,
+  //           decoration: BoxDecoration(
+  //               borderRadius: BorderRadius.circular(8),
+  //               // color: AppColors.containerPopBg,
+  //               border: errorText != null
+  //                   ? Border.all(color: Colors.redAccent)
+  //                   : Border.all(color: Colors.black, width: .5)),
+  //           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+  //           child: Row(
+  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //             children: [
+  //               Expanded(
+  //                 child: Text(
+  //                   controller.text.isEmpty ? "DD / MM / YY" : controller.text,
+  //                   style: GoogleFonts.poppins(
+  //                     fontSize: 14,
+  //                     fontWeight: FontWeight.w500,
+  //                     color: controller.text.isEmpty
+  //                         ? AppColors.fontColor
+  //                         : AppColors.fontColor,
+  //                   ),
+  //                 ),
+  //               ),
+  //               const Icon(
+  //                 Icons.calendar_month,
+  //                 color: AppColors.fontColor,
+  //                 size: 20,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // Widget _buildTextField({
   //   required String label,
@@ -823,118 +961,92 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
     );
   }
 
-  // Widget _buildSearchField() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text('Select Lead', style: AppFont.dropDowmLabel(context)),
-  //       const SizedBox(height: 5),
-  //       Container(
-  //         height: MediaQuery.of(context).size.height *
-  //             .055, // Match height from previous widget
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: AppColors.containerBg,
-  //         ),
-  //         child: Row(
-  //           children: [
-  //             // TextField itself
-  //             Expanded(
-  //               child: Align(
-  //                 alignment: Alignment.bottomCenter,
-  //                 child: TextField(
-  //                   controller: _searchController,
-  //                   onTap: () => FocusScope.of(context).unfocus(),
-  //                   decoration: InputDecoration(
-  //                     filled: true,
-  //                     alignLabelWithHint: true,
-  //                     fillColor: AppColors.containerBg,
-  //                     hintText: selectedLeadsName ?? 'Select Leads',
-  //                     hintStyle: TextStyle(
-  //                         color: selectedLeadsName != null
-  //                             ? Colors.black
-  //                             : Colors.grey),
-  //                     prefixIcon: const Icon(
-  //                       FontAwesomeIcons.magnifyingGlass,
-  //                       size: 15,
-  //                       color: AppColors.fontColor,
-  //                     ),
-  //                     suffixIcon: IconButton(
-  //                       icon: const Icon(
-  //                         FontAwesomeIcons.microphone,
-  //                         color: AppColors.fontColor,
-  //                         size: 15, // Adjusted to match sizing
-  //                       ),
-  //                       onPressed: () {
-  //                         // Implement the action for the microphone button here
-  //                         print('Microphone button pressed');
-  //                       },
-  //                     ),
-  //                     border: OutlineInputBorder(
-  //                       borderRadius: BorderRadius.circular(5),
-  //                       borderSide: BorderSide.none,
-  //                     ),
-  //                   ),
-  //                   style: GoogleFonts.poppins(
-  //                     fontSize: 14,
-  //                     fontWeight: FontWeight.w500,
-  //                     color: Colors.black,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //       if (_isLoadingSearch) const Center(child: CircularProgressIndicator()),
-  //       if (_searchResults.isNotEmpty)
-  //         Positioned(
-  //           top: 60, // Adjusted top positioning for proper dropdown placement
-  //           left: 20,
-  //           right: 20,
-  //           child: Material(
-  //             elevation: 5,
-  //             child: Container(
-  //               decoration: BoxDecoration(
-  //                 color: Colors.white,
-  //                 borderRadius: BorderRadius.circular(5),
-  //               ),
-  //               child: ListView.builder(
-  //                 shrinkWrap: true, // Shrink to fit the content height
-  //                 physics:
-  //                     NeverScrollableScrollPhysics(), // Prevent scrolling inside the dropdown
-  //                 itemCount: _searchResults.length,
-  //                 itemBuilder: (context, index) {
-  //                   final result = _searchResults[index];
-  //                   return ListTile(
-  //                     onTap: () {
-  //                       setState(() {
-  //                         FocusScope.of(context).unfocus();
-  //                         selectedLeads = result['lead_id'];
-  //                         selectedLeadsName = result['lead_name'];
-  //                         _searchController.clear();
-  //                         _searchResults.clear();
-  //                       });
-  //                     },
-  //                     title: Text(
-  //                       result['lead_name'] ?? 'No Name',
-  //                       style: TextStyle(
-  //                         color: selectedLeads == result['lead_id']
-  //                             ? Colors.black // Selected item color
-  //                             : AppColors.fontBlack, // Default color
-  //                       ),
-  //                     ),
-  //                     leading: const Icon(Icons.person),
-  //                   );
-  //                 },
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
+
+  Widget _buildDatePicker({
+    required TextEditingController controller,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 45,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: const Color.fromARGB(255, 248, 247, 247),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? "Select" : controller.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          controller.text.isEmpty ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  color: AppColors.fontColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker1({
+    required TextEditingController controller,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 45,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: const Color.fromARGB(255, 248, 247, 247),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? "Select" : controller.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          controller.text.isEmpty ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.watch_later_outlined,
+                  color: AppColors.fontColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildButtons({
     required Map<String, String> options, // ✅ Short display & actual value
