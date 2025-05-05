@@ -348,12 +348,13 @@ class _LoginPageState extends State<LoginPage>
       if (response['isSuccess'] == true && response['user'] != null) {
         final user = response['user'];
         final userId = user['user_id'];
-        final teamRole = user['team_role'];
+        // final teamRole = user['team_role'];
         final authToken = response['token'];
+        final userRole = user['user_role'];
 
         if (userId != null && authToken != null) {
           // Save authentication data
-          await TokenManager.saveAuthData(authToken, userId, teamRole);
+          await TokenManager.saveAuthData(authToken, userId, userRole);
           String successMessage =
               response['message']?.toString() ?? 'Login Successful';
           Get.snackbar(

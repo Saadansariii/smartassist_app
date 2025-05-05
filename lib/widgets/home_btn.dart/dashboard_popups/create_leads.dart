@@ -416,7 +416,8 @@ class _CreateLeadsState extends State<CreateLeads> {
             _existingLeadData = {
               'name': data['data']['lead_name'] ?? 'Unknown',
               'mobile': data['data']['mobile'] ?? mobileNumber,
-              'PMI': data['data']['brand'] ?? 'Unknown',
+              'PMI': data['data']['PMI'] ?? 'Unknown',
+              'lead_owner': data['data']['lead_owner'] ?? 'Unknown',
             };
           });
           print("Existing lead found: ${_existingLeadData}");
@@ -904,12 +905,14 @@ class _CreateLeadsState extends State<CreateLeads> {
                         label: 'Lead Source',
                         options: {
                           "Email": "Email",
-                          "Walk-in": "Walk-in",
-                          "Social": "Social",
+                          "Existing Customer": "Existing Customer",
+                          "Field Visit": "Field Visit",
+                          "Google SEM Ads": "Google SEM Ads",
+                          "Online Booking": "Online Booking",
                           "Referral": "Referral",
-                          "Walk-inn": "Walk-inn",
-                          "Sociall": "Sociall",
-                          "Referrall": "Referrall"
+                          "Retailer Website": "Retailer Website",
+                          "Social": "Social",
+                          "Walk-in": "Walk-in",
                         },
                         groupValue: _selectedType,
                         errorText: _errors['leadSource'],
@@ -1500,19 +1503,33 @@ class _CreateLeadsState extends State<CreateLeads> {
                                         BorderSide(color: AppColors.fontColor)),
                               ),
                             ),
-                            // const SizedBox(
-                            //   width: 5,
-                            // ),
                             Text('${_existingLeadData!['PMI']}',
                                 style: AppFont.smallText(context)),
                           ],
                         ),
-                        Text(
-                          '${_existingLeadData!['mobile']}',
-                          style: GoogleFonts.poppins(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              '${_existingLeadData!['mobile']}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              height: 15,
+                              width: 0.1,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                    right:
+                                        BorderSide(color: AppColors.fontColor)),
+                              ),
+                            ),
+                            Text('by ${_existingLeadData!['lead_owner']}',
+                                style: AppFont.smallText(context)),
+                          ],
                         ),
                       ],
                     ),

@@ -287,9 +287,10 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                 ..._buildPositionedTaskItems(tasks),
 
                 // Render appointments
-                ...appointments
-                    .map((appointment) => _buildAppointmentItem(appointment))
-                    .toList(),
+                ..._buildPositionedAppointments(appointments),
+                // ...appointments
+                //     .map((appointment) => _buildAppointmentItem(appointment))
+                //     .toList(),
               ],
             ),
           ),
@@ -338,8 +339,41 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
-  Widget _buildAppointmentItem(dynamic item,
-      {double widthFactor = 1.0, double leftOffset = 0.0}) {
+  List<Widget> _buildPositionedAppointments(List<dynamic> appointments) {
+    // Group appointments by their start_time
+    Map<String, List<dynamic>> groupedAppointments = {};
+
+    for (var appointment in appointments) {
+      final key = appointment['start_time'] ?? '00:00';
+      groupedAppointments.putIfAbsent(key, () => []).add(appointment);
+    }
+
+    List<Widget> widgets = [];
+    const double verticalSpacing = 62;
+
+    for (var group in groupedAppointments.entries) {
+      final groupList = group.value;
+      final count = groupList.length;
+
+      for (int i = 0; i < count; i++) {
+        final appointment = groupList[i];
+
+        widgets.add(_buildAppointmentItem(
+          appointment,
+          verticalOffset: i * verticalSpacing,
+        ));
+      }
+    }
+
+    return widgets;
+  }
+
+  Widget _buildAppointmentItem(
+    dynamic item, {
+    double widthFactor = 1.0,
+    double leftOffset = 0.0,
+    double verticalOffset = 0.0,
+  }) {
     final startTime = _parseTimeString(item['start_time'] ?? '00:00');
     final endTime = _parseTimeString(item['end_time'] ?? '00:00');
 
@@ -388,7 +422,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
         '${item['start_time'] ?? '00:00'} - ${item['end_time'] ?? '00:00'}';
 
     return Positioned(
-      top: startPosition,
+      top: startPosition + verticalOffset,
       left: 8 + (MediaQuery.of(context).size.width - 59) * leftOffset,
       width: (MediaQuery.of(context).size.width - 59) * widthFactor - 16,
       height: finalHeight,
@@ -465,6 +499,8 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
+
+
   List<Widget> _buildPositionedTaskItems(List<dynamic> tasks) {
     // Group tasks by their due date string
     Map<String, List<dynamic>> groupedTasks = {};
@@ -502,6 +538,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   }
 
   Widget _buildTaskItem(
+
     dynamic item, {
     double widthFactor = 1.0,
     double leftOffset = 0.0,
@@ -595,32 +632,32 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                     ),
                   ],
                 ),
-                SizedBox(height: 2),
+               const SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(
+                  const  Icon(
                       Icons.flag,
                       size: 12,
                       color: Colors.white70,
                     ),
-                    SizedBox(width: 4),
+                  const  SizedBox(width: 4),
                     Text(
                       priority,
-                      style: TextStyle(
+                      style:const TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Icon(
+                  const  SizedBox(width: 8),
+                  const  Icon(
                       Icons.info_outline,
                       size: 12,
                       color: Colors.white70,
                     ),
-                    SizedBox(width: 4),
+                   const SizedBox(width: 4),
                     Text(
                       status,
-                      style: TextStyle(
+                      style:const TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
                       ),
@@ -642,6 +679,8 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       ),
     );
   }
+
+ 
 
   List<List<dynamic>> _groupOverlappingItems(List<dynamic> items) {
     if (items.isEmpty) return [];

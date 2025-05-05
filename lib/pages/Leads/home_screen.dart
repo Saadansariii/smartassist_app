@@ -392,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 0, horizontal: 10),
+                                      vertical: 5, horizontal: 12),
                                   margin: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                       color: AppColors.backgroundLightGrey,
@@ -608,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   overdueAppointmentsCount,
                               overdueTestDrivesCount: overdueTestDrivesCount,
                             ),
-                            BottomBtnSecond(
+                            const BottomBtnSecond(
                                 // MtdData: MtdData,
                                 // QtdData: QtdData,
                                 // YtdData: YtdData,

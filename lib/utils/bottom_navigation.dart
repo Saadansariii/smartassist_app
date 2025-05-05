@@ -50,43 +50,98 @@ class BottomNavigation extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 0),
           child: Obx(
-            () => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
+            () {
+              List<Widget> navItems = [
                 _buildNavItem(
                     icon: Icons.home,
                     label: 'Home',
                     index: 0,
                     isIcon: true,
                     isImg: false),
-                _buildNavItem(
+              ];
+
+              // Insert Teams navigation only for SM role
+              if (controller.userRole.value == "SM") {
+                navItems.add(_buildNavItem(
                     icon: Icons.people_alt_outlined,
                     label: 'My Teams',
                     index: 1,
                     isIcon: true,
-                    isImg: false),
-                _buildNavItem(
-                    isImg: true,
-                    isIcon: false,
-                    img: Image.asset(
-                      'assets/calendar.png',
-                      fit: BoxFit.contain,
-                    ),
-                    label: 'Calendar',
-                    index: 2),
-                _buildNavItem(
-                    icon: Icons.settings,
-                    label: 'More',
-                    index: 3,
-                    isIcon: true,
-                    isImg: false,
-                    onTap: _showMoreBottomSheet),
-              ],
-            ),
+                    isImg: false));
+              }
+
+              // Add Calendar - index needs to be adjusted based on whether Teams is present
+              int calendarIndex = controller.userRole.value == "SM" ? 2 : 1;
+              navItems.add(_buildNavItem(
+                  isImg: true,
+                  isIcon: false,
+                  img: Image.asset(
+                    'assets/calendar.png',
+                    fit: BoxFit.contain,
+                  ),
+                  label: 'Calendar',
+                  index: calendarIndex));
+
+              // Add More/Settings - index needs to be adjusted based on whether Teams is present
+              int moreIndex = controller.userRole.value == "SM" ? 3 : 2;
+              navItems.add(_buildNavItem(
+                  icon: Icons.settings,
+                  label: 'More',
+                  index: moreIndex,
+                  isIcon: true,
+                  isImg: false,
+                  onTap: _showMoreBottomSheet));
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: navItems,
+              );
+            },
           ),
         ),
       ),
     );
+    //   child: SafeArea(
+    //     child: Padding(
+    //       padding: const EdgeInsets.symmetric(vertical: 0),
+    //       child: Obx(
+    //         () => Row(
+    //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+    //           children: [
+    //             _buildNavItem(
+    //                 icon: Icons.home,
+    //                 label: 'Home',
+    //                 index: 0,
+    //                 isIcon: true,
+    //                 isImg: false),
+    //             _buildNavItem(
+    //                 icon: Icons.people_alt_outlined,
+    //                 label: 'My Teams',
+    //                 index: 1,
+    //                 isIcon: true,
+    //                 isImg: false),
+    //             _buildNavItem(
+    //                 isImg: true,
+    //                 isIcon: false,
+    //                 img: Image.asset(
+    //                   'assets/calendar.png',
+    //                   fit: BoxFit.contain,
+    //                 ),
+    //                 label: 'Calendar',
+    //                 index: 2),
+    //             _buildNavItem(
+    //                 icon: Icons.settings,
+    //                 label: 'More',
+    //                 index: 3,
+    //                 isIcon: true,
+    //                 isImg: false,
+    //                 onTap: _showMoreBottomSheet),
+    //           ],
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // );
   }
 
   // Update this method to not require a controller parameter
@@ -163,13 +218,14 @@ class BottomNavigation extends StatelessWidget {
 
   // ✅ Show Bottom Sheet for More options
   void _showMoreBottomSheet() async {
-    String? teamRole = await SharedPreferences.getInstance()
-        .then((prefs) => prefs.getString('USER_ROLE'));
+    // String? teamRole = await SharedPreferences.getInstance()
+    //     .then((prefs) => prefs.getString('USER_ROLE'));
 
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(16),
-        height: teamRole == "Owner" ? 320 : 300,
+        // height: teamRole == "Owner" ? 320 : 300,
+        height:312,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),

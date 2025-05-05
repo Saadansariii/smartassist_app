@@ -110,6 +110,7 @@ import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup
 import 'package:smart_assist/pages/home/single_id_screens/single_leads.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class GlobalSearch extends StatefulWidget {
   const GlobalSearch({super.key});
@@ -124,11 +125,15 @@ class _GlobalSearchState extends State<GlobalSearch> {
   bool _isLoadingSearch = false;
   String _query = '';
   bool _isErrorShowing = false;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _speech = stt.SpeechToText();
+    _initSpeech();
   }
 
   @override
@@ -217,6 +222,57 @@ class _GlobalSearchState extends State<GlobalSearch> {
     });
   }
 
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
+  }
+
   // void _onSearchChanged() {
   //   final newQuery = _searchController.text.trim();
   //   if (newQuery == _query) return;
@@ -254,18 +310,20 @@ class _GlobalSearchState extends State<GlobalSearch> {
             SizedBox(
               width: MediaQuery.of(context).size.width *
                   .8, // Adjust width as needed
-              height: MediaQuery.of(context).size.height * .05,
+              height: MediaQuery.of(context).size.height * .06,
               child: TextField(
+                minLines: 1,
+                maxLines: null,
                 autofocus: true,
                 controller: _searchController,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 15), // Reduce padding
                   filled: true,
                   fillColor: AppColors.searchBar,
                   hintText: 'Search',
@@ -280,6 +338,22 @@ class _GlobalSearchState extends State<GlobalSearch> {
                       color: AppColors.fontColor,
                       size: 15,
                     ),
+                  ),
+                  suffix: Padding(
+                    padding:
+                        const EdgeInsets.only(right: 0), // Reduce icon padding
+                    child: IconButton(
+                        style: const ButtonStyle(
+                          // minimumSize: WidgetStatePropertyAll(Size.zero),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                        ),
+                        onPressed: () => _toggleListening(_searchController),
+                        icon: const Icon(
+                          FontAwesomeIcons.microphone,
+                          color: AppColors.fontColor,
+                          size: 15,
+                        )),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
