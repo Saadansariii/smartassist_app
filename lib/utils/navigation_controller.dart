@@ -34,6 +34,7 @@ import 'package:smart_assist/pages/Leads/home_screen.dart';
 import 'package:smart_assist/pages/navbar_page/my_teams.dart';
 import 'package:smart_assist/pages/Calendar/calender.dart';
 import 'package:smart_assist/utils/token_manager.dart';
+import 'package:smart_assist/widgets/myteam.dart';
 import 'package:smart_assist/widgets/timeline_view_calender.dart'; // Adjust your imports based on your actual page locations
 
 // class NavigationController extends GetxController {
@@ -94,7 +95,7 @@ class NavigationController extends GetxController {
 
     // Insert MyTeams screen at index 1 only for SM role
     if (userRole.value == "SM") {
-      baseScreens.insert(1, const MyTeams());
+      baseScreens.insert(1, const Myteam());
     }
 
     return baseScreens;
