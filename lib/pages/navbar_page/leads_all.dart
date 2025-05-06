@@ -21,6 +21,7 @@ class AllLeads extends StatefulWidget {
 
 class _AllLeadsState extends State<AllLeads> {
   bool isLoading = true;
+  int _selectedButtonIndex = 0;
   final Map<String, double> _swipeOffsets = {};
   List<dynamic> upcomingTasks = [];
   List<dynamic> _searchResults = [];
@@ -283,6 +284,85 @@ class _AllLeadsState extends State<AllLeads> {
                       ),
                     ),
                   ),
+
+//                 Column(
+//                   children: [
+//                     Padding(
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 0, vertical: 10),
+//                       child: Wrap(
+//                         spacing: 4,
+//                         children: [
+//                           FlexibleButton(
+//                             title: 'Status',
+//                             onPressed: () {
+//                               setState(() {
+//                                 _selectedButtonIndex =
+//                                     1; // for Test Drives etc.
+// c
+//                               });
+//                             },
+//                             decoration: BoxDecoration(
+//                               border: _selectedButtonIndex == 1
+//                                   ? Border.all(color: Colors.blue)
+//                                   : Border.all(color: Colors.transparent),
+//                               borderRadius: BorderRadius.circular(13),
+//                             ),
+//                             textStyle: GoogleFonts.poppins(
+//                               color: _selectedButtonIndex == 1
+//                                   ? Colors.blue
+//                                   : Colors.black,
+//                               fontSize: 14,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                           FlexibleButton(
+//                             title: 'Source',
+//                             onPressed: () {
+//                               setState(() {
+//                                 _selectedButtonIndex = 2;
+//                               });
+//                             },
+//                             decoration: BoxDecoration(
+//                               border: _selectedButtonIndex == 2
+//                                   ? Border.all(color: Colors.blue)
+//                                   : Border.all(color: Colors.transparent),
+//                               borderRadius: BorderRadius.circular(13),
+//                             ),
+//                             textStyle: GoogleFonts.poppins(
+//                               color: _selectedButtonIndex == 2
+//                                   ? Colors.blue
+//                                   : Colors.black,
+//                               fontSize: 14,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                           FlexibleButton(
+//                             title: 'Brand',
+//                             onPressed: () {
+//                               setState(() {
+//                                 _selectedButtonIndex = 3;
+//                               });
+//                             },
+//                             decoration: BoxDecoration(
+//                               border: _selectedButtonIndex == 3
+//                                   ? Border.all(color: Colors.blue)
+//                                   : Border.all(color: Colors.transparent),
+//                               borderRadius: BorderRadius.circular(13),
+//                             ),
+//                             textStyle: GoogleFonts.poppins(
+//                               color: _selectedButtonIndex == 3
+//                                   ? Colors.blue
+//                                   : Colors.black,
+//                               fontSize: 14,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ],
+//                 ), // No padding, no container for Team Comparison
 
                 // Expanded widget containing the appropriate list
                 Expanded(
@@ -741,6 +821,56 @@ class _TaskItemState extends State<TaskItem> {
       style: AppFont.dashboardCarName(context),
       softWrap: true,
       overflow: TextOverflow.visible,
+    );
+  }
+}
+
+class FlexibleButton extends StatelessWidget {
+  final String title;
+  final VoidCallback onPressed;
+  final BoxDecoration decoration;
+  final TextStyle textStyle;
+
+  const FlexibleButton(
+      {super.key,
+      required this.title,
+      required this.onPressed,
+      required this.decoration,
+      required this.textStyle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      height: 30,
+      decoration: decoration,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xffF3F9FF),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+          ),
+          minimumSize: const Size(0, 0),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: textStyle,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(width: 4), // small space between text and icon
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              // color: AppColors.fontColor,
+            )
+          ],
+        ),
+      ),
     );
   }
 }

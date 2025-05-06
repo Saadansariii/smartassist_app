@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? leadId;
   bool _isHidden = false;
   String greeting = '';
-  String name = 'S';
+  String name = '';
   int notificationCount = 0;
   int overdueFollowupsCount = 0;
   int overdueAppointmentsCount = 0;
@@ -153,9 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
               (data.containsKey('greetings') && data['greetings'] is String)
                   ? data['greetings']
                   : 'Welcome!';
-          name = (data.containsKey('name') && data['name'] is String)
-              ? data['name']
-              : 'S';
+          name = (data.containsKey('initials') &&
+                  data['initials'] is String &&
+                  data['initials'].trim().isNotEmpty)
+              ? data['initials'].trim()
+              : '';
+
           // if (upcomingFollowups.isNotEmpty) {
           //   leadId = upcomingFollowups[0]['lead_id'];
           // }
@@ -411,12 +414,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  ProfileScreen()));
+                                                  const ProfileScreen()));
                                     },
                                     child: Text(
-                                      _getFirstTwoLettersCapitalized(name),
-                                      style:
-                                          AppFont.mediumText14bluebold(context),
+                                      name.isNotEmpty ? name : 'NA',
+                                      style: AppFont.smallText(context),
                                     ),
                                   ),
                                   // child: IconButton(

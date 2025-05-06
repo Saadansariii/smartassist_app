@@ -37,6 +37,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   String? selectedVehicleName;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool isSubmitting = false;
 
   List<dynamic> _searchResults = [];
   List<String> colorOptions = [];
@@ -622,8 +623,24 @@ class _CreateLeadsState extends State<CreateLeads> {
     }
   }
 
-  void _submitForm() {
-    submitForm();
+  Future<void> _submitForm() async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      await submitForm(); // Your actual API call
+      // Optionally show a success snackbar or navigate
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Submission failed: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
   }
 
   @override

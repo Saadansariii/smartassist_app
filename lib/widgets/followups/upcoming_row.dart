@@ -1,3 +1,4 @@
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FollowupsUpcoming extends StatefulWidget {
@@ -168,8 +170,12 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
             taskId: taskId,
             isFavorite: item['favourite'] ?? false,
             swipeOffset: swipeOffset,
-            fetchDashboardData:
-                () {}, // Placeholder, replace with actual method
+            onToggleFavorite: () {
+              _toggleFavorite(taskId, index);
+            },
+            // fetchDashboardData:
+            //     () {},
+            // Placeholder, replace with actual method
           ),
         );
       },
@@ -177,222 +183,313 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
   }
 }
 
-class UpcomingFollowupItem extends StatelessWidget {
-  final String name, date, vehicle, leadId, taskId, subject, mobile;
-  final bool isFavorite;
+class UpcomingFollowupItem extends StatefulWidget {
+  final String name, mobile, taskId;
+  final String subject;
+  final String date;
+  final String vehicle;
+  final String leadId;
   final double swipeOffset;
-  final VoidCallback fetchDashboardData;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
 
   const UpcomingFollowupItem({
     super.key,
     required this.name,
+    required this.subject,
     required this.date,
     required this.vehicle,
     required this.leadId,
-    required this.taskId,
-    required this.isFavorite,
-    required this.swipeOffset,
-    required this.fetchDashboardData,
-    required this.subject,
+    this.swipeOffset = 0.0,
+    this.isFavorite = false,
+    required this.onToggleFavorite,
     required this.mobile,
+    required this.taskId,
   });
 
+  @override
+  State<UpcomingFollowupItem> createState() => _overdueeFollowupsItemState();
+}
+
+class _overdueeFollowupsItemState extends State<UpcomingFollowupItem> {
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
-      child: _buildFollowupCard(context),
+      child: _buildOverdueCard(context),
     );
   }
 
-  Widget _buildFollowupCard(BuildContext context) {
-    bool isFavoriteSwipe = swipeOffset > 50;
-    bool isCallSwipe = swipeOffset < -50;
+  Widget _buildOverdueCard(BuildContext context) {
+    bool isFavoriteSwipe = widget.swipeOffset > 50;
+    bool isCallSwipe = widget.swipeOffset < -50;
 
-    // Gradient background for swipe
-    LinearGradient _buildSwipeGradient() {
-      if (isFavoriteSwipe) {
-        return const LinearGradient(
+    return Slidable(
+      key: ValueKey(widget.leadId), // Always good to set keys
+      startActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          ReusableSlidableAction(
+            onPressed: widget.onToggleFavorite, // handle fav toggle
+            backgroundColor: Colors.amber,
+            icon: widget.isFavorite ? Icons.star : Icons.star_border,
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ),
+
+      endActionPane: ActionPane(
+        motion: const StretchMotion(),
+        children: [
+          if (widget.subject == 'Call')
+            ReusableSlidableAction(
+              onPressed: _phoneAction,
+              backgroundColor: Colors.blue,
+              icon: Icons.phone,
+            ),
+          if (widget.subject == 'Send SMS')
+            ReusableSlidableAction(
+              onPressed: _messageAction,
+              backgroundColor: Colors.green,
+              icon: Icons.message_rounded,
+            ),
+          // Edit is always shown
+          ReusableSlidableAction(
+            onPressed: _mailAction,
+            backgroundColor: const Color.fromARGB(255, 231, 225, 225),
+            icon: Icons.edit,
+            foregroundColor: Colors.red,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Favorite Swipe Overlay
+          if (isFavoriteSwipe)
+            Positioned.fill(
+              child: _buildFavoriteOverlay(),
+            ),
+
+          // Call Swipe Overlay
+          if (isCallSwipe)
+            Positioned.fill(
+              child: _buildCallOverlay(),
+            ),
+
+          // Main Card
+          Opacity(
+            opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+              decoration: BoxDecoration(
+                color: AppColors.containerBg,
+                borderRadius: BorderRadius.circular(5),
+                border: Border(
+                  left: BorderSide(
+                    width: 8.0,
+                    color:
+                        widget.isFavorite ? Colors.yellow : AppColors.sideGreen,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _buildUserDetails(context),
+                              _buildVerticalDivider(15),
+                              _buildCarModel(context),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _buildSubjectDetails(context),
+                              _date(context),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  _buildNavigationButton(context),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoriteOverlay() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
           colors: [
-            Color.fromRGBO(239, 206, 29, 0.67),
-            // Colors.yellow.withOpacity(0.2),
-            // Colors.yellow.withOpacity(0.8)
-            Color.fromRGBO(239, 206, 29, 0.67)
+            Colors.yellow.withOpacity(0.2),
+            Colors.yellow.withOpacity(0.8)
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-        );
-      } else if (isCallSwipe) {
-        return LinearGradient(
-          colors: [
-            Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.2)
-          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 15),
+          Icon(
+              widget.isFavorite
+                  ? Icons.star_outline_rounded
+                  : Icons.star_rounded,
+              color: const Color.fromRGBO(226, 195, 34, 1),
+              size: 40),
+          const SizedBox(width: 10),
+          Text(widget.isFavorite ? 'Unfavorite' : 'Favorite',
+              style: GoogleFonts.poppins(
+                  color: const Color.fromRGBO(187, 158, 0, 1),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCallOverlay() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green, Colors.green],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
-        );
-      }
-      return const LinearGradient(
-        colors: [AppColors.containerBg, AppColors.containerBg],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      );
+        ),
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 10),
+          const Icon(Icons.phone_in_talk, color: Colors.white, size: 30),
+          const SizedBox(width: 10),
+          Text('Call',
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserDetails(BuildContext context) {
+    return Text(widget.name, style: AppFont.dashboardName(context));
+  }
+
+  Widget _buildSubjectDetails(BuildContext context) {
+    IconData icon;
+    if (widget.subject == 'Call') {
+      icon = Icons.phone_in_talk;
+    } else if (widget.subject == 'Send SMS') {
+      icon = Icons.mail_rounded;
+    } else {
+      icon = Icons.phone; // fallback icon
     }
 
-    return Stack(
+    return Row(
       children: [
-        // Favorite Swipe Overlay
-        if (isFavoriteSwipe)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.yellow.withOpacity(0.2),
-                    Colors.yellow.withOpacity(0.8)
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const SizedBox(width: 15),
-                    Icon(
-                        isFavorite
-                            ? Icons.star_outline_rounded
-                            : Icons.star_rounded,
-                        color: Color.fromRGBO(226, 195, 34, 1),
-                        size: 40),
-                    const SizedBox(width: 10),
-                    Text(isFavorite ? 'Unfavorite' : 'Favorite',
-                        style: GoogleFonts.poppins(
-                            color: Color.fromRGBO(187, 158, 0, 1),
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-        // Call Swipe Overlay
-        if (isCallSwipe)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.green, Colors.green],
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Icon(Icons.phone_in_talk,
-                        color: Colors.white, size: 30),
-                    const SizedBox(width: 10),
-                    Text('Call',
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 5),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-        // Main Container
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-          decoration: BoxDecoration(
-            gradient: _buildSwipeGradient(),
-            borderRadius: BorderRadius.circular(7),
-            border: Border(
-              left: BorderSide(
-                width: 8.0,
-                color: isFavorite
-                    ? (isCallSwipe
-                        ? Colors.green
-                            .withOpacity(0.9) // Green when swiping for a call
-                        : Colors.yellow.withOpacity(isFavoriteSwipe
-                            ? 0.1
-                            : 0.9)) // Keep yellow when favorite
-                    : (isFavoriteSwipe
-                        ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe ? Colors.green : AppColors.sideGreen)),
-              ),
-            ),
-          ),
-          child: Opacity(
-            opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    // Conditional favorite star
-                    // if (isFavorite || isFavoriteSwipe)
-                    //   Icon(
-                    //     Icons.star_rounded,
-                    //     color: isFavoriteSwipe
-                    //         ? Colors.white
-                    //         : AppColors.starColorsYellow,
-                    //     size: 40,
-                    //   ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildUserDetails(context),
-                            _buildVerticalDivider(15),
-                            _buildCarModel(context),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            _buildSubjectDetails(context),
-                            _date(context),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                _buildNavigationButton(context),
-              ],
-            ),
-          ),
-        ),
+        Icon(icon, color: Colors.blue, size: 18),
+        const SizedBox(width: 5),
+        Text('${widget.subject},', style: AppFont.smallText(context)),
       ],
     );
   }
 
+  // Widget _buildSubjectDetails(BuildContext context) {
+  //   return Row(
+  //     children: [
+  //       const Icon(Icons.phone_in_talk, color: Colors.blue, size: 18),
+  //       const SizedBox(width: 5),
+  //       Text('${widget.subject},', style: AppFont.smallText(context)),
+  //     ],
+  //   );
+  // }
+
+  Widget _date(BuildContext context) {
+    String formattedDate = '';
+    try {
+      DateTime parseDate = DateTime.parse(widget.date);
+      if (parseDate.year == DateTime.now().year &&
+          parseDate.month == DateTime.now().month &&
+          parseDate.day == DateTime.now().day) {
+        formattedDate = 'Today';
+      } else {
+        int day = parseDate.day;
+        String suffix = _getDaySuffix(day);
+        String month = DateFormat('MMM').format(parseDate);
+        formattedDate = '$day$suffix $month';
+      }
+    } catch (e) {
+      formattedDate = widget.date;
+    }
+    return Row(
+      children: [
+        const SizedBox(width: 5),
+        Text(formattedDate, style: AppFont.smallText(context)),
+      ],
+    );
+  }
+
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
+    }
+  }
+
+  Widget _buildVerticalDivider(double height) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      height: height,
+      width: 0.1,
+      decoration: const BoxDecoration(
+        border: Border(right: BorderSide(color: AppColors.fontColor)),
+      ),
+    );
+  }
+
+  Widget _buildCarModel(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 100),
+      child: Text(
+        widget.vehicle,
+        style: AppFont.dashboardCarName(context),
+        overflow: TextOverflow.visible,
+        softWrap: true,
+      ),
+    );
+  }
+
   Widget _buildNavigationButton(BuildContext context) {
-    // ✅ Accept context
     return GestureDetector(
       onTap: () {
-        if (leadId.isNotEmpty) {
+        if (widget.leadId.isNotEmpty) {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => FollowupsDetails(leadId: leadId)),
+                builder: (context) => FollowupsDetails(leadId: widget.leadId)),
           );
         } else {
           print("Invalid leadId");
@@ -409,264 +506,89 @@ class UpcomingFollowupItem extends StatelessWidget {
     );
   }
 
-  // Widget _buildUserDetails(BuildContext context) {
-  //   return Text(name,
-  //       textAlign: TextAlign.end, style: AppFont.dashboardName(context));
-  // }
+  void _phoneAction() {
+    print("Call action triggered for ${widget.mobile}");
 
-  Widget _buildUserDetails(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(name, style: AppFont.dashboardName(context)),
-        // const SizedBox(height: 5),
-      ],
-    );
-  }
+    // String mobile = item['mobile'] ?? '';
 
-  Widget _buildSubjectDetails(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.phone_in_talk, color: Colors.blue, size: 18),
-        const SizedBox(width: 5),
-        Text('$subject,', style: AppFont.smallText(context)),
-      ],
-    );
-  }
-
-  Widget _date(BuildContext context) {
-    String formattedDate = '';
-
-    try {
-      DateTime parseDate = DateTime.parse(date);
-
-      // Check if the date is today
-      if (parseDate.year == DateTime.now().year &&
-          parseDate.month == DateTime.now().month &&
-          parseDate.day == DateTime.now().day) {
-        formattedDate = 'Today';
-      } else {
-        // If not today, format it as "26th March"
-        int day = parseDate.day;
-        String suffix = _getDaySuffix(day);
-        String month = DateFormat('MMM').format(parseDate); // Full month name
-        formattedDate = '${day}$suffix $month';
+    if (widget.mobile.isNotEmpty) {
+      try {
+        // Simple approach without canLaunchUrl check
+        final phoneNumber = 'tel:${widget.mobile}';
+        launchUrl(Uri.parse(phoneNumber),
+            mode: LaunchMode.externalNonBrowserApplication);
+      } catch (e) {
+        print('Error launching phone app: $e');
+        // Show error message to user
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
       }
-    } catch (e) {
-      formattedDate = date; // Fallback if date parsing fails
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No phone number available')),
+        );
+      }
     }
+  }
 
-    return Row(
-      children: [
-        const SizedBox(width: 5),
-        Text(formattedDate, style: AppFont.smallText(context)),
-      ],
+  void _messageAction() {
+    print("Message action triggered");
+  }
+
+  void _mailAction() {
+    print("Mail action triggered");
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 10),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: FollowupsEdit(onFormSubmit: () {}, taskId: widget.taskId),
+        );
+      },
     );
   }
+}
 
-// Helper method to get the suffix for the day (e.g., "st", "nd", "rd", "th")
-  String _getDaySuffix(int day) {
-    if (day >= 11 && day <= 13) {
-      return 'th';
-    }
-    switch (day % 10) {
-      case 1:
-        return 'st';
-      case 2:
-        return 'nd';
-      case 3:
-        return 'rd';
-      default:
-        return 'th';
-    }
-  }
+class ReusableSlidableAction extends StatelessWidget {
+  final VoidCallback onPressed;
+  final Color backgroundColor;
+  final IconData icon;
+  final Color? foregroundColor;
 
-  Widget _buildVerticalDivider(double height) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 3, left: 10, right: 10),
-      height: height,
-      width: 0.1,
-      decoration: const BoxDecoration(
-          border: Border(right: BorderSide(color: AppColors.fontColor))),
-    );
-  }
+  const ReusableSlidableAction({
+    Key? key,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.icon,
+    this.foregroundColor,
+  }) : super(key: key);
 
-  Widget _buildCarModel(BuildContext context) {
-    return Text(
-      vehicle,
-      textAlign: TextAlign.start,
-      style: AppFont.dashboardCarName(context),
-      softWrap: true,
-      overflow: TextOverflow.visible,
+  @override
+  Widget build(BuildContext context) {
+    return SlidableAction(
+      onPressed: (context) => onPressed(),
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor ?? Colors.white,
+      icon: icon,
+      borderRadius: BorderRadius.circular(8),
     );
   }
 }
 
 
- 
-// import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart'; 
-// import 'package:intl/intl.dart';
-// import 'package:smart_assist/config/component/color/colors.dart'; 
-// import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-
-// class FollowupsUpcoming extends StatefulWidget {
-//   final List<dynamic> upcomingFollowups;
-//   final bool isNested;
-//   const FollowupsUpcoming({
-//     super.key,
-//     required this.upcomingFollowups,
-//     required this.isNested,
-
-//   });
-
-//   @override
-//   State<FollowupsUpcoming> createState() => _FollowupsUpcomingState();
-// }
-
-// class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
-//   double _swipeOffset = 0.0;
-
-//   void _onHorizontalDragUpdate(DragUpdateDetails details) {
-//     setState(() {
-//       _swipeOffset += details.primaryDelta ?? 0;
-//     });
-//   }
-
-//   void _onHorizontalDragEnd(DragEndDetails details, String taskId, int index) {
-//     if (_swipeOffset > 100) {
-//       // Right Swipe (Favorite)
-//       _toggleFavorite(taskId, index);
-//     } else if (_swipeOffset < -100) {
-//       // Left Swipe (Call)
-//       print(
-//           "Call action triggered for ${widget.upcomingFollowups[index]['name']}");
-//     }
-
-//     // Reset animation
-//     setState(() {
-//       _swipeOffset = 0.0;
-//     });
-//   }
-
-//   Future<void> _toggleFavorite(String taskId, int index) async {
-//     setState(() {
-//       widget.upcomingFollowups[index]['favourite'] =
-//           !(widget.upcomingFollowups[index]['favourite'] ?? false);
-//     });
-
-//     // Simulating API Call (Replace with actual API request)
-//     await Future.delayed(Duration(milliseconds: 500));
-
-//     print("Favorite toggled for Task ID: $taskId");
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     if (widget.upcomingFollowups.isEmpty) {
-//       return const SizedBox(
-//         height: 240,
-//         child: Center(child: Text('No upcoming followups available')),
-//       );
-//     }
-
-//     return ListView.builder(
-//       shrinkWrap: true,
-//       physics: widget.isNested
-//           ? const NeverScrollableScrollPhysics()
-//           : const AlwaysScrollableScrollPhysics(),
-//       itemCount: widget.upcomingFollowups.length,
-//       itemBuilder: (context, index) {
-//         var item = widget.upcomingFollowups[index];
-
-//         if (!(item.containsKey('name') &&
-//             item.containsKey('due_date') &&
-//             item.containsKey('lead_id') &&
-//             item.containsKey('task_id'))) {
-//           return ListTile(title: Text('Invalid data at index $index'));
-//         }
-
-//         return GestureDetector(
-//           onHorizontalDragUpdate: _onHorizontalDragUpdate,
-//           onHorizontalDragEnd: (details) =>
-//               _onHorizontalDragEnd(details, item['task_id'], index),
-//           child: AnimatedContainer(
-//             duration: Duration(milliseconds: 300),
-//             curve: Curves.easeOut,
-//             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-//             padding: const EdgeInsets.all(16),
-//             decoration: BoxDecoration(
-//               color: _swipeOffset > 50
-//                   ? Colors.yellow // Right Swipe (Favorite)
-//                   : _swipeOffset < -50
-//                       ? Colors.blue // Left Swipe (Call)
-//                       : Colors.white, // Default
-//               borderRadius: BorderRadius.circular(10),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: Colors.black.withOpacity(0.1),
-//                   blurRadius: 5,
-//                   spreadRadius: 2,
-//                 ),
-//               ],
-//             ),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 // Left Side (Favorite)
-//                 if (_swipeOffset > 50)
-//                   Row(
-//                     children: [
-//                       Icon(Icons.star_rounded, color: Colors.white, size: 30),
-//                       SizedBox(width: 10),
-//                       Text("Prime",
-//                           style: GoogleFonts.poppins(
-//                               fontSize: 18,
-//                               color: Colors.white,
-//                               fontWeight: FontWeight.w600)),
-//                     ],
-//                   ),
-
-//                 // Middle (Task Info)
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(item['name'],
-//                           style: TextStyle(
-//                               fontSize: 18, fontWeight: FontWeight.bold)),
-//                       SizedBox(height: 5),
-//                       Text(item['due_date'],
-//                           style: TextStyle(fontSize: 14, color: Colors.grey)),
-//                     ],
-//                   ),
-//                 ),
-
-//                 // Right Side (Call)
-//                 if (_swipeOffset < -50)
-//                   Row(
-//                     children: [
-//                       Text("Call",
-//                           style: TextStyle(
-//                               color: Colors.white,
-//                               fontWeight: FontWeight.bold)),
-//                       SizedBox(width: 10),
-//                       Icon(Icons.phone, color: Colors.white, size: 28),
-//                     ],
-//                   ),
-//               ],
-//             ),
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
-
 // class UpcomingFollowupItem extends StatelessWidget {
-//   final String name, date, vehicle, leadId, taskId;
+//   final String name, date, vehicle, leadId, taskId, subject, mobile;
 //   final bool isFavorite;
+//   final double swipeOffset;
 //   final VoidCallback fetchDashboardData;
 
 //   const UpcomingFollowupItem({
@@ -677,61 +599,196 @@ class UpcomingFollowupItem extends StatelessWidget {
 //     required this.leadId,
 //     required this.taskId,
 //     required this.isFavorite,
+//     required this.swipeOffset,
 //     required this.fetchDashboardData,
+//     required this.subject,
+//     required this.mobile,
 //   });
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return Padding(
 //       padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
-//       child: _buildFollowupCard(context), // ✅ Pass context here
+//       child: _buildFollowupCard(context),
 //     );
 //   }
 
 //   Widget _buildFollowupCard(BuildContext context) {
-//     // ✅ Accept context
-//     return Container(
-//       padding: const EdgeInsets.all(10),
-//       decoration: BoxDecoration(
-//         color: AppColors.containerBg,
-//         borderRadius: BorderRadius.circular(10),
-//         border: const Border(
-//           left: BorderSide(width: 8.0, color: AppColors.sideGreen),
-//         ),
-//       ),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//         crossAxisAlignment: CrossAxisAlignment.center,
-//         children: [
-//           Row(
-//             children: [
-//               if (isFavorite)
-//                 const Icon(
-//                   Icons.star_rounded,
-//                   color: AppColors.starColorsYellow,
-//                   size: 40,
+//     bool isFavoriteSwipe = swipeOffset > 50;
+//     bool isCallSwipe = swipeOffset < -50;
+
+//     // Gradient background for swipe
+//     LinearGradient _buildSwipeGradient() {
+//       if (isFavoriteSwipe) {
+//         return const LinearGradient(
+//           colors: [
+//             Color.fromRGBO(239, 206, 29, 0.67),
+//             // Colors.yellow.withOpacity(0.2),
+//             // Colors.yellow.withOpacity(0.8)
+//             Color.fromRGBO(239, 206, 29, 0.67)
+//           ],
+//           begin: Alignment.centerLeft,
+//           end: Alignment.centerRight,
+//         );
+//       } else if (isCallSwipe) {
+//         return LinearGradient(
+//           colors: [
+//             Colors.green.withOpacity(0.2),
+//             Colors.green.withOpacity(0.2)
+//           ],
+//           begin: Alignment.centerRight,
+//           end: Alignment.centerLeft,
+//         );
+//       }
+//       return const LinearGradient(
+//         colors: [AppColors.containerBg, AppColors.containerBg],
+//         begin: Alignment.centerLeft,
+//         end: Alignment.centerRight,
+//       );
+//     }
+
+//     return Stack(
+//       children: [
+//         // Favorite Swipe Overlay
+//         if (isFavoriteSwipe)
+//           Positioned.fill(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 gradient: LinearGradient(
+//                   colors: [
+//                     Colors.yellow.withOpacity(0.2),
+//                     Colors.yellow.withOpacity(0.8)
+//                   ],
+//                   begin: Alignment.centerLeft,
+//                   end: Alignment.centerRight,
 //                 ),
-//               const SizedBox(width: 8),
-//               Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   _buildUserDetails(),
-//                   const SizedBox(
-//                       height: 4), // Spacing between user details and date-car
-//                   Row(
-//                     children: [
-//                       _date(),
-//                       _buildVerticalDivider(20),
-//                       _buildCarModel(),
-//                     ],
-//                   ),
-//                 ],
+//                 borderRadius: BorderRadius.circular(10),
 //               ),
-//             ],
+//               child: Center(
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     const SizedBox(width: 15),
+//                     Icon(
+//                         isFavorite
+//                             ? Icons.star_outline_rounded
+//                             : Icons.star_rounded,
+//                         color: Color.fromRGBO(226, 195, 34, 1),
+//                         size: 40),
+//                     const SizedBox(width: 10),
+//                     Text(isFavorite ? 'Unfavorite' : 'Favorite',
+//                         style: GoogleFonts.poppins(
+//                             color: Color.fromRGBO(187, 158, 0, 1),
+//                             fontSize: 18,
+//                             fontWeight: FontWeight.bold)),
+//                   ],
+//                 ),
+//               ),
+//             ),
 //           ),
-//           _buildNavigationButton(context), // ✅ Pass context here
-//         ],
-//       ),
+
+//         // Call Swipe Overlay
+//         if (isCallSwipe)
+//           Positioned.fill(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 gradient: const LinearGradient(
+//                   colors: [Colors.green, Colors.green],
+//                   begin: Alignment.centerRight,
+//                   end: Alignment.centerLeft,
+//                 ),
+//                 borderRadius: BorderRadius.circular(10),
+//               ),
+//               child: Center(
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     const SizedBox(
+//                       width: 10,
+//                     ),
+//                     const Icon(Icons.phone_in_talk,
+//                         color: Colors.white, size: 30),
+//                     const SizedBox(width: 10),
+//                     Text('Call',
+//                         style: GoogleFonts.poppins(
+//                             color: Colors.white,
+//                             fontSize: 18,
+//                             fontWeight: FontWeight.bold)),
+//                     const SizedBox(width: 5),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//         // Main Container
+//         Container(
+//           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+//           decoration: BoxDecoration(
+//             gradient: _buildSwipeGradient(),
+//             borderRadius: BorderRadius.circular(7),
+//             border: Border(
+//               left: BorderSide(
+//                 width: 8.0,
+//                 color: isFavorite
+//                     ? (isCallSwipe
+//                         ? Colors.green
+//                             .withOpacity(0.9) // Green when swiping for a call
+//                         : Colors.yellow.withOpacity(isFavoriteSwipe
+//                             ? 0.1
+//                             : 0.9)) // Keep yellow when favorite
+//                     : (isFavoriteSwipe
+//                         ? Colors.yellow.withOpacity(0.1)
+//                         : (isCallSwipe ? Colors.green : AppColors.sideGreen)),
+//               ),
+//             ),
+//           ),
+//           child: Opacity(
+//             opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               crossAxisAlignment: CrossAxisAlignment.center,
+//               children: [
+//                 Row(
+//                   children: [
+//                     // Conditional favorite star
+//                     // if (isFavorite || isFavoriteSwipe)
+//                     //   Icon(
+//                     //     Icons.star_rounded,
+//                     //     color: isFavoriteSwipe
+//                     //         ? Colors.white
+//                     //         : AppColors.starColorsYellow,
+//                     //     size: 40,
+//                     //   ),
+//                     const SizedBox(width: 8),
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Row(
+//                           crossAxisAlignment: CrossAxisAlignment.end,
+//                           children: [
+//                             _buildUserDetails(context),
+//                             _buildVerticalDivider(15),
+//                             _buildCarModel(context),
+//                           ],
+//                         ),
+//                         const SizedBox(height: 4),
+//                         Row(
+//                           children: [
+//                             _buildSubjectDetails(context),
+//                             _date(context),
+//                           ],
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//                 _buildNavigationButton(context),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ],
 //     );
 //   }
 
@@ -760,55 +817,439 @@ class UpcomingFollowupItem extends StatelessWidget {
 //     );
 //   }
 
-//   Widget _buildUserDetails() {
+//   // Widget _buildUserDetails(BuildContext context) {
+//   //   return Text(name,
+//   //       textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+//   // }
+
+//   Widget _buildUserDetails(BuildContext context) {
 //     return Column(
 //       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         Text(name,
-//             style: GoogleFonts.poppins(
-//                 color: AppColors.fontColor,
-//                 fontWeight: FontWeight.bold,
-//                 fontSize: 14)),
-//         const SizedBox(height: 5),
+//         Text(name, style: AppFont.dashboardName(context)),
+//         // const SizedBox(height: 5),
 //       ],
 //     );
 //   }
 
-//   Widget _date() {
-//     String formattedDate = '';
-//     try {
-//       DateTime parseDate = DateTime.parse(date);
-//       formattedDate = DateFormat('dd MMM').format(parseDate);
-//     } catch (e) {
-//       formattedDate = date;
-//     }
+//   Widget _buildSubjectDetails(BuildContext context) {
 //     return Row(
+//       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         const Icon(Icons.phone_in_talk, color: Colors.blue, size: 14),
+//         const Icon(Icons.phone_in_talk, color: Colors.blue, size: 18),
 //         const SizedBox(width: 5),
-//         Text(formattedDate,
-//             style: const TextStyle(fontSize: 12, color: Colors.grey)),
+//         Text('$subject,', style: AppFont.smallText(context)),
 //       ],
 //     );
+//   }
+
+//   Widget _date(BuildContext context) {
+//     String formattedDate = '';
+
+//     try {
+//       DateTime parseDate = DateTime.parse(date);
+
+//       // Check if the date is today
+//       if (parseDate.year == DateTime.now().year &&
+//           parseDate.month == DateTime.now().month &&
+//           parseDate.day == DateTime.now().day) {
+//         formattedDate = 'Today';
+//       } else {
+//         // If not today, format it as "26th March"
+//         int day = parseDate.day;
+//         String suffix = _getDaySuffix(day);
+//         String month = DateFormat('MMM').format(parseDate); // Full month name
+//         formattedDate = '${day}$suffix $month';
+//       }
+//     } catch (e) {
+//       formattedDate = date; // Fallback if date parsing fails
+//     }
+
+//     return Row(
+//       children: [
+//         const SizedBox(width: 5),
+//         Text(formattedDate, style: AppFont.smallText(context)),
+//       ],
+//     );
+//   }
+
+// // Helper method to get the suffix for the day (e.g., "st", "nd", "rd", "th")
+//   String _getDaySuffix(int day) {
+//     if (day >= 11 && day <= 13) {
+//       return 'th';
+//     }
+//     switch (day % 10) {
+//       case 1:
+//         return 'st';
+//       case 2:
+//         return 'nd';
+//       case 3:
+//         return 'rd';
+//       default:
+//         return 'th';
+//     }
 //   }
 
 //   Widget _buildVerticalDivider(double height) {
 //     return Container(
-//       margin: const EdgeInsets.symmetric(horizontal: 10),
+//       margin: const EdgeInsets.only(bottom: 3, left: 10, right: 10),
 //       height: height,
-//       width: 1,
+//       width: 0.1,
 //       decoration: const BoxDecoration(
 //           border: Border(right: BorderSide(color: AppColors.fontColor))),
 //     );
 //   }
 
-//   Widget _buildCarModel() {
+//   Widget _buildCarModel(BuildContext context) {
 //     return Text(
 //       vehicle,
 //       textAlign: TextAlign.start,
-//       style: GoogleFonts.poppins(fontSize: 10, color: AppColors.fontColor),
+//       style: AppFont.dashboardCarName(context),
 //       softWrap: true,
 //       overflow: TextOverflow.visible,
 //     );
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// class UpcomingFollowupItem extends StatelessWidget {
+//   final String name, date, vehicle, leadId, taskId, subject, mobile;
+//   final bool isFavorite;
+//   final double swipeOffset;
+//   final VoidCallback fetchDashboardData;
+
+//   const UpcomingFollowupItem({
+//     super.key,
+//     required this.name,
+//     required this.date,
+//     required this.vehicle,
+//     required this.leadId,
+//     required this.taskId,
+//     required this.isFavorite,
+//     required this.swipeOffset,
+//     required this.fetchDashboardData,
+//     required this.subject,
+//     required this.mobile,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
+//       child: _buildFollowupCard(context),
+//     );
+//   }
+
+//   Widget _buildFollowupCard(BuildContext context) {
+//     bool isFavoriteSwipe = swipeOffset > 50;
+//     bool isCallSwipe = swipeOffset < -50;
+
+//     // Gradient background for swipe
+//     LinearGradient _buildSwipeGradient() {
+//       if (isFavoriteSwipe) {
+//         return const LinearGradient(
+//           colors: [
+//             Color.fromRGBO(239, 206, 29, 0.67),
+//             // Colors.yellow.withOpacity(0.2),
+//             // Colors.yellow.withOpacity(0.8)
+//             Color.fromRGBO(239, 206, 29, 0.67)
+//           ],
+//           begin: Alignment.centerLeft,
+//           end: Alignment.centerRight,
+//         );
+//       } else if (isCallSwipe) {
+//         return LinearGradient(
+//           colors: [
+//             Colors.green.withOpacity(0.2),
+//             Colors.green.withOpacity(0.2)
+//           ],
+//           begin: Alignment.centerRight,
+//           end: Alignment.centerLeft,
+//         );
+//       }
+//       return const LinearGradient(
+//         colors: [AppColors.containerBg, AppColors.containerBg],
+//         begin: Alignment.centerLeft,
+//         end: Alignment.centerRight,
+//       );
+//     }
+
+//     return Stack(
+//       children: [
+//         // Favorite Swipe Overlay
+//         if (isFavoriteSwipe)
+//           Positioned.fill(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 gradient: LinearGradient(
+//                   colors: [
+//                     Colors.yellow.withOpacity(0.2),
+//                     Colors.yellow.withOpacity(0.8)
+//                   ],
+//                   begin: Alignment.centerLeft,
+//                   end: Alignment.centerRight,
+//                 ),
+//                 borderRadius: BorderRadius.circular(10),
+//               ),
+//               child: Center(
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     const SizedBox(width: 15),
+//                     Icon(
+//                         isFavorite
+//                             ? Icons.star_outline_rounded
+//                             : Icons.star_rounded,
+//                         color: Color.fromRGBO(226, 195, 34, 1),
+//                         size: 40),
+//                     const SizedBox(width: 10),
+//                     Text(isFavorite ? 'Unfavorite' : 'Favorite',
+//                         style: GoogleFonts.poppins(
+//                             color: Color.fromRGBO(187, 158, 0, 1),
+//                             fontSize: 18,
+//                             fontWeight: FontWeight.bold)),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//         // Call Swipe Overlay
+//         if (isCallSwipe)
+//           Positioned.fill(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 gradient: const LinearGradient(
+//                   colors: [Colors.green, Colors.green],
+//                   begin: Alignment.centerRight,
+//                   end: Alignment.centerLeft,
+//                 ),
+//                 borderRadius: BorderRadius.circular(10),
+//               ),
+//               child: Center(
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.start,
+//                   children: [
+//                     const SizedBox(
+//                       width: 10,
+//                     ),
+//                     const Icon(Icons.phone_in_talk,
+//                         color: Colors.white, size: 30),
+//                     const SizedBox(width: 10),
+//                     Text('Call',
+//                         style: GoogleFonts.poppins(
+//                             color: Colors.white,
+//                             fontSize: 18,
+//                             fontWeight: FontWeight.bold)),
+//                     const SizedBox(width: 5),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//         // Main Container
+//         Container(
+//           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+//           decoration: BoxDecoration(
+//             gradient: _buildSwipeGradient(),
+//             borderRadius: BorderRadius.circular(7),
+//             border: Border(
+//               left: BorderSide(
+//                 width: 8.0,
+//                 color: isFavorite
+//                     ? (isCallSwipe
+//                         ? Colors.green
+//                             .withOpacity(0.9) // Green when swiping for a call
+//                         : Colors.yellow.withOpacity(isFavoriteSwipe
+//                             ? 0.1
+//                             : 0.9)) // Keep yellow when favorite
+//                     : (isFavoriteSwipe
+//                         ? Colors.yellow.withOpacity(0.1)
+//                         : (isCallSwipe ? Colors.green : AppColors.sideGreen)),
+//               ),
+//             ),
+//           ),
+//           child: Opacity(
+//             opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               crossAxisAlignment: CrossAxisAlignment.center,
+//               children: [
+//                 Row(
+//                   children: [
+//                     // Conditional favorite star
+//                     // if (isFavorite || isFavoriteSwipe)
+//                     //   Icon(
+//                     //     Icons.star_rounded,
+//                     //     color: isFavoriteSwipe
+//                     //         ? Colors.white
+//                     //         : AppColors.starColorsYellow,
+//                     //     size: 40,
+//                     //   ),
+//                     const SizedBox(width: 8),
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Row(
+//                           crossAxisAlignment: CrossAxisAlignment.end,
+//                           children: [
+//                             _buildUserDetails(context),
+//                             _buildVerticalDivider(15),
+//                             _buildCarModel(context),
+//                           ],
+//                         ),
+//                         const SizedBox(height: 4),
+//                         Row(
+//                           children: [
+//                             _buildSubjectDetails(context),
+//                             _date(context),
+//                           ],
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//                 _buildNavigationButton(context),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildNavigationButton(BuildContext context) {
+//     // ✅ Accept context
+//     return GestureDetector(
+//       onTap: () {
+//         if (leadId.isNotEmpty) {
+//           Navigator.push(
+//             context,
+//             MaterialPageRoute(
+//                 builder: (context) => FollowupsDetails(leadId: leadId)),
+//           );
+//         } else {
+//           print("Invalid leadId");
+//         }
+//       },
+//       child: Container(
+//         padding: const EdgeInsets.all(3),
+//         decoration: BoxDecoration(
+//             color: AppColors.arrowContainerColor,
+//             borderRadius: BorderRadius.circular(30)),
+//         child: const Icon(Icons.arrow_forward_ios_rounded,
+//             size: 25, color: Colors.white),
+//       ),
+//     );
+//   }
+
+//   // Widget _buildUserDetails(BuildContext context) {
+//   //   return Text(name,
+//   //       textAlign: TextAlign.end, style: AppFont.dashboardName(context));
+//   // }
+
+//   Widget _buildUserDetails(BuildContext context) {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Text(name, style: AppFont.dashboardName(context)),
+//         // const SizedBox(height: 5),
+//       ],
+//     );
+//   }
+
+//   Widget _buildSubjectDetails(BuildContext context) {
+//     return Row(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Icon(Icons.phone_in_talk, color: Colors.blue, size: 18),
+//         const SizedBox(width: 5),
+//         Text('$subject,', style: AppFont.smallText(context)),
+//       ],
+//     );
+//   }
+
+//   Widget _date(BuildContext context) {
+//     String formattedDate = '';
+
+//     try {
+//       DateTime parseDate = DateTime.parse(date);
+
+//       // Check if the date is today
+//       if (parseDate.year == DateTime.now().year &&
+//           parseDate.month == DateTime.now().month &&
+//           parseDate.day == DateTime.now().day) {
+//         formattedDate = 'Today';
+//       } else {
+//         // If not today, format it as "26th March"
+//         int day = parseDate.day;
+//         String suffix = _getDaySuffix(day);
+//         String month = DateFormat('MMM').format(parseDate); // Full month name
+//         formattedDate = '${day}$suffix $month';
+//       }
+//     } catch (e) {
+//       formattedDate = date; // Fallback if date parsing fails
+//     }
+
+//     return Row(
+//       children: [
+//         const SizedBox(width: 5),
+//         Text(formattedDate, style: AppFont.smallText(context)),
+//       ],
+//     );
+//   }
+
+// // Helper method to get the suffix for the day (e.g., "st", "nd", "rd", "th")
+//   String _getDaySuffix(int day) {
+//     if (day >= 11 && day <= 13) {
+//       return 'th';
+//     }
+//     switch (day % 10) {
+//       case 1:
+//         return 'st';
+//       case 2:
+//         return 'nd';
+//       case 3:
+//         return 'rd';
+//       default:
+//         return 'th';
+//     }
+//   }
+
+//   Widget _buildVerticalDivider(double height) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 3, left: 10, right: 10),
+//       height: height,
+//       width: 0.1,
+//       decoration: const BoxDecoration(
+//           border: Border(right: BorderSide(color: AppColors.fontColor))),
+//     );
+//   }
+
+//   Widget _buildCarModel(BuildContext context) {
+//     return Text(
+//       vehicle,
+//       textAlign: TextAlign.start,
+//       style: AppFont.dashboardCarName(context),
+//       softWrap: true,
+//       overflow: TextOverflow.visible,
+//     );
+//   }
+// }
+
+
+ 

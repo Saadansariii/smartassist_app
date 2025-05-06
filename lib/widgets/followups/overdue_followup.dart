@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_Followups_popups.dart';
 import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/create_leads.dart';
+import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart';
 import 'package:smart_assist/widgets/home_btn.dart/lead_old_popup/leads_third.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -168,6 +169,7 @@ class _OverdueFollowupState extends State<OverdueFollowup> {
             mobile: item['mobile'],
             subject: item['subject'] ?? 'call',
             date: item['due_date'],
+            taskId: item['task_id'],
             vehicle: item['PMI'] ?? 'Range Rover Velar',
             leadId: item['lead_id'],
             // taskId: taskId,
@@ -186,7 +188,7 @@ class _OverdueFollowupState extends State<OverdueFollowup> {
 }
 
 class overdueeFollowupsItem extends StatefulWidget {
-  final String name, mobile;
+  final String name, mobile, taskId;
   final String subject;
   final String date;
   final String vehicle;
@@ -206,6 +208,7 @@ class overdueeFollowupsItem extends StatefulWidget {
     this.isFavorite = false,
     required this.onToggleFavorite,
     required this.mobile,
+    required this.taskId,
   });
 
   @override
@@ -552,16 +555,12 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          child: _createFollowups, // Your follow-up widget
+          child: FollowupsEdit(onFormSubmit: () {}, taskId: widget.taskId),
         );
       },
     );
   }
 }
-
-final Widget _createFollowups = CreateFollowupsPopups(
-  onFormSubmit: () {},
-);
 
 class ReusableSlidableAction extends StatelessWidget {
   final VoidCallback onPressed;
