@@ -95,7 +95,7 @@ class NavigationController extends GetxController {
 
     // Insert MyTeams screen at index 1 only for SM role
     if (userRole.value == "SM") {
-      baseScreens.insert(1, const Myteam());
+      baseScreens.insert(1, const MyTeams());
     }
 
     return baseScreens;

@@ -36,6 +36,11 @@ class _MyteamState extends State<Myteam> {
   late Future<Map<String, dynamic>> _data;
   late Future<Map<String, dynamic>> _teamComparisonData;
 
+  // remove this
+  List<Map<String, dynamic>> staticTeamData = [];
+  Set<String> selectedTeams = {};
+  bool showAll = false;
+
   // Class level variables to store upcoming activities
   List<Map<String, dynamic>> _upcomingFollowups = [];
   List<Map<String, dynamic>> _upcomingAppointments = [];
@@ -537,7 +542,7 @@ class _MyteamState extends State<Myteam> {
     }
 
     return Container(
-      margin: const EdgeInsets.all(10), 
+      margin: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -745,6 +750,130 @@ class _MyteamState extends State<Myteam> {
     _initialize();
   }
 
+  // Static data for team comparison
+  List<Map<String, dynamic>> _getStaticTeamData() {
+    return [
+      {
+        'name': 'Sumit',
+        'type': 'team',
+        'count': 75,
+        'id': 'product_team',
+        'members': [
+          {'name': 'Andrew Smith', 'count': 35, 'id': 'andrew_smith'},
+          {'name': 'Michael Torres', 'count': 25, 'id': 'michael_torres'},
+          {'name': 'Sam Peters', 'count': 65, 'id': 'sam_peters'},
+        ]
+      },
+      {
+        'name': 'Anand',
+        'type': 'team',
+        'count': 85,
+        'id': 'sales_team',
+        'members': [
+          {'name': 'Angela Davis', 'count': 15, 'id': 'angela_davis'},
+          {'name': 'Mark Singer', 'count': 60, 'id': 'mark_singer'},
+          {'name': 'Sarah Johnson', 'count': 45, 'id': 'sarah_johnson'},
+        ]
+      },
+      {
+        'name': 'Kenem',
+        'type': 'team',
+        'count': 55,
+        'id': 'design_team',
+        'members': [
+          {'name': 'James Wilson', 'count': 30, 'id': 'james_wilson'},
+          {'name': 'Emma Taylor', 'count': 70, 'id': 'emma_taylor'},
+          {'name': 'David Lopez', 'count': 40, 'id': 'david_lopez'},
+        ]
+      },
+      {
+        'name': 'sikos',
+        'type': 'team',
+        'count': 55,
+        'id': 'design_team',
+        'members': [
+          {'name': 'James Wilson', 'count': 30, 'id': 'james_wilson'},
+          {'name': 'Emma Taylor', 'count': 70, 'id': 'emma_taylor'},
+          {'name': 'David Lopez', 'count': 40, 'id': 'david_lopez'},
+        ]
+      }
+    ];
+  }
+
+  // Find the maximum value for scaling progress bars
+  int findMaxValue(List<Map<String, dynamic>> items) {
+    int max = 0;
+    for (var item in items) {
+      if (item['count'] != null && item['count'] > max) {
+        max = item['count'];
+      }
+
+      if (item['members'] != null) {
+        for (var member in item['members']) {
+          if (member['count'] != null && member['count'] > max) {
+            max = member['count'];
+          }
+        }
+      }
+    }
+    return max;
+  }
+
+  // Get display items based on selected teams or show all
+  List<Map<String, dynamic>> getDisplayItems() {
+    List<Map<String, dynamic>> displayItems = [];
+
+    if (showAll) {
+      // Show all teams and their members
+      for (var team in staticTeamData) {
+        displayItems.add(team);
+        if (team['members'] != null) {
+          for (var member in team['members']) {
+            member['type'] = 'member';
+            displayItems.add(member);
+          }
+        }
+      }
+    } else if (selectedTeams.isEmpty) {
+      // Show only team headers when nothing is selected
+      displayItems = List.from(staticTeamData);
+    } else {
+      // Show selected teams and their members
+      for (var team in staticTeamData) {
+        if (selectedTeams.contains(team['id'])) {
+          displayItems.add(team);
+          if (team['members'] != null) {
+            for (var member in team['members']) {
+              member['type'] = 'member';
+              displayItems.add(member);
+            }
+          }
+        }
+      }
+    }
+
+    return displayItems;
+  }
+
+  // Handle team selection
+  void toggleTeamSelection(String teamId) {
+    setState(() {
+      if (selectedTeams.contains(teamId)) {
+        selectedTeams.remove(teamId);
+        showAll = false;
+      } else {
+        // Limit to two selections
+        if (selectedTeams.length < 2) {
+          selectedTeams.add(teamId);
+        } else {
+          // If already have 2 selections, remove the first one and add the new one
+          selectedTeams = {selectedTeams.last, teamId};
+        }
+        showAll = false;
+      }
+    });
+  }
+
   Future<void> _initialize() async {
     setState(() {
       isLoading = true;
@@ -755,6 +884,8 @@ class _MyteamState extends State<Myteam> {
       _data = fetchData();
       _teamComparisonData = fetchTeamComparisonData();
       await _teamComparisonData; // properly await
+
+      staticTeamData = _getStaticTeamData(); //remove this
 
       // Fetch team performance data for all users first
       await _fetchAllTeamPerformance();
@@ -836,21 +967,23 @@ class _MyteamState extends State<Myteam> {
 
     return result;
   }
-
-  int findMaxValue(List<Map<String, dynamic>> items) {
-    int max = 0;
-    for (var item in items) {
-      final count = item['count'];
-      if (count != null && count is int && count > max) {
-        max = count;
-      }
-    }
-    return max > 0 ? max : 1; // Avoid division by zero
-  }
+//uncommment
+  // int findMaxValue(List<Map<String, dynamic>> items) {
+  //   int max = 0;
+  //   for (var item in items) {
+  //     final count = item['count'];
+  //     if (count != null && count is int && count > max) {
+  //       max = count;
+  //     }
+  //   }
+  //   return max > 0 ? max : 1; // Avoid division by zero
+  // }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    final List<Map<String, dynamic>> displayItems = getDisplayItems();
+    final int maxValue = findMaxValue(staticTeamData);
 
     return Scaffold(
       appBar: AppBar(
@@ -1031,196 +1164,212 @@ class _MyteamState extends State<Myteam> {
                               height: 10,
                             ),
 
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                color: AppColors.backgroundLightGrey,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        margin: const EdgeInsets.only(
-                                            left: 10, bottom: 0),
-                                        child: Text(
-                                          'Team Comparison',
-                                          style: AppFont.dropDowmLabel(context),
+                            if (_selectedType != 'dynamic') ...[
+                              Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 0),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundLightGrey,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                              left: 10, bottom: 0),
+                                          child: Text(
+                                            'Team Comparison',
+                                            style:
+                                                AppFont.dropDowmLabel(context),
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            isHide = !isHide;
-                                          });
-                                        },
-                                        icon: Icon(
-                                          isHide
-                                              ? Icons
-                                                  .keyboard_arrow_down_rounded
-                                              : Icons.keyboard_arrow_up_rounded,
-                                          size: 35,
-                                          color: AppColors.iconGrey,
+                                        IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              isHide = !isHide;
+                                            });
+                                          },
+                                          icon: Icon(
+                                            isHide
+                                                ? Icons
+                                                    .keyboard_arrow_down_rounded
+                                                : Icons
+                                                    .keyboard_arrow_up_rounded,
+                                            size: 35,
+                                            color: AppColors.iconGrey,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-
-                            if (!isHide) ...[
-                              FutureBuilder<Map<String, dynamic>>(
-                                future: _teamComparisonData,
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Center(
-                                        child: CircularProgressIndicator());
-                                  } else if (snapshot.hasError) {
-                                    print(
-                                        "FutureBuilder error: ${snapshot.error}");
-                                    return Center(
-                                        child:
-                                            Text('Error: ${snapshot.error}'));
-                                  } else if (snapshot.hasData) {
-                                    final responseData = snapshot.data!;
-
-                                    // Add safety check to see if the data is structured as expected
-                                    if (!responseData
-                                            .containsKey('independentUser') &&
-                                        !responseData
-                                            .containsKey('teamsData')) {
-                                      print(
-                                          "Data structure is not as expected: $responseData");
-                                      return const Center(
-                                          child: Text('Invalid data format'));
-                                    }
-
-                                    // Process data to get all items to display
-                                    List<Map<String, dynamic>> displayItems =
-                                        processDataForDisplay(responseData);
-
-                                    // Find maximum value for scaling
-                                    int maxValue = findMaxValue(displayItems);
-
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                          color: AppColors.backgroundLightGrey,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                      margin: const EdgeInsets.only(top: 10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          // Show "Target" label
-                                          const Padding(
-                                            padding: EdgeInsets.only(
-                                                top: 10,
-                                                right: 8.0,
-                                                bottom: 10.0),
-                                            child: Text(
-                                              "Target",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
+                              if (!isHide) ...[
+                                Container(
+                                    decoration: BoxDecoration(
+                                        color: AppColors.backgroundLightGrey,
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.only(top: 10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        // Show "Target" label
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            // "Show All" button (appears only when teams are selected)
+                                            if (selectedTeams.isNotEmpty &&
+                                                !showAll)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(12.0),
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      showAll = true;
+                                                    });
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.blue,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                  ),
+                                                  child: const Text("Show All"),
+                                                ),
+                                              ),
+                                            const Padding(
+                                              padding: EdgeInsets.only(
+                                                  top: 10,
+                                                  right: 8.0,
+                                                  bottom: 10.0),
+                                              child: Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 10.0),
+                                                  child: Text(
+                                                    "Target",
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                          ],
+                                        ),
 
-                                          // Display all items with progress bars - use a fixed height container instead of Expanded
-                                          ListView.builder(
-                                            shrinkWrap: true, // Add this
-                                            physics:
-                                                const AlwaysScrollableScrollPhysics(), // Allow scrolling
-                                            itemCount: displayItems.length,
-                                            itemBuilder: (context, index) {
-                                              final item = displayItems[index];
-                                              final count = item['count'] ?? 0;
-                                              final percentage = maxValue > 0
-                                                  ? count / maxValue
-                                                  : 0.0;
-                                              final isTeam =
-                                                  item['type'] == 'team';
+                                        // Display all items with progress bars
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: displayItems.length,
+                                          itemBuilder: (context, index) {
+                                            final item = displayItems[index];
+                                            final count = item['count'] ?? 0;
+                                            final percentage = maxValue > 0
+                                                ? count / maxValue
+                                                : 0.0;
+                                            final isTeam =
+                                                item['type'] == 'team';
+                                            final teamId = item['id'] ?? '';
+                                            final isSelected =
+                                                selectedTeams.contains(teamId);
 
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8.0,
-                                                        horizontal: 10),
-                                                child: Row(
-                                                  children: [
-                                                    // Name with proper indentation for team members
-                                                    SizedBox(
-                                                      width: 100,
-                                                      child: Text(
-                                                        item['name'] ?? '',
-                                                        style: TextStyle(
-                                                          fontWeight: isTeam
-                                                              ? FontWeight.bold
-                                                              : FontWeight
-                                                                  .normal,
-                                                          fontSize: 14,
-                                                          color: Colors.black87,
-                                                        ),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 8.0,
+                                                horizontal: 10,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  // Checkbox (only for team headers)
+                                                  if (isTeam)
+                                                    Checkbox(
+                                                      value: isSelected,
+                                                      onChanged: (bool? value) {
+                                                        toggleTeamSelection(
+                                                            teamId);
+                                                      },
+                                                      visualDensity:
+                                                          VisualDensity.compact,
+                                                    )
+                                                  else
+                                                    const SizedBox(width: 24),
 
-                                                    // Progress bar
-                                                    Expanded(
-                                                      child:
-                                                          LinearPercentIndicator(
-                                                        percent: percentage
-                                                            .clamp(0.0, 1.0),
-                                                        lineHeight: 20.0,
-                                                        barRadius: const Radius
-                                                            .circular(10),
-                                                        backgroundColor:
-                                                            Colors.grey[200],
-                                                        linearGradient:
-                                                            LinearGradient(
-                                                          colors:
-                                                              _getGradientForIndex(
-                                                                  index),
-                                                        ),
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                right: 10),
-                                                      ),
-                                                    ),
-
-                                                    // Count value
-                                                    Text(
-                                                      '$count',
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                  // Name with proper indentation for team members
+                                                  SizedBox(
+                                                    width: 100,
+                                                    child: Text(
+                                                      item['name'] ?? '',
+                                                      style: TextStyle(
+                                                        fontWeight: isTeam
+                                                            ? FontWeight
+                                                                .normal // Changed from bold to normal
+                                                            : FontWeight.normal,
                                                         fontSize: 14,
+                                                        color: Colors.black87,
                                                       ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  } else {
-                                    return const Center(
-                                        child: Text('No Data Available'));
-                                  }
-                                },
-                              ),
-                            ],
+                                                  ),
 
+                                                  // Progress bar
+                                                  Expanded(
+                                                    child:
+                                                        LinearPercentIndicator(
+                                                      percent: percentage.clamp(
+                                                          0.0, 1.0),
+                                                      lineHeight: 20.0,
+                                                      barRadius:
+                                                          const Radius.circular(
+                                                              10),
+                                                      backgroundColor:
+                                                          Colors.grey[200],
+                                                      linearGradient:
+                                                          LinearGradient(
+                                                        colors:
+                                                            _getGradientForIndex(
+                                                                index),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              right: 10),
+                                                    ),
+                                                  ),
+
+                                                  // Count value
+                                                  Text(
+                                                    '$count',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ))
+                              ],
+                            ],
 // thir code for first button
                             FutureBuilder<Map<String, dynamic>>(
                               future: _data,
@@ -1524,15 +1673,7 @@ class _MyteamState extends State<Myteam> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  // children: List.generate(
-                  //   teamProfiles.length,
-                  //   (index) => _buildProfileAvatar(
-                  //     teamProfiles[index]['name'] ?? '',
-                  //     // teamProfiles[index]['lastName'] ?? '',
-                  //     index,
-                  //     data['teamProfiles'][index]['user_id'],
-                  //   ),
-                  // ),
+                 
                   children: [
                     for (int i = 0; i < teamProfiles.length; i++)
                       _buildProfileAvatar(
