@@ -26,6 +26,7 @@ class _MyTeamsState extends State<MyTeams> {
   int _selectedProfileIndex = 0; // Default to 'All' profile
   String _selectedUserId = '';
   String _selectedType = 'All';
+  Map<String, dynamic> _individualPerformanceData = {};
 
   bool isHideActivities = false;
   bool isHide = false;
@@ -80,7 +81,7 @@ class _MyTeamsState extends State<MyTeams> {
     try {
       final token = await Storage.getToken();
 
-      // Build query parameters based on current filters
+      // Build period parameter
       String? periodParam;
       switch (_periodIndex) {
         case 1:
@@ -92,39 +93,34 @@ class _MyTeamsState extends State<MyTeams> {
         case 3:
           periodParam = 'YTD';
           break;
-        default:
-          periodParam = null;
       }
 
-      final summaryMetrics = [
-        'enquiries',
-        'testdrives',
-        'orders',
-        'orders',
-        'cancellation',
-        'retail'
-      ];
-      final summaryParam = summaryMetrics[_metricIndex];
+      final Map<String, String> queryParams = {};
 
-      // Build the URL with query parameters
-      final queryParams = {
-        // '': periodParam,
-        if (periodParam != null) 'type': periodParam,
-        if (_selectedUserId.isNotEmpty) 'user_id': _selectedUserId,
-        'summary': summaryParam,
-      };
+      if (periodParam != null) {
+        queryParams['type'] = periodParam;
+      }
 
-      Uri uri;
+      // ✅ Only add user_id and summary if a specific user is selected
+      if (_selectedProfileIndex != 0 && _selectedUserId.isNotEmpty) {
+        final summaryMetrics = [
+          'enquiries',
+          'testdrives',
+          'orders',
+          'orders',
+          'cancellation',
+          'retail'
+        ];
+        final summaryParam = summaryMetrics[_metricIndex];
+        queryParams['user_id'] = _selectedUserId;
+        queryParams['summary'] = summaryParam;
+      }
 
       final baseUri = Uri.parse(
         'https://api.smartassistapp.in/api/users/sm/dashboard/team-dashboard',
       );
 
-      if (queryParams.isEmpty) {
-        uri = baseUri;
-      } else {
-        uri = baseUri.replace(queryParameters: queryParams);
-      }
+      final uri = baseUri.replace(queryParameters: queryParams);
 
       print('📤 Fetching from: $uri');
 
@@ -138,13 +134,16 @@ class _MyTeamsState extends State<MyTeams> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print(response.body);
-        print(uri);
 
         setState(() {
           _teamData = data['data'] ?? {};
 
-          // ✅ Only reset if 'allMember' exists and is not empty
+          // Save total performance
+          if (_teamData.containsKey('totalPerformance')) {
+            _selectedUserData['totalPerformance'] =
+                _teamData['totalPerformance'];
+          }
+
           if (_teamData.containsKey('allMember') &&
               _teamData['allMember'].isNotEmpty) {
             _teamMembers = [];
@@ -159,23 +158,23 @@ class _MyTeamsState extends State<MyTeams> {
             }
           }
 
-          // Set the selected user data
           if (_selectedProfileIndex == 0) {
-            // All users data
             _selectedUserData = _teamData['summary'] ?? {};
+            _selectedUserData['totalPerformance'] =
+                _teamData['totalPerformance'] ?? {};
           } else if (_selectedProfileIndex < _teamMembers.length) {
-            // Specific user data
-            final selectedMember = _teamMembers[_selectedProfileIndex];
+            final selectedMember = _teamMembers[_selectedProfileIndex - 1];
             _selectedUserData = selectedMember;
 
-            // Extract upcoming activities for the selected user
-            final stats = selectedMember['stats'] ?? {};
+            final selectedUserPerformance =
+                selectedMember['selectedUserPerformance'] ?? {};
+
             _upcomingFollowups = List<Map<String, dynamic>>.from(
-                stats['UpComingFollowups'] ?? []);
+                selectedUserPerformance['UpComingFollowups'] ?? []);
             _upcomingAppointments = List<Map<String, dynamic>>.from(
-                stats['UpComingAppointment'] ?? []);
+                selectedUserPerformance['UpComingAppointment'] ?? []);
             _upcomingTestDrives = List<Map<String, dynamic>>.from(
-                stats['UpComingTestDrive'] ?? []);
+                selectedUserPerformance['UpComingTestDrive'] ?? []);
           }
         });
       } else {
@@ -183,9 +182,119 @@ class _MyTeamsState extends State<MyTeams> {
       }
     } catch (e) {
       print('Error fetching team details: $e');
-      // rethrow;
     }
   }
+
+  // Future<void> _fetchTeamDetails() async {
+  //   try {
+  //     final token = await Storage.getToken();
+
+  //     // Build query parameters based on current filters
+  //     String? periodParam;
+  //     switch (_periodIndex) {
+  //       case 1:
+  //         periodParam = 'MTD';
+  //         break;
+  //       case 2:
+  //         periodParam = 'QTD';
+  //         break;
+  //       case 3:
+  //         periodParam = 'YTD';
+  //         break;
+  //       default:
+  //         periodParam = null;
+  //     }
+
+  //     final summaryMetrics = [
+  //       'enquiries',
+  //       'testdrives',
+  //       'orders',
+  //       'orders',
+  //       'cancellation',
+  //       'retail'
+  //     ];
+  //     final summaryParam = summaryMetrics[_metricIndex];
+
+  //     // Build the URL with query parameters
+  //     final queryParams = {
+  //       // '': periodParam,
+  //       if (periodParam != null) 'type': periodParam,
+  //       if (_selectedUserId.isNotEmpty) 'user_id': _selectedUserId,
+  //       'summary': summaryParam,
+  //     };
+
+  //     Uri uri;
+
+  //     final baseUri = Uri.parse(
+  //       'https://api.smartassistapp.in/api/users/sm/dashboard/team-dashboard',
+  //     );
+
+  //     if (queryParams.isEmpty) {
+  //       uri = baseUri;
+  //     } else {
+  //       uri = baseUri.replace(queryParameters: queryParams);
+  //     }
+
+  //     print('📤 Fetching from: $uri');
+
+  //     final response = await http.get(uri, headers: {
+  //       'Authorization': 'Bearer $token',
+  //       'Content-Type': 'application/json',
+  //     });
+
+  //     print('📥 Status Code: ${response.statusCode}');
+  //     print('📥 Response: ${response.body}');
+
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       print(response.body);
+  //       print(uri);
+
+  //       setState(() {
+  //         _teamData = data['data'] ?? {};
+
+  //         // ✅ Only reset if 'allMember' exists and is not empty
+  //         if (_teamData.containsKey('allMember') &&
+  //             _teamData['allMember'].isNotEmpty) {
+  //           _teamMembers = [];
+
+  //           for (var member in _teamData['allMember']) {
+  //             _teamMembers.add({
+  //               'fname': member['fname'] ?? '',
+  //               'lname': member['lname'] ?? '',
+  //               'user_id': member['user_id'] ?? '',
+  //               'team_name': '',
+  //             });
+  //           }
+  //         }
+
+  //         // Set the selected user data
+  //         if (_selectedProfileIndex == 0) {
+  //           // All users data
+  //           _selectedUserData = _teamData['summary'] ?? {};
+  //         } else if (_selectedProfileIndex < _teamMembers.length) {
+  //           // Specific user data
+  //           final selectedMember = _teamMembers[_selectedProfileIndex];
+  //           _selectedUserData = selectedMember;
+
+  //           // Extract upcoming activities for the selected user
+  //           final stats = selectedMember['stats'] ?? {};
+  //           _upcomingFollowups = List<Map<String, dynamic>>.from(
+  //               stats['UpComingFollowups'] ?? []);
+  //           _upcomingAppointments = List<Map<String, dynamic>>.from(
+  //               stats['UpComingAppointment'] ?? []);
+  //           _upcomingTestDrives = List<Map<String, dynamic>>.from(
+  //               stats['UpComingTestDrive'] ?? []);
+  //         }
+  //       });
+  //     } else {
+  //       throw Exception('Failed to fetch team details: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching team details: $e');
+  //     // rethrow;
+  //   }
+  // }
 
   // Select a different user profile
   void _selectUserProfile(int index, String userId) {
@@ -555,11 +664,12 @@ class _MyTeamsState extends State<MyTeams> {
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
-          onTap: () {
+          onTap: () async {
             setState(() {
               _selectedProfileIndex = index;
               _selectedType = 'All';
             });
+            await _fetchTeamDetails();
           },
           child: Container(
             margin: const EdgeInsets.fromLTRB(10, 10, 5, 0),
@@ -987,7 +1097,14 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Individual Performance Metrics Display
   Widget _buildIndividualPerformanceMetrics(BuildContext context) {
-    final stats = _selectedUserData['totalPerformance'] ?? {};
+    // Use selectedUserPerformance if a user is selected, else use totalPerformance
+    final bool isUserSelected = _selectedProfileIndex != 0;
+
+    // Choose appropriate stats object
+    final stats = isUserSelected
+        ? _teamData['selectedUserPerformance'] ?? {}
+        : _selectedUserData['totalPerformance'] ?? {};
+
     final metrics = [
       {'label': 'Enquiries', 'key': 'enquiries'},
       {'label': 'Test Drive\nDone', 'key': 'testDrives'},
@@ -995,7 +1112,8 @@ class _MyTeamsState extends State<MyTeams> {
       {'label': 'Cancellations', 'key': 'cancellation'},
       {
         'label': 'Net Orders',
-        'value': (stats['Orders'] ?? 0) - (stats['cancellation'] ?? 0)
+        'key': 'Net orders'
+        // 'value': (stats['Orders'] ?? 0) - (stats['Cancellation'] ?? 0)
       },
       {'label': 'Retails', 'key': 'retail'},
     ];
@@ -1011,7 +1129,7 @@ class _MyTeamsState extends State<MyTeams> {
                   onTap: () {
                     setState(() {
                       _metricIndex = j;
-                      _fetchTeamDetails(); // Refresh data with new metric
+                      _fetchTeamDetails(); // Refresh with selected metric
                     });
                   },
                   child: _buildMetricCard(
@@ -1038,6 +1156,59 @@ class _MyTeamsState extends State<MyTeams> {
       ),
     );
   }
+
+  // Widget _buildIndividualPerformanceMetrics(BuildContext context) {
+  //   final stats = _selectedUserData['totalPerformance'] ?? {};
+  //   final metrics = [
+  //     {'label': 'Enquiries', 'key': 'enquiries'},
+  //     {'label': 'Test Drive\nDone', 'key': 'testDrives'},
+  //     {'label': 'Order Taken', 'key': 'orders'},
+  //     {'label': 'Cancellations', 'key': 'cancellation'},
+  //     {
+  //       'label': 'Net Orders',
+  //       'value': (stats['orders'] ?? 0) - (stats['cancellation'] ?? 0)
+  //     },
+  //     {'label': 'Retails', 'key': 'retail'},
+  //   ];
+
+  //   List<Widget> rows = [];
+  //   for (int i = 0; i < metrics.length; i += 2) {
+  //     rows.add(
+  //       Row(
+  //         children: [
+  //           for (int j = i; j < i + 2 && j < metrics.length; j++) ...[
+  //             Expanded(
+  //               child: InkWell(
+  //                 onTap: () {
+  //                   setState(() {
+  //                     _metricIndex = j;
+  //                     _fetchTeamDetails(); // Refresh data with new metric
+  //                   });
+  //                 },
+  //                 child: _buildMetricCard(
+  //                   "${metrics[j].containsKey('value') ? metrics[j]['value'] : stats[metrics[j]['key']] ?? 0}",
+  //                   metrics[j]['label']!,
+  //                   Colors.blue,
+  //                   isSelected: _metricIndex == j,
+  //                 ),
+  //               ),
+  //             ),
+  //             if (j % 2 == 0) const SizedBox(width: 12),
+  //           ],
+  //         ],
+  //       ),
+  //     );
+  //     rows.add(const SizedBox(height: 12));
+  //   }
+
+  //   return Padding(
+  //     padding: const EdgeInsets.all(10),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.stretch,
+  //       children: rows,
+  //     ),
+  //   );
+  // }
 
   // Team Comparison Chart
   Widget _buildTeamComparisonChart(BuildContext context) {
@@ -1238,46 +1409,73 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Upcoming Activities Section
   Widget _buildUpcomingActivities(BuildContext context) {
-    // Only show if we have data and not in "All" view
-    if (_selectedProfileIndex == 0 ||
-        (_upcomingFollowups.isEmpty &&
-            _upcomingAppointments.isEmpty &&
-            _upcomingTestDrives.isEmpty)) {
+    if (_individualPerformanceData.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-          child: Text(
-            "Upcoming Activities",
-            style: AppFont.mediumText14(context),
-          ),
-        ),
+    return Container(
+      margin: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [ 
 
-        // Upcoming Followups
-        if (_upcomingFollowups.isNotEmpty)
-          _buildActivitySection(context, _upcomingFollowups),
+          // Upcoming Followups
+          if (_upcomingFollowups.isNotEmpty)
+            _buildActivitySection(context, _upcomingFollowups),
 
-        // Upcoming Appointments
-        if (_upcomingAppointments.isNotEmpty)
-          _buildActivitySection(context, _upcomingAppointments),
+          // Upcoming Appointments
+          if (_upcomingAppointments.isNotEmpty)
+            _buildActivitySection(context, _upcomingAppointments),
 
-        // Upcoming Test Drives
-        if (_upcomingTestDrives.isNotEmpty)
-          _buildActivitySection(context, _upcomingTestDrives),
-      ],
+          // Upcoming Test Drives
+          if (_upcomingTestDrives.isNotEmpty)
+            _buildActivitySection(context, _upcomingTestDrives),
+        ],
+      ),
     );
   }
+
+  // Widget _buildUpcomingActivities(BuildContext context) {
+  //   // Only show if we have data and not in "All" view
+  //   if (_selectedProfileIndex == 0 ||
+  //       (_upcomingFollowups.isEmpty &&
+  //           _upcomingAppointments.isEmpty &&
+  //           _upcomingTestDrives.isEmpty)) {
+  //     return const SizedBox.shrink();
+  //   }
+
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Padding(
+  //         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+  //         child: Text(
+  //           "Upcoming Activities",
+  //           style: AppFont.mediumText14(context),
+  //         ),
+  //       ),
+
+  //       // Upcoming Followups
+  //       if (_upcomingFollowups.isNotEmpty)
+  //         _buildActivitySection(context, _upcomingFollowups),
+
+  //       // Upcoming Appointments
+  //       if (_upcomingAppointments.isNotEmpty)
+  //         _buildActivitySection(context, _upcomingAppointments),
+
+  //       // Upcoming Test Drives
+  //       if (_upcomingTestDrives.isNotEmpty)
+  //         _buildActivitySection(context, _upcomingTestDrives),
+  //     ],
+  //   );
+  // }
 
   // Activity section builder
   Widget _buildActivitySection(
       BuildContext context, List<Map<String, dynamic>> activities) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: [ 
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1290,7 +1488,7 @@ class _MyTeamsState extends State<MyTeams> {
                 decoration: BoxDecoration(
                     color: AppColors.containerBg,
                     borderRadius: BorderRadius.circular(5)),
-                child: _buildActivityCard(
+                child: _buildFollowupCard(
                   context,
                   name: activity['name'] ?? '',
                   subject: activity['subject'] ?? '',
@@ -1303,6 +1501,139 @@ class _MyTeamsState extends State<MyTeams> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildFollowupCard(
+    BuildContext context, {
+    required String name,
+    required String subject,
+    required String date,
+    required String leadId,
+    required String vehicle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: const Border(
+          left: BorderSide(width: 8.0, color: AppColors.colorsBlue),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(name, style: AppFont.dashboardName(context)),
+                      if (vehicle.isNotEmpty) _buildVerticalDivider(15),
+                      if (vehicle.isNotEmpty)
+                        Text(
+                          vehicle,
+                          style: AppFont.dashboardCarName(context),
+                          softWrap: true,
+                          overflow: TextOverflow.visible,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(subject, style: AppFont.smallText(context)),
+                      _formatDate(context, date),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () {
+              if (leadId.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => FollowupsDetails(leadId: leadId)),
+                );
+              } else {
+                print("Invalid leadId");
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                  color: AppColors.arrowContainerColor,
+                  borderRadius: BorderRadius.circular(30)),
+              child: const Icon(Icons.arrow_forward_ios_rounded,
+                  size: 25, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _formatDate(BuildContext context, String dateStr) {
+    String formattedDate = '';
+
+    try {
+      DateTime parseDate = DateTime.parse(dateStr);
+
+      // Check if the date is today
+      if (parseDate.year == DateTime.now().year &&
+          parseDate.month == DateTime.now().month &&
+          parseDate.day == DateTime.now().day) {
+        formattedDate = 'Today';
+      } else {
+        // If not today, format it as "26th March"
+        int day = parseDate.day;
+        String suffix = _getDaySuffix(day);
+        String month = DateFormat('MMM').format(parseDate); // Full month name
+        formattedDate = '${day}$suffix $month';
+      }
+    } catch (e) {
+      formattedDate = dateStr; // Fallback if date parsing fails
+    }
+
+    return Row(
+      children: [
+        const SizedBox(width: 5),
+        Text(formattedDate, style: AppFont.smallText(context)),
+      ],
+    );
+  }
+
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return 'th';
+    }
+    switch (day % 10) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
+    }
+  }
+
+  Widget _buildVerticalDivider(double height) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 3, left: 10, right: 10),
+      height: height,
+      width: 0.1,
+      decoration: const BoxDecoration(
+          border: Border(right: BorderSide(color: AppColors.fontColor))),
     );
   }
 
