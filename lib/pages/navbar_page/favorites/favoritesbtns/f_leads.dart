@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_id_screens/single_leads.dart';
 import 'package:smart_assist/utils/storage.dart';
 
 class FLeads extends StatefulWidget {
@@ -230,28 +231,7 @@ class _TaskItemState extends State<TaskItem> {
     isFav = widget.isFavorite;
   }
 
-  // Future<void> _toggleFavorite() async {
-  //   final token = await Storage.getToken();
-  //   try {
-  //     final response = await http.put(
-  //       Uri.parse(
-  //         'https://api.smartassistapp.in/api/favourites/mark-fav/lead/${widget.leadId}',
-  //       ),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: jsonEncode({'leadId': widget.leadId, 'favourite': !isFav}),
-  //     );
 
-  //     if (response.statusCode == 200) {
-  //       setState(() => isFav = !isFav);
-  //       widget.onFavoriteToggled();
-  //     }
-  //   } catch (e) {
-  //     print('Error updating favorite status: $e');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {

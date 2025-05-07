@@ -87,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.keyboard_arrow_left_rounded,
             color: Colors.white,
           ),
         ),

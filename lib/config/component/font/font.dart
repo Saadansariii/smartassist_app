@@ -223,6 +223,29 @@ class AppFont {
     );
   }
 
+  static TextStyle smallTextWhite1(
+    BuildContext context, {
+    double fontSize = 12,
+    Color color = AppColors.white,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w400,
+    );
+  }
+
+  static TextStyle smallText10(
+    BuildContext context, {
+    double fontSize = 10,
+    Color color = const Color.fromRGBO(78, 78, 78, 1),
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w400,
+    );
+  }
 
   static TextStyle smallTextWhite(
     BuildContext context, {
@@ -248,6 +271,66 @@ class AppFont {
     );
   }
 
+  static TextStyle mediumText14white(
+    BuildContext context, {
+    double fontSize = 14,
+    Color color = Colors.white,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w400,
+    );
+  }
+
+  static TextStyle mediumText14red(
+    BuildContext context, {
+    double fontSize = 14,
+    Color color = Colors.red,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w400,
+    );
+  }
+
+  static TextStyle mediumText14Black(
+    BuildContext context, {
+    double fontSize = 14,
+    Color color = Colors.black,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w500,
+    );
+  }
+
+  static TextStyle mediumText14blue(
+    BuildContext context, {
+    double fontSize = 14,
+    Color color = AppColors.colorsBlue,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w400,
+    );
+  }
+
+  static TextStyle mediumText14bluebold(
+    BuildContext context, {
+    double fontSize = 20,
+    Color color = Colors.blue,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w500,
+    );
+  }
+
   static TextStyle tinyText(
     BuildContext context, {
     double fontSize = 8,
@@ -262,7 +345,7 @@ class AppFont {
 
   static TextStyle buttonwhite(
     BuildContext context, {
-    double fontSize = 12,
+    double fontSize = 14,
   }) {
     return GoogleFonts.poppins(
       fontSize: scaleFont(context, fontSize),
@@ -394,6 +477,18 @@ class AppFont {
     BuildContext context, {
     double fontSize = 18,
     Color color = AppColors.fontColor,
+  }) {
+    return GoogleFonts.poppins(
+      fontSize: scaleFont(context, fontSize),
+      color: color,
+      fontWeight: FontWeight.w500,
+    );
+  }
+
+  static TextStyle appbarfontblack(
+    BuildContext context, {
+    double fontSize = 18,
+    Color color = AppColors.fontBlack,
   }) {
     return GoogleFonts.poppins(
       fontSize: scaleFont(context, fontSize),

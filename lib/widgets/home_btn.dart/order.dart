@@ -4,29 +4,58 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 
 class Order extends StatefulWidget {
-    final Map<String, dynamic> MtdData;
+  final Map<String, dynamic> MtdData;
   final Map<String, dynamic> YtdData;
   final Map<String, dynamic> QtdData;
-  const Order({super.key, required this.MtdData, required this.YtdData, required this.QtdData});
+  const Order(
+      {super.key,
+      required this.MtdData,
+      required this.YtdData,
+      required this.QtdData});
 
   @override
   State<Order> createState() => _OrderState();
 }
 
 class _OrderState extends State<Order> {
-  int _childButtonIndex = 0;
+  // int _childButtonIndex = 0;
 
-    Map<String, dynamic> getSelectedData() {
+  // Map<String, dynamic> getSelectedData() {
+  //   switch (_childButtonIndex) {
+  //     case 0:
+  //       return widget.MtdData;
+  //     case 1:
+  //       return widget.QtdData;
+  //     case 2:
+  //       return widget.YtdData;
+  //     default:
+  //       return {};
+  //   }
+  // }
+
+  int _childButtonIndex = 0;
+  final PageController _pageController = PageController();
+
+  Map<String, dynamic> getSelectedData() {
+    Map<String, dynamic> periodData;
+
+    // Select the appropriate period data
     switch (_childButtonIndex) {
       case 0:
-        return widget.MtdData;
+        periodData = widget.MtdData;
+        break;
       case 1:
-        return widget.QtdData;
+        periodData = widget.QtdData;
+        break;
       case 2:
-        return widget.YtdData;
+        periodData = widget.YtdData;
+        break;
       default:
-        return {};
+        periodData = {};
     }
+
+    // Make sure allData exists, otherwise return empty map
+    return periodData['allData'] ?? {};
   }
 
   @override
@@ -112,7 +141,7 @@ class _OrderState extends State<Order> {
                         _getRightOneCardTitle(_childButtonIndex),
                         _getRightOneCardValue(_childButtonIndex),
                         screenWidth,
-                        _getGreenCardColor(_childButtonIndex),
+                        _getGreenCardColor1(_childButtonIndex),
                       ),
                     )),
                     const SizedBox(height: 10),
@@ -168,8 +197,6 @@ class _OrderState extends State<Order> {
     }
   }
 
-  
-
   String _getLeftTwoTitle(int index) {
     switch (index) {
       case 0:
@@ -209,6 +236,19 @@ class _OrderState extends State<Order> {
     }
   }
 
+  Color _getGreenCardColor1(int index) {
+    switch (index) {
+      case 0:
+        return Colors.red; // Color for MTD
+      case 1:
+        return Colors.red; // Color for QTD
+      case 2:
+        return Colors.red; // Color for YTD
+      default:
+        return Colors.black; // Default color
+    }
+  }
+
   Color _getRedCardColor(int index) {
     switch (index) {
       case 0:
@@ -225,11 +265,11 @@ class _OrderState extends State<Order> {
   Color _getBlueCardColor(int index) {
     switch (index) {
       case 0:
-        return Colors.blue; // Color for MTD
+        return Colors.red; // Color for MTD
       case 1:
-        return Colors.blue; // Color for QTD
+        return Colors.red; // Color for QTD
       case 2:
-        return Colors.blue; // Color for YTD
+        return Colors.red; // Color for YTD
       default:
         return Colors.black; // Default color
     }
@@ -365,30 +405,7 @@ class _OrderState extends State<Order> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                value1,
-                style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: valueColor1),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title1,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.w400),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10), // Spacing between rows
+          // Spacing between rows
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -403,6 +420,30 @@ class _OrderState extends State<Order> {
               Expanded(
                 child: Text(
                   title2,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, fontWeight: FontWeight.w400),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                value1,
+                style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor1),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title1,
                   softWrap: true,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
@@ -429,10 +470,9 @@ class _OrderState extends State<Order> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Your contribution  to of dealership cancellations',
@@ -442,6 +482,17 @@ class _OrderState extends State<Order> {
               maxLines: 4,
               style: GoogleFonts.poppins(
                   fontSize: 14, fontWeight: FontWeight.w400),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Text(
+              '20%',
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 4,
+              style: GoogleFonts.poppins(
+                  color: Colors.red, fontSize: 24, fontWeight: FontWeight.w700),
             ),
           ),
         ],

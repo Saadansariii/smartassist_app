@@ -35,6 +35,25 @@ class _AppointmentWidgetState extends State<AppointmentWidget> {
     }
   }
 
+  DateTime _parseTimeString(String timeStr) {
+    // Parse the time string (e.g., "06:30:00") into a DateTime object
+    final parts = timeStr.split(':');
+    if (parts.length == 3) {
+      try {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        final second = int.parse(parts[2]);
+        return DateTime(2022, 1, 1, hour, minute,
+            second); // Use a dummy date (e.g., 2022-01-01)
+      } catch (e) {
+        return DateTime(
+            2022, 1, 1, 0, 0, 0); // Default to midnight if parsing fails
+      }
+    }
+    return DateTime(2022, 1, 1, 0, 0,
+        0); // Default to midnight if the time format is incorrect
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -181,14 +200,15 @@ class _AppointmentWidgetState extends State<AppointmentWidget> {
                                           width: 5,
                                         ),
                                         Text(
-                                          appointment['start_date'] != null
-                                              ? DateFormat('dd-MM-yyyy').format(
-                                                  DateTime.parse(appointment[
-                                                      'start_date']))
-                                              : 'No start date',
+                                          appointment['start_time'] != null
+                                              ? DateFormat('hh:mm a').format(
+                                                  _parseTimeString(appointment[
+                                                      'start_time']))
+                                              : 'No start time',
                                           style: GoogleFonts.poppins(
-                                              fontSize:
-                                                  screenWidth > 600 ? 16 : 10),
+                                            fontSize:
+                                                screenWidth > 600 ? 16 : 10,
+                                          ),
                                         ),
                                         SizedBox(
                                           width: 5,

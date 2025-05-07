@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/testdrive_verifyotp.dart';
 
@@ -63,13 +64,18 @@ class _TestOverdueState extends State<TestOverdue> {
 
   void _handleTestDrive(dynamic item) {
     String email = item['updated_by'] ?? '';
+    String mobile = item['mobile'] ?? '';
     String eventId = item['event_id'] ?? '';
     String leadId = item['lead_id'] ?? '';
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TestdriveVerifyotp(
-            email: email, text: '', leadId: leadId, eventId: eventId),
+          email: email,
+          leadId: leadId,
+          eventId: eventId,
+          mobile: mobile,
+        ),
       ),
     );
     print("Call action triggered for ${item['name']}");

@@ -18,26 +18,38 @@ class Leads extends StatefulWidget {
 }
 
 class _LeadsState extends State<Leads> {
+  // final selectedData = getSelectedData();
+
   int _childButtonIndex = 0;
   final PageController _pageController = PageController();
 
   Map<String, dynamic> getSelectedData() {
+    Map<String, dynamic> periodData;
+
+    // Select the appropriate period data
     switch (_childButtonIndex) {
       case 0:
-        return widget.MtdData;
+        periodData = widget.MtdData;
+        break;
       case 1:
-        return widget.QtdData;
+        periodData = widget.QtdData;
+        break;
       case 2:
-        return widget.YtdData;
+        periodData = widget.YtdData;
+        break;
       default:
-        return {};
+        periodData = {};
     }
+
+    // Make sure allData exists, otherwise return empty map
+    return periodData['allData'] ?? {};
   }
 
   @override
   Widget build(BuildContext context) {
     // Get screen width and height for responsiveness
     double screenWidth = MediaQuery.of(context).size.width;
+    final selectedData = getSelectedData();
 
     return Column(
       children: [
@@ -202,10 +214,13 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'No.of followups per lost digital enquiry',
+                    'Follow-ups recommended for order',
+                    'Follow-ups done by you per lost enquiry',
+                    '2',
+                    '2',
                     // '${selectedData['enquiryBank'] ?? 0}',
-                    '1(3)',
                     screenWidth,
+                    Colors.red,
                     Colors.green,
                   ),
                 ),
@@ -213,12 +228,15 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'No.of followups per lost enquiry',
-                    '3(5)',
+                    'Follow-ups done by you per lost digital enquiry', 
+                    'Follow-ups recommended for order',
+                    '3',
+                    '2',
                     screenWidth,
-                    Colors.orange,
+                    Colors.red,
+                    Colors.green,
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -277,8 +295,15 @@ class _LeadsState extends State<Leads> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, String title, String value,
-      double screenWidth, Color valueColor) {
+  Widget _buildInfoCard(
+      BuildContext context,
+      String title1,
+      String title,
+      String value,
+      String value1,
+      double screenWidth,
+      Color valueColor,
+      Color valueColor1) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(screenWidth * 0.02),
@@ -286,31 +311,64 @@ class _LeadsState extends State<Leads> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            softWrap: true,
-            overflow: TextOverflow.ellipsis,
-            // textAlign: TextAlign.center,
-            maxLines: 4,
-            value,
-            style: GoogleFonts.poppins(
-                fontSize: 20, fontWeight: FontWeight.w700, color: valueColor),
+          Row(
+            children: [
+              Text(
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                // textAlign: TextAlign.center,
+                maxLines: 4,
+                value,
+                style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(title,
+                    softWrap: true,
+                    // textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 4,
+                    style: AppFont.smallText10(context)),
+              ),
+            ],
           ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Text(
-              title,
-              softWrap: true,
-              // textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 4,
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[700]),
-            ),
+          const SizedBox(
+            height: 5,
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                // textAlign: TextAlign.center,
+                maxLines: 4,
+                value1,
+                style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor1),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: Text(title1,
+                    softWrap: true,
+                    // textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 4,
+                    style: AppFont.smallText10(context)),
+              ),
+            ],
           ),
         ],
       ),
@@ -320,51 +378,93 @@ class _LeadsState extends State<Leads> {
   // Info Card for Left Columns
   Widget _buildInfoCard1(BuildContext context, String title, String value,
       double screenWidth, Color valueColor) {
-    return Align(
-      alignment: Alignment.center,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(screenWidth * 0.04),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              decoration:
-                  BoxDecoration(border: Border.all(color: Colors.transparent)),
-              child: Expanded(
-                child: Text(
-                  title,
-                  softWrap: true,
-                  // textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 4,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[700]),
-                ),
-              ),
-            ),
-            // const SizedBox(height: 5),
-            Text(
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              value,
-              style: GoogleFonts.poppins(
-                  fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
-            ),
-          ],
-        ),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        // mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            value,
+            style: GoogleFonts.poppins(
+                fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          // Using Container instead of Expanded for Title Text
+          Expanded(
+            child: Text(title,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey[700])),
+          ),
+          // The value text
+        ],
       ),
     );
   }
+
+  // Widget _buildInfoCard1(BuildContext context, String title, String value,
+  //     double screenWidth, Color valueColor) {
+  //   return Align(
+  //     alignment: Alignment.center,
+  //     child: Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(screenWidth * 0.04),
+  //       decoration: BoxDecoration(
+  //         color: Colors.white,
+  //         borderRadius: BorderRadius.circular(10),
+  //       ),
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         crossAxisAlignment: CrossAxisAlignment.center,
+  //         children: [
+  //           Container(
+  //             decoration:
+  //                 BoxDecoration(border: Border.all(color: Colors.transparent)),
+  //             child: Expanded(
+  //               child: Text(
+  //                 title,
+  //                 softWrap: true,
+  //                 // textAlign: TextAlign.center,
+  //                 overflow: TextOverflow.ellipsis,
+  //                 maxLines: 4,
+  //                 style: GoogleFonts.poppins(
+  //                     fontSize: 12,
+  //                     fontWeight: FontWeight.w400,
+  //                     color: Colors.grey[700]),
+  //               ),
+  //             ),
+  //           ),
+  //           // const SizedBox(height: 5),
+  //           Text(
+  //             softWrap: true,
+  //             overflow: TextOverflow.ellipsis,
+  //             textAlign: TextAlign.center,
+  //             maxLines: 4,
+  //             value,
+  //             style: GoogleFonts.poppins(
+  //                 fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // Right Info Card
   Widget _buildRightInfoCard(BuildContext context, String title, String head,
@@ -401,14 +501,6 @@ class _LeadsState extends State<Leads> {
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[700]),
           ),
-          const SizedBox(height: 10),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '😍',
-              style: TextStyle(fontSize: 20),
-            ),
-          )
         ],
       ),
     );
@@ -448,14 +540,14 @@ class _LeadsState extends State<Leads> {
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[700]),
           ),
-          const SizedBox(height: 15),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '⏰',
-              style: TextStyle(fontSize: 20),
-            ),
-          )
+          // const SizedBox(height: 15),
+          // const Align(
+          //   alignment: Alignment.centerRight,
+          //   child: Text(
+          //     '⏰',
+          //     style: TextStyle(fontSize: 20),
+          //   ),
+          // )
         ],
       ),
     );

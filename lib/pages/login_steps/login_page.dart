@@ -348,14 +348,22 @@ class _LoginPageState extends State<LoginPage>
       if (response['isSuccess'] == true && response['user'] != null) {
         final user = response['user'];
         final userId = user['user_id'];
-        final teamRole = user['team_role'];
+        // final teamRole = user['team_role'];
         final authToken = response['token'];
+        final userRole = user['user_role'];
 
         if (userId != null && authToken != null) {
           // Save authentication data
-          await TokenManager.saveAuthData(authToken, userId, teamRole);
-
-          showSuccessMessage(context, message: 'Login Successful!');
+          await TokenManager.saveAuthData(authToken, userId, userRole);
+          String successMessage =
+              response['message']?.toString() ?? 'Login Successful';
+          Get.snackbar(
+            'Success',
+            successMessage,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+          // showSuccessMessage(context, message: 'Login Successful!');
 
           // Initialize FCM after successful login
           await NotificationService.instance.initialize();
@@ -364,15 +372,39 @@ class _LoginPageState extends State<LoginPage>
           Get.offAll(() => BottomNavigation());
           widget.onLoginSuccess?.call();
         } else {
-          throw Exception('Invalid user data or token received');
+          String errorMessage = response['error'] ??
+              response['message'] ??
+              'Something went wrong';
+          Get.snackbar(
+            'Error',
+            errorMessage,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          // throw Exception('Invalid user data or token received');
         }
       } else {
-        throw Exception(response['message'] ?? 'Login failed: Unknown error');
+        String errorMessage =
+            response['error'] ?? response['message'] ?? 'Something went wrong';
+        Get.snackbar(
+          'Error',
+          errorMessage,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        // throw Exception(response['message'] ?? 'Login failed: Unknown error');
       }
     } catch (error) {
       if (!mounted) return;
       print('error');
-      showErrorMessage(context, message: error.toString());
+      // showErrorMessage(context, message: error.toString());
+
+      Get.snackbar(
+        'Error',
+        error.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       if (mounted) {
         setState(() => isLoading = false);

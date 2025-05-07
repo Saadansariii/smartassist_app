@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/call_history.dart';
 import 'package:smart_assist/widgets/home_btn.dart/single_ids_popup/appointment_ids.dart';
@@ -21,6 +24,7 @@ import 'package:smart_assist/widgets/timeline/timeline_overdue.dart';
 import 'package:smart_assist/widgets/timeline/timeline_tasks.dart';
 import 'package:smart_assist/widgets/timeline/timeline_completed.dart';
 import 'package:smart_assist/widgets/whatsapp_chat.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class FollowupsDetails extends StatefulWidget {
   final String leadId;
@@ -44,7 +48,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   String purchase_type = 'Loading...';
   String PMI = 'Loading....';
   String fuel_type = 'Loading....';
+  String lead_name = 'Loading....';
   String expected_date_purchase = 'Loading...';
+  String pincode = 'Loading..';
+  String lead_status = 'Not Converted';
 
   bool isLoading = false;
   int _childButtonIndex = 0;
@@ -65,6 +72,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   List<Map<String, dynamic>> upcomingEvents = [];
   List<Map<String, dynamic>> completedEvents = [];
   List<Map<String, dynamic>> completedTasks = [];
+
+  final TextEditingController descriptionController = TextEditingController();
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   List<String> subjectList = [];
   List<String> priorityList = [];
@@ -89,6 +100,8 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     fetchSingleIdData(widget.leadId).then((_) {
       fetchCallLogs(mobile);
       // _fetchCallLogs();
+      _speech = stt.SpeechToText();
+      _initSpeech();
     });
 
     // Initially, set the selected widget
@@ -103,6 +116,79 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     );
 
     // _callLogsWidget = TimelineEightWid(tasks: upcomingTasks, upcomingEvents: upcomingEvents);
+  }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+// Check if there's any data to determine if buttons should be enabled
+  bool areButtonsEnabled() {
+    // Return true if any of the lists have data, false if all are empty
+    return overdueTasks.isNotEmpty ||
+        overdueEvents.isNotEmpty ||
+        upcomingTasks.isNotEmpty ||
+        upcomingEvents.isNotEmpty ||
+        completedTasks.isNotEmpty ||
+        completedEvents.isNotEmpty;
+  }
+
+  String _getFirstTwoLettersCapitalized(String input) {
+    input = input.trim(); // Remove any extra spaces
+    if (input.length >= 2) {
+      return input.substring(0, 2).toUpperCase();
+    } else if (input.isNotEmpty) {
+      return input.toUpperCase();
+    } else {
+      return '';
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
   }
 
   String formatDate(String date) {
@@ -127,12 +213,15 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         address = leadData['data']['address'] ?? 'N/A';
         leadSource = leadData['data']['lead_source'] ?? 'N/A';
         fuel_type = leadData['data']['fuel_type'] ?? 'N/A';
+        lead_owner = leadData['data']['lead_owner'] ?? 'N/A';
         PMI = leadData['data']['PMI'] ?? 'N/A';
         purchase_type = leadData['data']['purchase_type'] ?? 'N/A';
         enquiry_type = leadData['data']['enquiry_type'] ?? 'N/A';
         expected_date_purchase =
             leadData['data']['expected_date_purchase'] ?? 'N/A';
-        lead_owner = leadData['data']['lead_name'] ?? 'N/A';
+        lead_name = leadData['data']['lead_name'] ?? 'N/A';
+        pincode = leadData['data']['pincode']?.toString() ?? 'N/A';
+        lead_status = leadData['data']['opportunity_status'] ?? 'Not Converted';
       });
     } catch (e) {
       print('Error fetching data: $e');
@@ -245,10 +334,9 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       child: Text(
         text,
         style: GoogleFonts.poppins(
-          fontSize: isActive ? 18 : 12,
-          fontWeight: FontWeight.w500,
-          color: Colors.black,
-        ),
+            fontSize: isActive ? 18 : 12,
+            fontWeight: FontWeight.w500,
+            color: isActive ? Colors.black : Colors.grey),
       ),
     );
   }
@@ -285,6 +373,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             child: FollowupsIds(
               leadId: leadId,
               onFormSubmit: eventandtask,
+              onSubmitStatus: fetchSingleIdData,
             ),
           ),
         );
@@ -453,22 +542,403 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
     }
   }
 
+  bool isFabExpanded = false;
+
+  // API call methods
+  void handleFabAction() {
+    // Your FAB API call logic here
+    print('FAB action triggered - API call would happen here');
+  }
+
+  void handleLostAction() {
+    _showLostDiolog();
+    print('Lost API call triggered');
+  }
+
+  Future<void> _showLostDiolog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button to close dialog
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'If you wish to mark this enquiry as lost, please provide a reason',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 30),
+              _buildTextField(
+                  // label: 'resion:',
+                  controller: descriptionController,
+                  hint: 'Add Comments'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Pass context to submit
+              },
+              child: Text(
+                'Cancel',
+                style: AppFont.mediumText14blue(context),
+                // style: TextStyle(color: AppColors.colorsBlue),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (descriptionController.text.trim().isEmpty) {
+                  // Show a simple error message
+                  Get.snackbar(
+                    'Error',
+                    'Please provide a reason before submitting',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                } else {
+                  submitLost(context); // Proceed if not empty
+                }
+              },
+              child: Text(
+                'Submit',
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> submitLost(BuildContext context) async {
+    setState(() {
+      // _isUploading = true; // If you are showing any loading indicator
+    });
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? spId = prefs.getString('user_id');
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/leads/mark-lost/${widget.leadId}');
+      final token = await Storage.getToken();
+
+      // Create the request body
+      final requestBody = {
+        'sp_id': spId,
+        'lost_reason': descriptionController.text,
+      };
+
+      // Print the data to console for debugging
+      print('Submitting feedback data:');
+      print(requestBody);
+
+      final response = await http.put(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode(requestBody));
+
+      // Print the response
+      print('API Response status: ${response.statusCode}');
+      print('API Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        // Success handling
+        print('Feedback submitted successfully');
+        Get.snackbar(
+          'Success',
+          errorMessage,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        Navigator.pop(context); // Dismiss the dialog after success
+      } else {
+        // Error handling
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        print('Failed to submit feedback');
+        Get.snackbar(
+          'Error',
+          errorMessage, // Show the backend error message
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        Navigator.pop(context); // Dismiss the dialog on error
+      }
+    } catch (e) {
+      // Exception handling
+      print('Exception occurred: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'An error occurred: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      Navigator.pop(context); // Dismiss the dialog on exception
+    } finally {
+      setState(() {
+        // _isUploading = false; // Reset loading state
+      });
+    }
+  }
+
+  void toggleFab() {
+    setState(() {
+      isFabExpanded = !isFabExpanded;
+    });
+  }
+
+  Future<void> _showSkipDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button to close dialog
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'Are you sure you want to qualify this lead to an opportunity?',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Cancel',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                submitQualify(context); // Pass context to submit
+              },
+              child: Text(
+                'Submit',
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> submitQualify(BuildContext context) async {
+    setState(() {
+      // _isUploading = true; // If you are showing any loading indicator
+    });
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? spId = prefs.getString('user_id');
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/leads/convert-to-opp/${widget.leadId}');
+      final token = await Storage.getToken();
+
+      // Create the request body
+      final requestBody = {
+        'sp_id': spId,
+      };
+
+      // Print the data to console for debugging
+      print('Submitting feedback data:');
+      print(requestBody);
+
+      final response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode(requestBody));
+
+      // Print the response
+      print('API Response status: ${response.statusCode}');
+      print('API Response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        // Success handling
+        print('Feedback submitted successfully');
+        Get.snackbar(
+          'Success',
+          errorMessage,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        Navigator.pop(context); // Dismiss the dialog after success
+        await fetchSingleIdData(widget.leadId);
+      } else {
+        // Error handling
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        print('Failed to submit feedback');
+        Get.snackbar(
+          'Error',
+          errorMessage, // Show the backend error message
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        Navigator.pop(context); // Dismiss the dialog on error
+      }
+    } catch (e) {
+      // Exception handling
+      print('Exception occurred: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'An error occurred: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      Navigator.pop(context); // Dismiss the dialog on exception
+    } finally {
+      setState(() {
+        // _isUploading = false; // Reset loading state
+      });
+    }
+  }
+
+  void handleQualifyAction() {
+    _showSkipDialog();
+    // API call for Qualify tab
+    print('Qualify API call triggered');
+  }
+
+  Widget _buildTextField({
+    // required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 5.0),
+        //   child: Text(
+        //     label,
+        //     style: GoogleFonts.poppins(
+        //       fontSize: 14,
+        //       fontWeight: FontWeight.w500,
+        //       color: AppColors.fontBlack,
+        //     ),
+        //   ),
+        // ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              // Expanded TextField that adjusts height
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              // Microphone icon with speech recognition
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _toggleListening(controller),
+                  icon: Icon(
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
+                    color: _isListening ? Colors.red : AppColors.fontColor,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: AppColors.backgroundLightGrey,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLightGrey,
-        title: Text('Enquiry', style: AppFont.appbarfontgrey(context)),
-        actions: const [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [],
-          ),
-        ],
+        backgroundColor: AppColors.colorsBlueButton,
+        // title: Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+            Text('Opportunity Status : $lead_status',
+                style: AppFont.smallTextWhite1(context)),
+          ],
+        ),
+        // actions: [
+        // Align(
+        //   alignment: Alignment.centerLeft,
+        //   child: Column(
+        //     mainAxisAlignment: MainAxisAlignment.start,
+        //     children: [
+        //       Text('Enquiry', style: AppFont.appbarfontWhite(context)),
+        //       Text('data', style: AppFont.mediumText14white(context))
+        //     ],
+        //   ),
+        // ),
+        // ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_outlined,
-              color: AppColors.iconGrey),
+              color: AppColors.white),
           onPressed: () {
             // Navigator.pop(context, true);
             Navigator.push(context,
@@ -493,194 +963,242 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                     children: [
                       // Main Container with Flexbox Layout
                       Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              // Profile Section (Icon, Name, Divider, Gmail, Car Name)
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            // Profile Section (Icon, Name, Divider, Gmail, Car Name)
+                            Row(
+                              children: [
+                                // Profile Icon and Name
+                                Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    // mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                              textAlign: TextAlign.left,
+                                              lead_name,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.black)),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                        ],
+                                      ),
+                                      Text(PMI,
+                                          maxLines: 4,
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black)),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _isHiddenTop = !_isHiddenTop;
+                                        });
+                                      },
+                                      icon: Icon(
+                                        _isHiddenTop
+                                            ? Icons.keyboard_arrow_down_rounded
+                                            : Icons.keyboard_arrow_up_rounded,
+                                        size: 35,
+                                        color: AppColors.iconGrey,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            // Contact Details Section (Phone, Company, Address)
+                            if (!_isHiddenTop) ...[
+                              const Divider(
+                                thickness: 0.5,
+                              ),
+                              const SizedBox(height: 5),
                               Row(
                                 children: [
-                                  // Profile Icon and Name
-                                  Container(
-                                    padding: const EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: Colors.white,
+                                  // Left Section: Phone Number and Company
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.phone,
+                                      title: 'Mobile',
+                                      subtitle: mobile,
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: Column(
-                                      // mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                                textAlign: TextAlign.left,
-                                                lead_owner,
-                                                style: GoogleFonts.poppins(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black)),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
-                                          ],
-                                        ),
-                                        Text(PMI,
-                                            maxLines: 4,
-                                            style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.black)),
-                                      ],
+                                    child: _buildContactRow(
+                                      icon: Icons.location_on,
+                                      title: 'Location',
+                                      subtitle: pincode,
                                     ),
                                   ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.alt_route_outlined,
+                                      title: 'Status',
+                                      subtitle:
+                                          status, // Replace with the actual address variable
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.person,
+                                      title: 'Lead Source',
+                                      subtitle:
+                                          leadSource, // Replace with the actual address variable
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  // Left Section: Phone Number and Company
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon:
+                                          Icons.account_balance_wallet_outlined,
+                                      title: 'Email',
+                                      subtitle: email,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.directions_car,
+                                      title: 'Brand',
+                                      subtitle: company,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Row(
+                              //   children: [
+                              //     Expanded(
+                              //       child: _buildContactRow(
+                              //         icon: Icons.directions_car,
+                              //         title: 'Purchase type',
+                              //         subtitle:
+                              //             purchase_type, // Replace with the actual address variable
+                              //       ),
+                              //     ),
+                              //     const SizedBox(width: 10),
+                              //     Expanded(
+                              //       child: _buildContactRow(
+                              //         icon: Icons.local_gas_station,
+                              //         title: 'Fuel type',
+                              //         subtitle:
+                              //             fuel_type, // Replace with the actual address variable
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+
+                              Row(
+                                children: [
+                                  // Left Section: Phone Number and Company
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.calendar_month,
+                                      title: 'Expected purchase date',
+                                      subtitle:
+                                          formatDate(expected_date_purchase),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildContactRow(
+                                      icon: Icons.directions_car,
+                                      title: 'Enquiry type',
+                                      subtitle: enquiry_type,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Row(
+                                children: [
                                   Row(
                                     children: [
-                                      IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _isHiddenTop = !_isHiddenTop;
-                                          });
-                                        },
-                                        icon: Icon(
-                                          _isHiddenTop
-                                              ? Icons
-                                                  .keyboard_arrow_down_rounded
-                                              : Icons.keyboard_arrow_up_rounded,
-                                          size: 35,
-                                          color: AppColors.iconGrey,
+                                      Text(
+                                        'Assignee',
+                                        style: AppFont.mediumText14(context),
+                                      ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          color: AppColors.homeContainerLeads,
+                                        ),
+                                        child: Text(
+                                          _getFirstTwoLettersCapitalized(
+                                              lead_owner),
+                                          style:
+                                              AppFont.mediumText14blue(context),
                                         ),
                                       ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      // IconButton(
+                                      //     onPressed: () {},
+                                      //     icon: Container(
+                                      //         padding: EdgeInsets.all(5),
+                                      //         decoration: BoxDecoration(
+                                      //           borderRadius:
+                                      //               BorderRadius.circular(30),
+                                      //           color: AppColors
+                                      //               .backgroundLightGrey,
+                                      //         ),
+                                      //         child: const Icon(Icons.add)))
                                     ],
                                   )
                                 ],
-                              ),
-                              const SizedBox(height: 5),
-                              // Contact Details Section (Phone, Company, Address)
-                              if (!_isHiddenTop) ...[
-                                const Divider(
-                                  thickness: 0.5,
-                                ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  children: [
-                                    // Left Section: Phone Number and Company
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.phone,
-                                        title: 'Phone Number',
-                                        subtitle: mobile,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.location_on,
-                                        title: 'Company',
-                                        subtitle: company,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.alt_route_outlined,
-                                        title: 'Status',
-                                        subtitle:
-                                            status, // Replace with the actual address variable
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.person,
-                                        title: 'Address',
-                                        subtitle:
-                                            'Malad', // Replace with the actual address variable
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    // Left Section: Phone Number and Company
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons
-                                            .account_balance_wallet_outlined,
-                                        title: 'Car budget',
-                                        subtitle: '2xxxxxxx',
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.directions_car,
-                                        title: 'Brand',
-                                        subtitle: PMI,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.directions_car,
-                                        title: 'Purchase type',
-                                        subtitle:
-                                            purchase_type, // Replace with the actual address variable
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.local_gas_station,
-                                        title: 'Fuel type',
-                                        subtitle:
-                                            fuel_type, // Replace with the actual address variable
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    // Left Section: Phone Number and Company
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.calendar_month,
-                                        title: 'Expected purchase date',
-                                        subtitle:
-                                            formatDate(expected_date_purchase),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildContactRow(
-                                        icon: Icons.directions_car,
-                                        title: 'Enquiry type',
-                                        subtitle: enquiry_type,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ]
+                              )
                             ],
-                          )),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 10), // Spacer
                       // History Section
                       // Text('hiii'),
@@ -804,21 +1322,6 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                   ],
                                 ),
 
-                                // TextButton(
-                                //   onPressed: () {
-                                //     setState(() {
-                                //       _isHiddenMiddle = !_isHiddenMiddle;
-                                //     });
-                                //   },
-                                //   child: Text(
-                                //     _isHiddenMiddle ? 'Show' : 'Hide',
-                                //     style: GoogleFonts.poppins(
-                                //         fontSize: 15,
-                                //         fontWeight: FontWeight.w500,
-                                //         color: Colors.black),
-                                //   ),
-                                // ),
-
                                 IconButton(
                                   onPressed: () {
                                     setState(() {
@@ -851,18 +1354,101 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             ),
           ),
         ),
+
         // Floating Action Button
-
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: _buildFloatingActionButton(context),
-        ),
-
-        // Popup Menu (Conditionally Rendered)
+        // Popup Menu overlay (conditionally rendered)
         Obx(() => fabController.isFabExpanded.value
             ? _buildPopupMenu(context)
             : SizedBox.shrink()),
+      ]),
+      // floatingActionButton: _buildFloatingActionButton(context),
+      bottomNavigationBar: Stack(alignment: Alignment.bottomCenter, children: [
+        Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Lost Button
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (areButtonsEnabled()) {
+                      handleLostAction();
+                    } else {
+                      showLostRequiredDialog(context);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.red, width: 1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Lost',
+                      style: AppFont.mediumText14red(context),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Qualify Button
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (areButtonsEnabled()) {
+                      handleQualifyAction();
+                    } else {
+                      showTaskRequiredDialog(context);
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF35CB64),
+                      // Green color from image
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Qualify',
+                      style: AppFont.mediumText14white(context),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 60,
+                height: 45,
+                child: _buildFloatingActionButton(context),
+              ),
+
+              // Popup Menu (Conditionally Rendered)
+              // Obx(() => fabController.isFabExpanded.value
+              //     ? _buildPopupMenu(context)
+              //     : SizedBox.shrink()),
+            ],
+          ),
+        ),
       ]),
     );
   }
@@ -873,14 +1459,23 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       () => GestureDetector(
         onTap: fabController.toggleFab,
         child: AnimatedContainer(
+          padding: EdgeInsets.zero,
+          margin: EdgeInsets.zero,
           duration: const Duration(milliseconds: 300),
           width: MediaQuery.of(context).size.width * .15,
           height: MediaQuery.of(context).size.height * .08,
           decoration: BoxDecoration(
-            color: fabController.isFabExpanded.value
-                ? Colors.red
-                : AppColors.colorsBlue,
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              width: 1,
+              color: fabController.isFabExpanded.value
+                  ? Colors.red
+                  : AppColors.colorsBlue,
+            ),
+            // color: fabController.isFabExpanded.value
+            //     ? Colors.red
+            //     : AppColors.colorsBlue,
+            shape: BoxShape.rectangle,
           ),
           child: Center(
             child: AnimatedRotation(
@@ -888,13 +1483,119 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               duration: const Duration(milliseconds: 300),
               child: Icon(
                 fabController.isFabExpanded.value ? Icons.close : Icons.add,
-                color: Colors.white,
+                color: fabController.isFabExpanded.value
+                    ? Colors.red
+                    : AppColors.colorsBlue,
                 size: 30,
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+// Function to show dialog when disabled buttons are clicked
+  void showTaskRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'Perform atleast one Test Drive before qualifying this enquiry.',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Ok',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+            // TextButton(
+            //   onPressed: () {
+            //     submitQualify(context); // Pass context to submit
+            //   },
+            //   child: Text(
+            //     'Submit',
+            //     style: AppFont.mediumText14blue(context),
+            //   ),
+            // ),
+          ],
+        );
+      },
+    );
+  }
+
+// Function to show dialog when disabled buttons are clicked
+  void showLostRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  textAlign: TextAlign.center,
+                  'Cannot mark this Enquiry as lost without performing any actions ',
+                  style: AppFont.mediumText14(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Ok',
+                // style: TextStyle(color: AppColors.colorsBlue),
+                style: AppFont.mediumText14blue(context),
+              ),
+            ),
+            // TextButton(
+            //   onPressed: () {
+            //     submitQualify(context); // Pass context to submit
+            //   },
+            //   child: Text(
+            //     'Submit',
+            //     style: AppFont.mediumText14blue(context),
+            //   ),
+            // ),
+          ],
+        );
+      },
     );
   }
 
@@ -913,7 +1614,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
 
           // Popup Items Container aligned bottom right
           Positioned(
-            bottom: 90,
+            bottom: 20,
             right: 20,
             child: SizedBox(
               width: 200,
@@ -942,11 +1643,11 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
           ),
 
           // ✅ FAB positioned above the overlay
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: _buildFloatingActionButton(context),
-          ),
+          // Positioned(
+          //   bottom: 16,
+          //   right: 16,
+          //   child: _buildFloatingActionButton(context),
+          // ),
         ],
       ),
     );

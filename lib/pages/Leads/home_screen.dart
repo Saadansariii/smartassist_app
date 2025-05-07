@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
-import 'package:smart_assist/pages/Leads/gloabal_search_page/global_search.dart';
+import 'package:smart_assist/pages/home/gloabal_search_page/global_search.dart';
 import 'package:smart_assist/pages/navbar_page/app_setting.dart';
 import 'package:smart_assist/pages/navbar_page/call_logs.dart';
 import 'package:smart_assist/pages/navbar_page/favorite.dart';
@@ -16,7 +16,6 @@ import 'package:smart_assist/pages/navbar_page/logout_page.dart';
 import 'package:smart_assist/pages/navbar_page/my_teams.dart';
 import 'package:smart_assist/pages/notification/notification.dart';
 import 'package:smart_assist/services/leads_srv.dart';
-import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/home_btn.dart/bottom_btn_third.dart';
 import 'package:smart_assist/widgets/home_btn.dart/dashboard_popups/appointment_popup.dart';
@@ -46,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? leadId;
   bool _isHidden = false;
   String greeting = '';
+  String name = '';
   int notificationCount = 0;
   int overdueFollowupsCount = 0;
   int overdueAppointmentsCount = 0;
@@ -121,48 +121,58 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final data = await LeadsSrv.fetchDashboardData();
-      setState(() {
-        upcomingFollowups = data['upcomingFollowups'];
-        overdueFollowups = data['overdueFollowups'];
-        upcomingAppointments = data['upcomingAppointments'];
-        overdueAppointments = data['overdueAppointments'];
-        upcomingTestDrives = data['upcomingTestDrives'];
-        overdueTestDrives = data['overdueTestDrives'];
-        overdueFollowupsCount = data.containsKey('overdueFollowupsCount') &&
-                data['overdueFollowupsCount'] is int
-            ? data['overdueFollowupsCount']
-            : 0;
+      if (mounted) {
+        setState(() {
+          upcomingFollowups = data['upcomingFollowups'];
+          overdueFollowups = data['overdueFollowups'];
+          upcomingAppointments = data['upcomingAppointments'];
+          overdueAppointments = data['overdueAppointments'];
+          upcomingTestDrives = data['upcomingTestDrives'];
+          overdueTestDrives = data['overdueTestDrives'];
+          overdueFollowupsCount = data.containsKey('overdueFollowupsCount') &&
+                  data['overdueFollowupsCount'] is int
+              ? data['overdueFollowupsCount']
+              : 0;
 
-        overdueAppointmentsCount =
-            data.containsKey('overdueAppointmentsCount') &&
-                    data['overdueAppointmentsCount'] is int
-                ? data['overdueAppointmentsCount']
-                : 0;
+          overdueAppointmentsCount =
+              data.containsKey('overdueAppointmentsCount') &&
+                      data['overdueAppointmentsCount'] is int
+                  ? data['overdueAppointmentsCount']
+                  : 0;
 
-        overdueTestDrivesCount = data.containsKey('overdueTestDrivesCount') &&
-                data['overdueTestDrivesCount'] is int
-            ? data['overdueTestDrivesCount']
-            : 0;
+          overdueTestDrivesCount = data.containsKey('overdueTestDrivesCount') &&
+                  data['overdueTestDrivesCount'] is int
+              ? data['overdueTestDrivesCount']
+              : 0;
 
-        notificationCount =
-            data.containsKey('notifications') && data['notifications'] is int
-                ? data['notifications']
-                : 0;
-        greeting =
-            (data.containsKey('greetings') && data['greetings'] is String)
-                ? data['greetings']
-                : 'Welcome!';
-        // if (upcomingFollowups.isNotEmpty) {
-        //   leadId = upcomingFollowups[0]['lead_id'];
-        // }
-      });
+          notificationCount =
+              data.containsKey('notifications') && data['notifications'] is int
+                  ? data['notifications']
+                  : 0;
+          greeting =
+              (data.containsKey('greetings') && data['greetings'] is String)
+                  ? data['greetings']
+                  : 'Welcome!';
+          name = (data.containsKey('initials') &&
+                  data['initials'] is String &&
+                  data['initials'].trim().isNotEmpty)
+              ? data['initials'].trim()
+              : '';
+
+          // if (upcomingFollowups.isNotEmpty) {
+          //   leadId = upcomingFollowups[0]['lead_id'];
+          // }
+        });
+      }
     } catch (e) {
       print(e);
       // showErrorMessage(context, message: e.toString());
     } finally {
-      setState(() {
-        isDashboardLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isDashboardLoading = false;
+        });
+      }
     }
   }
 
@@ -292,6 +302,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _getFirstTwoLettersCapitalized(String input) {
+    input = input.trim(); // Remove any extra spaces
+    if (input.length >= 1) {
+      return input.substring(0, 1).toUpperCase();
+    } else if (input.isNotEmpty) {
+      return input.toUpperCase();
+    } else {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -372,106 +393,151 @@ class _HomeScreenState extends State<HomeScreen> {
                             /// ✅ Row with Menu, Search Bar, and Microphone
                             Row(
                               children: [
-                                // Then in your bottom sheet code:
-                                IconButton(
-                                  icon: const Icon(Icons.menu,
-                                      color: AppColors.fontColor),
-                                  onPressed: () async {
-                                    // Get the team role before showing the sheet
-                                    String? teamRole =
-                                        await SharedPreferences.getInstance()
-                                            .then((prefs) =>
-                                                prefs.getString('USER_ROLE'));
-
-                                    Get.bottomSheet(
-                                      Container(
-                                        padding: const EdgeInsets.all(16),
-                                        // Adjust height based on whether "My Team" is shown
-                                        height: teamRole == "Owner" ? 440 : 370,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(30)),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.people_alt_outlined,
-                                                  size: 28),
-                                              title: Text('Enquiries',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(
-                                                  () => const AllLeads()),
-                                            ),
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.call_outlined,
-                                                  size: 28),
-                                              title: Text('Call logs',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(
-                                                  () => const CallLogs()),
-                                            ),
-                                            if (teamRole == "Owner")
-                                              ListTile(
-                                                leading: const Icon(Icons.group,
-                                                    size: 28),
-                                                title: Text('My Team ',
-                                                    style: GoogleFonts.poppins(
-                                                        fontSize: 18)),
-                                                onTap: () => Get.to(
-                                                    () => const MyTeams()),
-                                              ),
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.star_border_rounded,
-                                                  size: 28),
-                                              title: Text('Favourite',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(() =>
-                                                  const FavoritePage(
-                                                      leadId: '')),
-                                            ),
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.person_outline,
-                                                  size: 28),
-                                              title: Text('Profile',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(
-                                                  () => const ProfileScreen()),
-                                            ),
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.settings_outlined,
-                                                  size: 28),
-                                              title: Text('App Settings',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(
-                                                  () => const AppSetting()),
-                                            ),
-                                            ListTile(
-                                              leading: const Icon(
-                                                  Icons.logout_outlined,
-                                                  size: 28),
-                                              title: Text('Logout',
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: 18)),
-                                              onTap: () => Get.to(
-                                                  () => const LogoutPage()),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 0, horizontal: 0),
+                                  margin: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                      // shape: BoxShape.circle,
+                                      color: AppColors.backgroundLightGrey,
+                                      borderRadius: BorderRadius.circular(30)),
+                                  child: TextButton(
+                                    style: const ButtonStyle(
+                                      minimumSize:
+                                          WidgetStatePropertyAll(Size.zero),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      padding: WidgetStatePropertyAll(
+                                          EdgeInsets.zero),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ProfileScreen()));
+                                    },
+                                    child: Text(
+                                      name.isNotEmpty ? name : 'NA',
+                                      style:
+                                          AppFont.mediumText14bluebold(context),
+                                    ),
+                                  ),
+                                  // child: IconButton(
+                                  //     style: ButtonStyle(),
+                                  //     onPressed: () {
+                                  //       Navigator.push(
+                                  //           context,
+                                  //           MaterialPageRoute(
+                                  //               builder: (context) =>
+                                  //                   ProfileScreen()));
+                                  //     },
+                                  //     icon: const Icon(
+                                  //       Icons.person,
+                                  //     )),
                                 ),
+                                // Then in your bottom sheet code:
+                                // IconButton(
+                                //   icon: const Icon(Icons.menu,
+                                //       color: AppColors.fontColor),
+                                //   onPressed: () async {
+                                //     // Get the team role before showing the sheet
+                                //     String? teamRole =
+                                //         await SharedPreferences.getInstance()
+                                //             .then((prefs) =>
+                                //                 prefs.getString('USER_ROLE'));
+
+                                //     Get.bottomSheet(
+                                //       Container(
+                                //         padding: const EdgeInsets.all(16),
+                                //         // Adjust height based on whether "My Team" is shown
+                                //         height: teamRole == "Owner" ? 440 : 370,
+                                //         decoration: const BoxDecoration(
+                                //           color: Colors.white,
+                                //           borderRadius: BorderRadius.vertical(
+                                //               top: Radius.circular(30)),
+                                //         ),
+                                //         child: Column(
+                                //           children: [
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.people_alt_outlined,
+                                //                   size: 28),
+                                //               title: Text('Enquiries',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(
+                                //                   () => const AllLeads()),
+                                //             ),
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.call_outlined,
+                                //                   size: 28),
+                                //               title: Text('Call logs',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(
+                                //                   () => const CallLogs()),
+                                //             ),
+                                //             if (teamRole == "Owner")
+                                //               ListTile(
+                                //                 leading: const Icon(Icons.group,
+                                //                     size: 28),
+                                //                 title: Text('My Team ',
+                                //                     style: GoogleFonts.poppins(
+                                //                         fontSize: 18)),
+                                //                 onTap: () => Get.to(
+                                //                     () => const MyTeams()),
+                                //               ),
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.star_border_rounded,
+                                //                   size: 28),
+                                //               title: Text('Favourite',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(() =>
+                                //                   const FavoritePage(
+                                //                       leadId: '')),
+                                //             ),
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.person_outline,
+                                //                   size: 28),
+                                //               title: Text('Profile',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(
+                                //                   () => const ProfileScreen()),
+                                //             ),
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.settings_outlined,
+                                //                   size: 28),
+                                //               title: Text('App Settings',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(
+                                //                   () => const AppSetting()),
+                                //             ),
+                                //             ListTile(
+                                //               leading: const Icon(
+                                //                   Icons.logout_outlined,
+                                //                   size: 28),
+                                //               title: Text('Logout',
+                                //                   style: GoogleFonts.poppins(
+                                //                       fontSize: 18)),
+                                //               onTap: () => Get.to(
+                                //                   () => const LogoutPage()),
+                                //             ),
+                                //           ],
+                                //         ),
+                                //       ),
+                                //     );
+                                //   },
+                                // ),
 
                                 Expanded(
                                   child: SizedBox(
@@ -548,11 +614,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   overdueAppointmentsCount,
                               overdueTestDrivesCount: overdueTestDrivesCount,
                             ),
-                            BottomBtnSecond(
-                              MtdData: MtdData,
-                              QtdData: QtdData,
-                              YtdData: YtdData,
-                            ),
+                            const BottomBtnSecond(
+                                // MtdData: MtdData,
+                                // QtdData: QtdData,
+                                // YtdData: YtdData,
+                                ),
 
                             Padding(
                               padding:

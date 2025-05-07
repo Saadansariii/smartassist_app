@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
 
 class FAppointment extends StatefulWidget {

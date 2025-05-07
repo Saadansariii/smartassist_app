@@ -15,6 +15,7 @@ import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class CreateLeads extends StatefulWidget {
   final Function onFormSubmit;
@@ -34,6 +35,9 @@ class _CreateLeadsState extends State<CreateLeads> {
   List<dynamic> vehicleList = [];
   List<String> uniqueVehicleNames = [];
   String? selectedVehicleName;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  bool isSubmitting = false;
 
   List<dynamic> _searchResults = [];
   List<String> colorOptions = [];
@@ -79,6 +83,10 @@ class _CreateLeadsState extends State<CreateLeads> {
     _rangeAmount = RangeValues(_minValue, _maxValue);
     // fetchVehicleData();
     _searchController.addListener(_onSearchChanged);
+
+    // Initialize speech recognition
+    _speech = stt.SpeechToText();
+    _initSpeech();
   }
 
   @override
@@ -87,6 +95,178 @@ class _CreateLeadsState extends State<CreateLeads> {
     _searchController.dispose();
     super.dispose();
   }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening() async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _searchController.text = result.recognizedWords;
+          });
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    }
+  }
+
+  // Add this helper method for showing error messages
+  void showErrorMessage(BuildContext context, {required String message}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Modified _buildSearchField with speech recognition
+  // Widget _buildSearchField() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const SizedBox(height: 10),
+  //       Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
+  //       const SizedBox(height: 5),
+  //       Container(
+  //         height: MediaQuery.of(context).size.height * 0.055,
+  //         width: double.infinity,
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(5),
+  //           color: AppColors.containerBg,
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Expanded(
+  //               child: TextField(
+  //                 controller: _searchController,
+  //                 decoration: InputDecoration(
+  //                   filled: true,
+  //                   fillColor: AppColors.containerBg,
+  //                   hintText: selectedVehicleName ?? 'Vehicle Name',
+  //                   hintStyle: TextStyle(
+  //                     color: selectedVehicleName != null
+  //                         ? Colors.black
+  //                         : Colors.grey,
+  //                   ),
+  //                   prefixIcon: const Icon(
+  //                     FontAwesomeIcons.magnifyingGlass,
+  //                     size: 15,
+  //                     color: AppColors.iconGrey,
+  //                   ),
+  //                   suffixIcon: IconButton(
+  //                     icon: Icon(
+  //                       _isListening
+  //                           ? FontAwesomeIcons.stop
+  //                           : FontAwesomeIcons.microphone,
+  //                       color: _isListening ? Colors.red : AppColors.iconGrey,
+  //                       size: 15,
+  //                     ),
+  //                     onPressed: _toggleListening,
+  //                   ),
+  //                   contentPadding:
+  //                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(5),
+  //                     borderSide: BorderSide.none,
+  //                   ),
+  //                 ),
+  //                 style: GoogleFonts.poppins(
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.w500,
+  //                   color: Colors.black,
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+
+  //       // Show loading indicator
+  //       if (_isLoadingSearch)
+  //         const Padding(
+  //           padding: EdgeInsets.only(top: 8.0),
+  //           child: Center(child: CircularProgressIndicator()),
+  //         ),
+
+  //       // Show search results
+  //       if (_searchResults.isNotEmpty)
+  //         Container(
+  //           margin: const EdgeInsets.only(top: 8),
+  //           decoration: BoxDecoration(
+  //             color: Colors.white,
+  //             borderRadius: BorderRadius.circular(5),
+  //             boxShadow: const [
+  //               BoxShadow(color: Colors.black12, blurRadius: 4)
+  //             ],
+  //           ),
+  //           child: ListView.builder(
+  //             shrinkWrap: true,
+  //             physics: const NeverScrollableScrollPhysics(),
+  //             itemCount: _searchResults.length,
+  //             itemBuilder: (context, index) {
+  //               final result = _searchResults[index];
+  //               return ListTile(
+  //                 onTap: () {
+  //                   setState(() {
+  //                     FocusScope.of(context).unfocus();
+  //                     // selectedLeads = result['lead_id'];
+  //                     selectedVehicleName = result['vehicle_name'];
+  //                     _searchController.clear();
+  //                     _searchResults.clear();
+  //                   });
+  //                   // ✅ Call the color-fetching function here!
+  //                   fetchVehicleColors(result['vehicle_name']);
+  //                 },
+  //                 title: Text(
+  //                   result['vehicle_name'] ?? 'No Name',
+  //                   style: TextStyle(
+  //                     color: selectedVehicleName == result['vehicle_name']
+  //                         ? Colors.black
+  //                         : AppColors.fontBlack,
+  //                   ),
+  //                 ),
+  //                 leading: const Icon(Icons.directions_car),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
 
   Future<void> fetchVehicleData(String query) async {
     if (query.isEmpty) {
@@ -237,7 +417,8 @@ class _CreateLeadsState extends State<CreateLeads> {
             _existingLeadData = {
               'name': data['data']['lead_name'] ?? 'Unknown',
               'mobile': data['data']['mobile'] ?? mobileNumber,
-              'PMI': data['data']['brand'] ?? 'Unknown',
+              'PMI': data['data']['PMI'] ?? 'Unknown',
+              'lead_owner': data['data']['lead_owner'] ?? 'Unknown',
             };
           });
           print("Existing lead found: ${_existingLeadData}");
@@ -368,15 +549,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     return isValid;
   }
 
-  // bool _validatePage3() {
-  //   bool isValid = false;
-
-  //   setState(() {
-  //     // _errors = {};
-  //   });
-  //   return isValid;
-  // }
-
   bool _validatePage3() {
     bool isValid = true;
 
@@ -415,36 +587,24 @@ class _CreateLeadsState extends State<CreateLeads> {
   void _nextStep() {
     if (_currentStep == 0) {
       if (_validatePage1()) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
         setState(() => _currentStep++);
+        // No need for PageController navigation with IndexedStack
       } else {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(
-        //     content: Text('Please correct the errors before continuing'),
-        //     backgroundColor: Colors.red,
-        //   ),
-        // );
         Get.snackbar(
           'Error',
-          'Error from first screen',
+          'please check the contact details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
       }
     } else if (_currentStep == 1) {
       if (_validatePage2()) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
         setState(() => _currentStep++);
+        // No need for PageController navigation with IndexedStack
       } else {
         Get.snackbar(
           'Error',
-          'Error from second screen',
+          'please check the Vehicle details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -455,7 +615,7 @@ class _CreateLeadsState extends State<CreateLeads> {
       } else {
         Get.snackbar(
           'Error',
-          'Error from third screen',
+          'please check the more details',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -463,8 +623,24 @@ class _CreateLeadsState extends State<CreateLeads> {
     }
   }
 
-  void _submitForm() {
-    submitForm();
+  Future<void> _submitForm() async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      await submitForm(); // Your actual API call
+      // Optionally show a success snackbar or navigate
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Submission failed: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
   }
 
   @override
@@ -652,13 +828,12 @@ class _CreateLeadsState extends State<CreateLeads> {
             const SizedBox(
               height: 10,
             ),
-            SizedBox(
-              height: height * .7,
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  Column(
+            IndexedStack(
+              index: _currentStep,
+              // physics: const NeverScrollableScrollPhysics(),
+              children: [
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -747,9 +922,14 @@ class _CreateLeadsState extends State<CreateLeads> {
                         label: 'Lead Source',
                         options: {
                           "Email": "Email",
-                          "Walk-in": "Walk-in",
+                          "Existing Customer": "Existing Customer",
+                          "Field Visit": "Field Visit",
+                          "Google SEM Ads": "Google SEM Ads",
+                          "Online Booking": "Online Booking",
+                          "Referral": "Referral",
+                          "Retailer Website": "Retailer Website",
                           "Social": "Social",
-                          "Referral": "Referral"
+                          "Walk-in": "Walk-in",
                         },
                         groupValue: _selectedType,
                         errorText: _errors['leadSource'],
@@ -765,7 +945,9 @@ class _CreateLeadsState extends State<CreateLeads> {
                       _buildAmountRange(),
                     ],
                   ),
-                  Column(
+                ),
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(
@@ -841,20 +1023,20 @@ class _CreateLeadsState extends State<CreateLeads> {
                               }
                             });
                           }),
-                      const SizedBox(height: 5),
-                      _buildNumberWidget(
-                          label: 'Pin Code',
-                          controller: pinController,
-                          // errorText: _errors['PIN Code'],
-                          hintText: '11220',
-                          onChanged: (value) {
-                            if (_errors.containsKey('pin')) {
-                              setState(() {
-                                // _errors.remove('pin');
-                              });
-                            }
-                            print("pin : $value");
-                          }),
+                      // const SizedBox(height: 5),
+                      // _buildNumberWidget(
+                      //     label: 'Pin Code',
+                      //     controller: pinController,
+                      //     // errorText: _errors['PIN Code'],
+                      //     hintText: '11220',
+                      //     onChanged: (value) {
+                      //       if (_errors.containsKey('pin')) {
+                      //         setState(() {
+                      //           // _errors.remove('pin');
+                      //         });
+                      //       }
+                      //       print("pin : $value");
+                      //     }),
                       // Align(
                       //   alignment: Alignment.centerLeft,
                       //   child: Padding(
@@ -908,12 +1090,14 @@ class _CreateLeadsState extends State<CreateLeads> {
                           onTap: () => _pickDate(isStartDate: false)),
                     ],
                   ),
-                  Column(
+                ),
+                SingleChildScrollView(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSearchField(),
                       const SizedBox(
-                        height: 5,
+                        height: 10,
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -925,7 +1109,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                               style: AppFont.dropDowmLabel(context),
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 10),
                           // Wrap your button widget here
                           Container(
                             width: double.infinity,
@@ -991,7 +1175,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                         const SizedBox(height: 15),
                       ],
                       const SizedBox(
-                        height: 5,
+                        height: 10,
                       ),
                       _consentTick(
                         text: "Agreed with these terms",
@@ -1004,8 +1188,8 @@ class _CreateLeadsState extends State<CreateLeads> {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             // ✅ Updated Button Row
@@ -1023,10 +1207,18 @@ class _CreateLeadsState extends State<CreateLeads> {
                       if (_currentStep == 0) {
                         Navigator.pop(context); // Close if on first page
                       } else {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
+                        // _pageController.previousPage(
+                        //   duration: const Duration(milliseconds: 300),
+                        //   curve: Curves.easeInOut,
+                        // );
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_pageController.hasClients) {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        });
                         setState(() => _currentStep--);
                       }
                     },
@@ -1040,7 +1232,7 @@ class _CreateLeadsState extends State<CreateLeads> {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.colorsBlue,
+                      backgroundColor: AppColors.colorsBlueButton,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
@@ -1092,16 +1284,6 @@ class _CreateLeadsState extends State<CreateLeads> {
                       FontAwesomeIcons.magnifyingGlass,
                       size: 15,
                       color: AppColors.iconGrey,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(
-                        FontAwesomeIcons.microphone,
-                        color: AppColors.iconGrey,
-                        size: 15,
-                      ),
-                      onPressed: () {
-                        print('Microphone button pressed');
-                      },
                     ),
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
@@ -1338,19 +1520,33 @@ class _CreateLeadsState extends State<CreateLeads> {
                                         BorderSide(color: AppColors.fontColor)),
                               ),
                             ),
-                            // const SizedBox(
-                            //   width: 5,
-                            // ),
                             Text('${_existingLeadData!['PMI']}',
                                 style: AppFont.smallText(context)),
                           ],
                         ),
-                        Text(
-                          '${_existingLeadData!['mobile']}',
-                          style: GoogleFonts.poppins(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              '${_existingLeadData!['mobile']}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              height: 15,
+                              width: 0.1,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                    right:
+                                        BorderSide(color: AppColors.fontColor)),
+                              ),
+                            ),
+                            Text('by ${_existingLeadData!['lead_owner']}',
+                                style: AppFont.smallText(context)),
+                          ],
                         ),
                       ],
                     ),
@@ -1362,75 +1558,6 @@ class _CreateLeadsState extends State<CreateLeads> {
       ],
     );
   }
-
-  // Widget _buildNumberWidget({
-  //   required TextEditingController controller,
-  //   required String hintText,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   bool isRequired = false,
-  //   String? errorText,
-  // }) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(
-  //         height: 5,
-  //       ),
-  //       Padding(
-  //         padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
-  //         child: RichText(
-  //           text: TextSpan(
-  //             style: GoogleFonts.poppins(
-  //               fontSize: 14,
-  //               fontWeight: FontWeight.w500,
-  //               color: AppColors.fontBlack,
-  //             ),
-  //             children: [
-  //               TextSpan(text: label),
-  //               if (isRequired)
-  //                 const TextSpan(
-  //                   text: " *",
-  //                   style: TextStyle(color: Colors.red),
-  //                 ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(
-  //         height: 5,
-  //       ),
-  //       Container(
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: const Color.fromARGB(255, 248, 247, 247),
-  //           border: errorText != null
-  //               ? Border.all(color: Colors.red, width: 1.0)
-  //               : null,
-  //         ),
-  //         child: Align(
-  //           alignment: Alignment.centerLeft,
-  //           child: TextField(
-  //             keyboardType: TextInputType.number,
-  //             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-  //             controller: controller,
-  //             style: AppFont.dropDowmLabel(context),
-  //             decoration: InputDecoration(
-  //               hintText: hintText,
-  //               hintStyle:
-  //                   GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-  //               contentPadding:
-  //                   const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-  //               border: InputBorder.none,
-  //             ),
-  //             onChanged: onChanged,
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _consentTick({
     required String text,
@@ -1839,84 +1966,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Widget _buildButtonFuel({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * .06,
-  //         decoration: BoxDecoration(
-  //             color: const Color.fromARGB(255, 248, 247, 247),
-  //             borderRadius: const BorderRadius.all(
-  //               Radius.circular(5),
-  //             ),
-  //             border: errorText != null
-  //                 ? Border.all(color: Colors.red, width: 1.0)
-  //                 : null),
-  //         child: Padding(
-  //           padding: const EdgeInsets.all(8.0),
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Row(
-  //                 crossAxisAlignment: CrossAxisAlignment.center,
-  //                 children: [
-  //                   SizedBox(
-  //                     child: Align(
-  //                       alignment:
-  //                           Alignment.centerRight, // ✅ Ensures proper alignment
-  //                       child: Text(
-  //                         label,
-  //                         style: AppFont.dropDowmLabel(context),
-  //                         textAlign: TextAlign.left,
-  //                       ),
-  //                     ),
-  //                   ),
-
-  //                   const SizedBox(width: 10),
-
-  //                   // 🔹 Right Side: Brand Options in Two Rows
-  //                   Expanded(
-  //                     child: Column(
-  //                       crossAxisAlignment:
-  //                           CrossAxisAlignment.start, // Align buttons left
-  //                       children: [
-  //                         Row(
-  //                           mainAxisAlignment:
-  //                               MainAxisAlignment.end, // ✅ Align left
-  //                           children: [
-  //                             _buildOptionFuel(optionKeys[0], options,
-  //                                 groupValue, onChanged),
-  //                             const SizedBox(width: 5),
-  //                             _buildOptionFuel(optionKeys[1], options,
-  //                                 groupValue, onChanged),
-  //                             // const SizedBox(width: 5),
-  //                             // _buildOptionFuel(
-  //                             //     optionKeys[2], options, groupValue, onChanged),
-  //                           ],
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
 // ✅ Button Builder Function
   Widget _buildOptionButton(String shortText, Map<String, String> options,
       String groupValue, ValueChanged<String> onChanged) {
@@ -1952,247 +2001,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Widget _buildEnquiryType({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Container(
-  //     height: MediaQuery.of(context).size.height * .06,
-  //     decoration: BoxDecoration(
-  //       color: const Color.fromARGB(255, 248, 247, 247),
-  //       borderRadius: BorderRadius.all(Radius.circular(5)),
-  //       border: errorText != null
-  //           ? Border.all(color: Colors.red, width: 1.0)
-  //           : null,
-  //     ),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             crossAxisAlignment: CrossAxisAlignment
-  //                 .center, // ✅ Aligns label and buttons properly
-  //             children: [
-  //               // 🔹 Brand Label (Left Side, Vertically Centered)
-  //               SizedBox(
-  //                 // width: 80, // ✅ Fixed width to align properly
-  //                 child: Align(
-  //                   alignment:
-  //                       Alignment.centerRight, // ✅ Ensures proper alignment
-  //                   child: Text(
-  //                     label,
-  //                     style: AppFont.dropDowmLabel(context),
-  //                     textAlign: TextAlign.left,
-  //                   ),
-  //                 ),
-  //               ),
-
-  //               const SizedBox(width: 10),
-
-  //               // 🔹 Right Side: Brand Options in Two Rows
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment:
-  //                       CrossAxisAlignment.start, // Align buttons left
-  //                   children: [
-  //                     Row(
-  //                       mainAxisAlignment:
-  //                           MainAxisAlignment.end, // ✅ Align left
-  //                       children: [
-  //                         _buildOptionButtonEnquiry(
-  //                             optionKeys[0], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                         _buildOptionButtonEnquiry(
-  //                             optionKeys[1], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildPurchaseType({
-  //   required Map<String, String> options,
-  //   required String groupValue,
-  //   required String label,
-  //   required ValueChanged<String> onChanged,
-  //   String? errorText,
-  // }) {
-  //   List<String> optionKeys = options.keys.toList();
-
-  //   return Container(
-  //     height: MediaQuery.of(context).size.height * .06,
-  //     decoration: BoxDecoration(
-  //         color: const Color.fromARGB(255, 248, 247, 247),
-  //         borderRadius: const BorderRadius.all(Radius.circular(5)),
-  //         border: errorText != null
-  //             ? Border.all(color: Colors.red, width: 1.0)
-  //             : null),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             crossAxisAlignment: CrossAxisAlignment.center,
-  //             children: [
-  //               SizedBox(
-  //                 child: Align(
-  //                   alignment: Alignment.centerRight,
-  //                   child: Text(
-  //                     label,
-  //                     style: AppFont.dropDowmLabel(context),
-  //                     textAlign: TextAlign.left,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 10),
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Row(
-  //                       mainAxisAlignment: MainAxisAlignment.end,
-  //                       children: [
-  //                         _buildOptionButtonPurchase(
-  //                             optionKeys[0], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                         _buildOptionButtonPurchase(
-  //                             optionKeys[1], options, groupValue, onChanged),
-  //                         const SizedBox(width: 5),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionFuel(String shortText, Map<String, String> options,
-  //     String groupValue, ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionButtonEnquiry(
-  //     String shortText,
-  //     Map<String, String> options,
-  //     String groupValue,
-  //     ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildOptionButtonPurchase(
-  //     String shortText,
-  //     Map<String, String> options,
-  //     String groupValue,
-  //     ValueChanged<String> onChanged) {
-  //   bool isSelected = groupValue == options[shortText];
-
-  //   return GestureDetector(
-  //     onTap: () {
-  //       onChanged(options[shortText]!);
-  //     },
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(
-  //           color: isSelected ? AppColors.colorsBlue : Colors.grey,
-  //           width: 1.0,
-  //         ),
-  //         borderRadius: BorderRadius.circular(15),
-  //         color:
-  //             isSelected ? AppColors.colorsBlue.withOpacity(0.2) : Colors.white,
-  //       ),
-  //       child: Center(
-  //         child: Text(
-  //           shortText,
-  //           style: TextStyle(
-  //             color: isSelected ? AppColors.colorsBlue : Colors.black,
-  //             fontSize: 12,
-  //             fontWeight: FontWeight.w400,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildButtons({
     required Map<String, String>
         options, // ✅ Use a Map for short display & actual value
@@ -2213,7 +2021,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         ),
         const SizedBox(height: 5),
         Wrap(
-          spacing: 5, // Space between buttons
+          spacing: 2, // Space between buttons
           runSpacing: 10,
           // mainAxisAlignment: MainAxisAlignment.start,
           children: options.keys.map((shortText) {
@@ -2225,8 +2033,8 @@ class _CreateLeadsState extends State<CreateLeads> {
               },
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
-                margin: const EdgeInsets.only(right: 10),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                margin: const EdgeInsets.only(right: 5),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color:
@@ -2336,10 +2144,9 @@ class _CreateLeadsState extends State<CreateLeads> {
 
 // Ensure the mobile number always includes the country code
       if (!mobileNumber.startsWith('+91')) {
-        print(mobileNumber);
+        // print(mobileNumber);
 
         mobileNumber = '+91' + mobileNumber;
-        print('ittt hitttttttttttttttt');
       }
 
       final double highestBudgetValue = _rangeAmount.end;
@@ -2355,7 +2162,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'type': 'Product',
         'sub_type': selectedSubType,
         'sp_id': spId,
-        'chat_id': "91" + mobileController.text + "@c.us",
+        'chat_id': "91${mobileController.text}@c.us",
         'PMI': selectedVehicleName,
         'expected_date_purchase': endDateController.text,
         'fuel_type': _selectedFuel,
@@ -2363,7 +2170,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'lead_source': _selectedType,
         'consent': consentValue,
         'budget': highestBudgetValue,
-        'pincode': pinController.text,
+        // 'pincode': pinController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor
       };
@@ -2374,10 +2181,10 @@ class _CreateLeadsState extends State<CreateLeads> {
       Map<String, dynamic>? response = await LeadsSrv.submitLead(leadData);
 
       if (response != null) {
-        print("Response received: $response"); // ✅ Print full response
-        print(leadData);
+        print("Response received: $response");
 
         if (response.containsKey('data')) {
+          // ✅ Form submitted successfully
           String leadId = response['data']['lead_id'];
 
           if (context.mounted) {
@@ -2390,44 +2197,60 @@ class _CreateLeadsState extends State<CreateLeads> {
             );
           }
 
-          String errorMsg = response['message'];
-
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(content: Text('Form Submit Successful.')),
-          // );
+          String successMessage =
+              response['message'] ?? 'Form submitted successfully';
           Get.snackbar(
             'Success',
-            errorMsg.toString(),
+            successMessage,
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
+
           widget.onFormSubmit();
-        } else if (response.containsKey('message')) {
-          String errorMsg = response['error'];
-          print("API Error: $errorMsg"); // ✅ Log API error
+        } else if (response.containsKey('error') ||
+            response.containsKey('message')) {
+          String errorMessage = response['error'] ??
+              response['message'] ??
+              'Something went wrong';
 
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
-          // );
+          if (response['errors'] != null && response['errors'] is Map) {
+            Map<String, dynamic> errorDetails = response['errors'];
 
-          Get.snackbar(
-            'Error',
-            'An error occurred: ${errorMsg.toString()}',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+            if (errorDetails.isNotEmpty) {
+              setState(() {
+                _errors = errorDetails
+                    .map((key, value) => MapEntry(key, value.toString()));
+              });
+
+              // Show first error message
+              String firstFieldError =
+                  errorDetails.entries.first.value.toString();
+              Get.snackbar(
+                'Validation Error',
+                firstFieldError,
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+            }
+          } else {
+            // If it's a generic error (like "Not a valid email")
+            Get.snackbar(
+              'Error',
+              errorMessage,
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+          }
         }
       } else {
-        print("Error: API response is null"); // ✅ Log null response
-        String errorMsg = response?['message'];
-        // ScaffoldMessenger.of(context).showSnackBar(
+        print("Error: API response is null");
+
         Get.snackbar(
           'Error',
-          'An error occurred: ${errorMsg.toString()}',
+          'Something went wrong. Please try again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-        // );
       }
     } catch (e, stackTrace) {
       print("Exception Occurred: $e"); // ✅ Log any unexpected exceptions

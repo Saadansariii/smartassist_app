@@ -325,24 +325,24 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-
   Future<void> checkAuthStatus() async {
     if (!_mounted) return;
 
     try {
       // Check if user has a valid token
       bool isTokenValid = await TokenManager.isTokenValid();
-      
+
       if (!_mounted) return;
 
       if (isTokenValid) {
         // If token exists and is valid, go to biometric screen
-        Navigator.of(context).pushReplacementNamed(RoutesName.biometricScreen);
+        Navigator.of(context)
+            .pushReplacementNamed(RoutesName.home); //replashce with biometric
       } else {
         // If no token or invalid token, go to login screen
         await TokenManager.clearAuthData();
         if (!_mounted) return;
-        
+
         Navigator.of(context).pushReplacementNamed(RoutesName.login);
       }
     } catch (e) {

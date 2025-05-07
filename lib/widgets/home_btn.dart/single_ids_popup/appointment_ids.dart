@@ -10,6 +10,7 @@ import 'package:smart_assist/utils/storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class AppointmentIds extends StatefulWidget {
   final Function onFormSubmit;
@@ -26,6 +27,8 @@ class _AppointmentIdsState extends State<AppointmentIds> {
   List<Map<String, String>> dropdownItems = [];
   bool isLoading = false;
   int _currentStep = 0;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   bool _isLoadingSearch = false;
   String _query = '';
@@ -41,12 +44,15 @@ class _AppointmentIdsState extends State<AppointmentIds> {
   TextEditingController endDateController = TextEditingController();
   TextEditingController startTimeController = TextEditingController();
   TextEditingController endTimeController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     // fetchDropdownData();
+    _speech = stt.SpeechToText();
+    _initSpeech();
   }
 
   /// Fetch search results from API
@@ -85,6 +91,57 @@ class _AppointmentIdsState extends State<AppointmentIds> {
       setState(() {
         _isLoadingSearch = false;
       });
+    }
+  }
+
+  // Initialize speech recognition
+  void _initSpeech() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (errorNotification) {
+        setState(() {
+          _isListening = false;
+        });
+        showErrorMessage(context,
+            message: 'Speech recognition error: ${errorNotification.errorMsg}');
+      },
+    );
+    if (!available) {
+      showErrorMessage(context,
+          message: 'Speech recognition not available on this device');
+    }
+  }
+
+  // Toggle listening
+  void _toggleListening(TextEditingController controller) async {
+    if (_isListening) {
+      _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } else {
+      setState(() {
+        _isListening = true;
+      });
+
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
     }
   }
 
@@ -183,6 +240,80 @@ class _AppointmentIdsState extends State<AppointmentIds> {
     }
   }
 
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.fontBlack,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              // Expanded TextField that adjusts height
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  maxLines:
+                      null, // This allows the TextField to expand vertically based on content
+                  minLines: 1, // Minimum 1 line of height
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              // Microphone icon with speech recognition
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _toggleListening(controller),
+                  icon: Icon(
+                    _isListening
+                        ? FontAwesomeIcons.stop
+                        : FontAwesomeIcons.microphone,
+                    color: _isListening ? Colors.red : AppColors.fontColor,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -260,10 +391,16 @@ class _AppointmentIdsState extends State<AppointmentIds> {
                     _selectedSubject = value;
                   });
                 },
-              )
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                  label: 'Comments:',
+                  controller: descriptionController,
+                  hint: 'Add Comments'),
+              const SizedBox(height: 10),
             ],
           ),
-          const SizedBox(height: 10),
+          // const SizedBox(height: 10),
           // SmoothPageIndicator(
           //     controller: _pageController,
           //     count: 2,
@@ -788,6 +925,7 @@ class _AppointmentIdsState extends State<AppointmentIds> {
       'end_time': formattedEndTime,
       'subject': _selectedSubject,
       'sp_id': spId,
+      'comments': descriptionController.text,
     };
 
     // Call the service to submit the appointment.

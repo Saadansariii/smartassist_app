@@ -106,7 +106,8 @@ import 'package:http/http.dart' as http;
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
-import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
+import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/home/single_id_screens/single_leads.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
 

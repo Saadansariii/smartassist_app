@@ -18,16 +18,16 @@ class TestdriveVerifyotp extends StatefulWidget {
   final String eventId;
   final String leadId;
   final String email;
-  final String text;
+  final String mobile;
   final TextStyle? style;
 
   const TestdriveVerifyotp({
     super.key,
     required this.email,
-    required this.text,
     this.style,
     required this.eventId,
     required this.leadId,
+    required this.mobile,
   });
 
   @override
@@ -140,15 +140,59 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     );
   }
 
+  // Widget _buildEmailInfo() {
+  //   return Padding(
+
+  //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+  //     child: Text(
+  //       textAlign: TextAlign.center,
+  //       'Enter OTP sent to ${widget.email} to continue',
+  //       style: AppFont.mediumText14(context),
+  //     ),
+  //   );
+  // }
   Widget _buildEmailInfo() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      child: Text(
-        textAlign: TextAlign.center,
-        'Enter OTP sent to ${widget.email} to continue',
-        style: AppFont.mediumText14(context),
-      ),
+    bool isEmailHidden = true;
+    String mobile = widget.mobile;
+    String emailPart = widget.email;
+
+    String hiddenMobile = _hideMobileNumber(mobile);
+    String hiddenEmail = _hideEmail(emailPart);
+
+    String message =
+        'Enter OTP sent to $hiddenMobile ${isEmailHidden ? hiddenEmail : emailPart} to continue';
+
+    return Text(
+      message,
+      textAlign: TextAlign.center,
+      style: AppFont.mediumText14(context),
     );
+  }
+
+// Helper to hide mobile number
+  String _hideMobileNumber(String mobile) {
+    if (mobile.length >= 10) {
+      // Example: 98765XXXXX
+      return mobile.substring(0, 2) + '*****' + mobile.substring(7);
+    } else {
+      return mobile; // fallback
+    }
+  }
+
+// Helper to hide email
+  String _hideEmail(String email) {
+    if (!email.contains('@')) return email; // invalid email fallback
+
+    List<String> parts = email.split('@');
+    String namePart = parts[0];
+    String domainPart = parts[1];
+
+    if (namePart.length <= 2) {
+      return '***@$domainPart'; // too short, hide full
+    } else {
+      String visible = namePart.substring(0, 2); // first 2 letters
+      return '$visible***@$domainPart';
+    }
   }
 
   Widget _buildOTPFields() {
