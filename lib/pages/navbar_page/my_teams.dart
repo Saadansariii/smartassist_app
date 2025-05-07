@@ -987,17 +987,17 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Individual Performance Metrics Display
   Widget _buildIndividualPerformanceMetrics(BuildContext context) {
-    final stats = _selectedUserData['stats'] ?? {};
+    final stats = _selectedUserData['totalPerformance'] ?? {};
     final metrics = [
-      {'label': 'Enquiries', 'key': 'Enquiries'},
-      {'label': 'Test Drive\nDone', 'key': 'TestDrives'},
+      {'label': 'Enquiries', 'key': 'enquiries'},
+      {'label': 'Test Drive\nDone', 'key': 'testDrives'},
       {'label': 'Order Taken', 'key': 'orders'},
       {'label': 'Cancellations', 'key': 'cancellation'},
       {
         'label': 'Net Orders',
-        'value': (stats['Orders'] ?? 0) - (stats['Cancellation'] ?? 0)
+        'value': (stats['Orders'] ?? 0) - (stats['cancellation'] ?? 0)
       },
-      {'label': 'Retails', 'key': 'Retail'},
+      {'label': 'Retails', 'key': 'retail'},
     ];
 
     List<Widget> rows = [];
