@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TimelineUpcoming extends StatelessWidget {
   final List<Map<String, dynamic>> tasks;
@@ -43,8 +44,19 @@ class TimelineUpcoming extends StatelessWidget {
         ...List.generate(reversedTasks.length, (index) {
           final task = reversedTasks[index];
           String remarks = task['remarks'] ?? 'No Subject';
+          String mobile = task['mobile'] ?? 'No Subject';
           String dueDate = _formatDate(task['due_date'] ?? 'N/A');
           String subject = task['subject'] ?? 'No Subject';
+
+          IconData icon;
+
+          if (subject == 'Call') {
+            icon = Icons.phone;
+          } else if (subject == 'Send SMS') {
+            icon = Icons.mail_rounded;
+          } else {
+            icon = Icons.phone; // default fallback icon
+          }
 
           return TimelineTile(
             alignment: TimelineAlign.manual,
@@ -53,14 +65,55 @@ class TimelineUpcoming extends StatelessWidget {
             isLast: index == 0,
             beforeLineStyle: const LineStyle(color: Colors.transparent),
             afterLineStyle: const LineStyle(color: Colors.transparent),
+            // indicatorStyle: IndicatorStyle(
+            //   padding: const EdgeInsets.only(left: 5),
+            //   width: 30,
+            //   height: 30,
+            //   color: AppColors.sideGreen,
+            //   iconStyle: IconStyle(
+            //     iconData: icon,
+            //     color: Colors.white,
+            //   ),
+            // ),
             indicatorStyle: IndicatorStyle(
-              padding: const EdgeInsets.only(left: 5),
               width: 30,
               height: 30,
-              color: AppColors.sideGreen,
-              iconStyle: IconStyle(
-                iconData: Icons.call,
-                color: Colors.white,
+              padding: const EdgeInsets.only(left: 5),
+              drawGap: true,
+              indicator: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.sideGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  style: const ButtonStyle(
+                    // padding:
+                    minimumSize: WidgetStatePropertyAll(Size.zero),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                  ),
+                  icon: Icon(
+                    size: 20,
+                    icon,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (subject == 'Call') {
+                      // Example: Launch phone dialer (you'll need url_launcher package)
+                      launchUrl(Uri.parse('tel:$mobile'));
+                    } else if (subject == 'Send SMS') {
+                      // Example: Open SMS
+                      launchUrl(Uri.parse('sms:$mobile'));
+                    } else {
+                      // fallback action
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('No action defined for this subject')),
+                      );
+                    }
+                  },
+                ),
               ),
             ),
             startChild: Container(

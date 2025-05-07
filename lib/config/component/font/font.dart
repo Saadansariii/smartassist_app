@@ -322,7 +322,7 @@ class AppFont {
   static TextStyle mediumText14bluebold(
     BuildContext context, {
     double fontSize = 20,
-    Color color = AppColors.colorsBlue,
+    Color color = Colors.blue,
   }) {
     return GoogleFonts.poppins(
       fontSize: scaleFont(context, fontSize),

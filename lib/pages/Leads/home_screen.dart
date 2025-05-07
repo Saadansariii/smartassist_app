@@ -394,10 +394,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             Row(
                               children: [
                                 Container(
+                                  width: 40,
+                                  height: 40,
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 5, horizontal: 12),
+                                      vertical: 0, horizontal: 0),
                                   margin: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
+                                      // shape: BoxShape.circle,
                                       color: AppColors.backgroundLightGrey,
                                       borderRadius: BorderRadius.circular(30)),
                                   child: TextButton(
@@ -418,7 +421,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                     child: Text(
                                       name.isNotEmpty ? name : 'NA',
-                                      style: AppFont.smallText(context),
+                                      style:
+                                          AppFont.mediumText14bluebold(context),
                                     ),
                                   ),
                                   // child: IconButton(

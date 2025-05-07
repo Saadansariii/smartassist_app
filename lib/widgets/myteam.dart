@@ -455,10 +455,10 @@ class _MyteamState extends State<Myteam> {
                   "${(stats['Orders'] ?? 0) - (stats['Cancellation'] ?? 0)}", // Net orders calculation
                   "Net Order",
                   Colors.blue,
-                  isSelected: _selectedMetric == "Orders",
+                  isSelected: _selectedMetric == "Net Order",
                   onTap: () {
                     setState(() {
-                      _selectedMetric = "Orders";
+                      _selectedMetric = "Net Order";
                     });
                   },
                 ),
@@ -536,29 +536,32 @@ class _MyteamState extends State<Myteam> {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-          child: Text(
-            "No Activities",
-            style: AppFont.mediumText14(context),
-          ),
-        ),
+    return Container(
+      margin: const EdgeInsets.all(10), 
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+          //   child: Text(
+          //     "No Activities",
+          //     style: AppFont.mediumText14(context),
+          //   ),
+          // ),
 
-        // Upcoming Followups
-        if (_upcomingFollowups.isNotEmpty)
-          _buildActivitySection(context, _upcomingFollowups),
+          // Upcoming Followups
+          if (_upcomingFollowups.isNotEmpty)
+            _buildActivitySection(context, _upcomingFollowups),
 
-        // Upcoming Appointments
-        if (_upcomingAppointments.isNotEmpty)
-          _buildActivitySection(context, _upcomingAppointments),
+          // Upcoming Appointments
+          if (_upcomingAppointments.isNotEmpty)
+            _buildActivitySection(context, _upcomingAppointments),
 
-        // Upcoming Test Drives
-        if (_upcomingTestDrives.isNotEmpty)
-          _buildActivitySection(context, _upcomingTestDrives),
-      ],
+          // Upcoming Test Drives
+          if (_upcomingTestDrives.isNotEmpty)
+            _buildActivitySection(context, _upcomingTestDrives),
+        ],
+      ),
     );
   }
 
