@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,9 +26,13 @@ class _MyTeamsState extends State<MyTeams> {
   int _metricIndex = 0; // Selected metric for comparison
   int _selectedProfileIndex = 0; // Default to 'All' profile
   String _selectedUserId = '';
-  String _selectedCheckboxIds = '';
+  // String _selectedCheckboxIds = '';
   String _selectedType = 'All';
   Map<String, dynamic> _individualPerformanceData = {};
+
+  Set<String> _selectedCheckboxIds = {}; //remove this
+  List<Map<String, dynamic>> selectedItems = [];
+  Set<String> selectedUserIds = {};
 
   bool isHideActivities = false;
   bool isHide = false;
@@ -77,6 +82,18 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
+  void _onCheckboxToggle(String userId) {
+    setState(() {
+      if (_selectedCheckboxIds.contains(userId)) {
+        _selectedCheckboxIds.remove(userId);
+      } else {
+        _selectedCheckboxIds.add(userId);
+      }
+    });
+
+    _fetchTeamDetails(); // Fetch new comparison each time
+  }
+
   // Fetch team details using the new API endpoint
   Future<void> _fetchTeamDetails() async {
     try {
@@ -108,14 +125,20 @@ class _MyTeamsState extends State<MyTeams> {
           'enquiries',
           'testdrives',
           'orders',
-          'orders',
           'cancellation',
+          'netOrders',
           'retail'
         ];
         final summaryParam = summaryMetrics[_metricIndex];
         queryParams['user_id'] = _selectedUserId;
-        queryParams['userIds'] = _selectedCheckboxIds;
+        // queryParams['userIds'] = _selectedCheckboxIds;
+        queryParams['userIds'] = _selectedCheckboxIds.join(',');
+
         queryParams['summary'] = summaryParam;
+      }
+
+      if (_selectedCheckboxIds.isNotEmpty) {
+        queryParams['userIds'] = _selectedCheckboxIds.join(',');
       }
 
       final baseUri = Uri.parse(
@@ -206,117 +229,6 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  // Future<void> _fetchTeamDetails() async {
-  //   try {
-  //     final token = await Storage.getToken();
-
-  //     // Build query parameters based on current filters
-  //     String? periodParam;
-  //     switch (_periodIndex) {
-  //       case 1:
-  //         per  iodParam = 'MTD';
-  //         break;
-  //       case 2:
-  //         periodParam = 'QTD';
-  //         break;
-  //       case 3:
-  //         periodParam = 'YTD';
-  //         break;
-  //       default:
-  //         periodParam = null;
-  //     }
-
-  //     final summaryMetrics = [
-  //       'enquiries',
-  //       'testdrives',
-  //       'orders',
-  //       'orders',
-  //       'cancellation',
-  //       'retail'
-  //     ];
-  //     final summaryParam = summaryMetrics[_metricIndex];
-
-  //     // Build the URL with query parameters
-  //     final queryParams = {
-  //       // '': periodParam,
-  //       if (periodParam != null) 'type': periodParam,
-  //       if (_selectedUserId.isNotEmpty) 'user_id': _selectedUserId,
-  //       'summary': summaryParam,
-  //     };
-
-  //     Uri uri;
-
-  //     final baseUri = Uri.parse(
-  //       'https://api.smartassistapp.in/api/users/sm/dashboard/team-dashboard',
-  //     );
-
-  //     if (queryParams.isEmpty) {
-  //       uri = baseUri;
-  //     } else {
-  //       uri = baseUri.replace(queryParameters: queryParams);
-  //     }
-
-  //     print('📤 Fetching from: $uri');
-
-  //     final response = await http.get(uri, headers: {
-  //       'Authorization': 'Bearer $token',
-  //       'Content-Type': 'application/json',
-  //     });
-
-  //     print('📥 Status Code: ${response.statusCode}');
-  //     print('📥 Response: ${response.body}');
-
-  //     if (response.statusCode == 200) {
-  //       final data = json.decode(response.body);
-  //       print(response.body);
-  //       print(uri);
-
-  //       setState(() {
-  //         _teamData = data['data'] ?? {};
-
-  //         // ✅ Only reset if 'allMember' exists and is not empty
-  //         if (_teamData.containsKey('allMember') &&
-  //             _teamData['allMember'].isNotEmpty) {
-  //           _teamMembers = [];
-
-  //           for (var member in _teamData['allMember']) {
-  //             _teamMembers.add({
-  //               'fname': member['fname'] ?? '',
-  //               'lname': member['lname'] ?? '',
-  //               'user_id': member['user_id'] ?? '',
-  //               'team_name': '',
-  //             });
-  //           }
-  //         }
-
-  //         // Set the selected user data
-  //         if (_selectedProfileIndex == 0) {
-  //           // All users data
-  //           _selectedUserData = _teamData['summary'] ?? {};
-  //         } else if (_selectedProfileIndex < _teamMembers.length) {
-  //           // Specific user data
-  //           final selectedMember = _teamMembers[_selectedProfileIndex];
-  //           _selectedUserData = selectedMember;
-
-  //           // Extract upcoming activities for the selected user
-  //           final stats = selectedMember['stats'] ?? {};
-  //           _upcomingFollowups = List<Map<String, dynamic>>.from(
-  //               stats['UpComingFollowups'] ?? []);
-  //           _upcomingAppointments = List<Map<String, dynamic>>.from(
-  //               stats['UpComingAppointment'] ?? []);
-  //           _upcomingTestDrives = List<Map<String, dynamic>>.from(
-  //               stats['UpComingTestDrive'] ?? []);
-  //         }
-  //       });
-  //     } else {
-  //       throw Exception('Failed to fetch team details: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching team details: $e');
-  //     // rethrow;
-  //   }
-  // }
-
   // Select a different user profile
   void _selectUserProfile(int index, String userId) {
     setState(() {
@@ -339,7 +251,7 @@ class _MyTeamsState extends State<MyTeams> {
       case 2:
         return stats['Orders'] ?? 0;
       case 3:
-        return stats['Orders'] ?? 0; // New Orders (using same field)
+        return stats['Cancellation'] ?? 0; // New Orders (using same field)
       case 4:
         return stats['Cancellation'] ?? 0;
       case 5:
@@ -360,55 +272,62 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Process team data for team comparison display
   List<Map<String, dynamic>> _processTeamComparisonData() {
-    List<Map<String, dynamic>> result = [];
-
-    if (_teamData.containsKey('teams')) {
-      for (var team in _teamData['teams']) {
-        // Add team header
-        final teamMembers =
-            List<Map<String, dynamic>>.from(team['members'] ?? []);
-        result.add({
-          'name': team['team_name'] ?? 'Unnamed Team',
-          'count': _calculateTeamTotal(teamMembers),
-          'type': 'team'
-        });
-
-        // Add team members
-        for (var member in teamMembers) {
-          result.add({
-            'name': '${member['fname']} ${member['lname']}',
-            'count': _getMetricValue(member),
-            'type': 'member'
-          });
-        }
-      }
+    if (!(_teamData.containsKey('teamComparsion') &&
+        _teamData['teamComparsion'] is List)) {
+      return [];
     }
 
-    return result;
+    return List<Map<String, dynamic>>.from(_teamData['teamComparsion']);
   }
 
   // Find maximum value for scaling in comparison chart
   int _findMaxValue(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) return 10;
+
     int max = 0;
+    // Get the current metric based on _metricIndex
+    final metrics = [
+      'enquiries',
+      'testDrives',
+      'orders',
+      'cancellation',
+      'netOrders',
+      'retail'
+    ];
+    final metric =
+        _metricIndex < metrics.length ? metrics[_metricIndex] : 'enquiries';
+
     for (var item in items) {
-      final count = item['count'] ?? 0;
-      if (count > max) {
-        max = count;
+      final value = item[metric] is num
+          ? (item[metric] as num).toInt()
+          : int.tryParse(item[metric]?.toString() ?? '0') ?? 0;
+
+      if (value > max) {
+        max = value;
       }
     }
-    return max > 0 ? max : 1; // Avoid division by zero
+
+    return max > 0 ? max : 10; // Ensure we have a reasonable scale
   }
 
-  // Get gradient colors for progress bars
-  List<Color> _getGradientForIndex(int index) {
-    final gradients = [
-      [const Color(0xFF4CAF50), const Color(0xFF8BC34A)], // Green
-      [const Color(0xFF2196F3), const Color(0xFF03A9F4)], // Blue
-      [const Color(0xFFFFEB3B), const Color(0xFFFFC107)], // Yellow
-      [const Color(0xFFFF9800), const Color(0xFFFF5722)], // Orange
-      [const Color(0xFFE91E63), const Color(0xFFF44336)], // Red
-    ];
-    return gradients[index % gradients.length];
+  // Get colors for each metric type
+  Color _getColorForMetric(int metricIndex) {
+    switch (metricIndex) {
+      case 0: // Enquiries
+        return Colors.green;
+      case 1: // Test Drives
+        return Colors.blue;
+      case 2: // Orders
+        return Color(0xFFFFBE55); // Gold/Yellow
+      case 3: // Cancellation
+        return Colors.red;
+      case 4: // Net Orders
+        return Colors.purple;
+      case 5: // Retail
+        return Colors.teal;
+      default:
+        return Colors.green;
+    }
   }
 
   @override
@@ -1232,16 +1151,40 @@ class _MyTeamsState extends State<MyTeams> {
   //   );
   // }
 
-  // Team Comparison Chart
+// Team Comparison Chart
   Widget _buildTeamComparisonChart(BuildContext context) {
-    final displayItems = _processTeamComparisonData();
-    final maxValue = _findMaxValue(displayItems);
+    // List of available metrics
+    final metrics = [
+      'enquiries',
+      'testDrives',
+      'orders',
+      'cancellation',
+      'netOrders',
+      'retail'
+    ];
 
-    return Padding(
-      padding: const EdgeInsets.all(0),
+    // Get current metric based on index
+    final currentMetric =
+        _metricIndex < metrics.length ? metrics[_metricIndex] : 'enquiries';
+
+    // Process data
+    final teamData = _processTeamComparisonData();
+    final maxValue = _findMaxValue(teamData);
+
+    // Width calculation for the bars (adjust as needed)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final barMaxWidth = screenWidth * 0.55;
+
+    // Current color for the selected metric
+    final metricColor = _getColorForMetric(_metricIndex);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_selectedType != 'dynamic') ...[
+            // Title with dropdown toggle
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 0),
               decoration: BoxDecoration(
@@ -1256,7 +1199,7 @@ class _MyTeamsState extends State<MyTeams> {
                       Container(
                         margin: const EdgeInsets.only(left: 10, bottom: 0),
                         child: Text(
-                          'Team Comparisons',
+                          'Team Comparison',
                           style: AppFont.dropDowmLabel(context),
                         ),
                       ),
@@ -1280,94 +1223,132 @@ class _MyTeamsState extends State<MyTeams> {
               ),
             ),
             if (!isHide) ...[
-              Container(
-                decoration: BoxDecoration(
+              if (teamData.isEmpty)
+                const Center(
+                  child: Text(
+                    'No team data available',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              else
+                Container(
+                  decoration: BoxDecoration(
                     color: AppColors.backgroundLightGrey,
-                    borderRadius: BorderRadius.circular(10)),
-                margin: const EdgeInsets.only(top: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Show "Target" label
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    children: teamData.map((item) {
+                      final value = item[currentMetric] is num
+                          ? (item[currentMetric] as num).toInt()
+                          : int.tryParse(
+                                  item[currentMetric]?.toString() ?? '0') ??
+                              0;
 
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8.0, bottom: 16.0),
-                      child: Text(
-                        "Target",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
+                      final double barWidth;
+                      if (maxValue > 0 && value > 0) {
+                        barWidth = (value / maxValue) * barMaxWidth;
+                      } else {
+                        barWidth = 0;
+                      }
 
-                    // Display all items with progress bars
-                    Container(
-                      height: 300,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: displayItems.length,
-                        itemBuilder: (context, index) {
-                          final item = displayItems[index];
-                          final count = item['count'] ?? 0;
-                          final percentage =
-                              maxValue > 0 ? count / maxValue : 0.0;
-                          final isTeam = item['type'] == 'team';
+                      final bool isSelected =
+                          selectedUserIds.contains(item['user_id']);
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Row(
-                              children: [
-                                // Name with proper indentation for team members
-                                SizedBox(
-                                  width: 100,
-                                  child: Text(
-                                    item['name'] ?? '',
-                                    style: TextStyle(
-                                      fontWeight: isTeam
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      fontSize: 14,
-                                      color: Colors.black87,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 5, horizontal: 8),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: isSelected,
+                              onChanged: (bool? val) {
+                                setState(() {
+                                  final id = item['user_id'];
 
-                                // Progress bar
-                                Expanded(
-                                  child: LinearPercentIndicator(
-                                    percent: percentage.clamp(0.0, 1.0),
-                                    lineHeight: 20.0,
-                                    barRadius: const Radius.circular(10),
-                                    backgroundColor: Colors.grey[200],
-                                    linearGradient: LinearGradient(
-                                      colors: _getGradientForIndex(index),
-                                    ),
-                                    padding: const EdgeInsets.only(right: 10),
-                                  ),
-                                ),
+                                  if (val == true) {
+                                    if (selectedUserIds.length < 2) {
+                                      selectedUserIds.add(id);
+                                      if (selectedUserIds.length == 2) {
+                                        _selectedCheckboxIds =
+                                            Set<String>.from(selectedUserIds);
+                                        _fetchTeamDetails(); // Call API immediately when 2 selected
+                                      }
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "You can only compare 2 users at a time"),
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    selectedUserIds.remove(id);
+                                    _selectedCheckboxIds =
+                                        Set<String>.from(selectedUserIds);
 
-                                // Count value
-                                Text(
-                                  '$count',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                                    if (_selectedCheckboxIds.length == 2) {
+                                      _fetchTeamDetails(); // Also re-fetch if user deselects and still 2 remain
+                                    } else {
+                                      // You may want to clear previous comparison data if less than 2
+                                      _teamData.clear();
+                                    }
+                                  }
+                                });
+                              },
+                              visualDensity: VisualDensity.compact,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                item['name'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    child: Text(
+                                      value.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.fontColor,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    height: 20,
+                                    width: barWidth,
+                                    decoration: BoxDecoration(
+                                      color: metricColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
             ],
-          ],
+          ]
         ],
       ),
     );

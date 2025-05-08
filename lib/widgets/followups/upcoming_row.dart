@@ -211,7 +211,39 @@ class UpcomingFollowupItem extends StatefulWidget {
   State<UpcomingFollowupItem> createState() => _overdueeFollowupsItemState();
 }
 
-class _overdueeFollowupsItemState extends State<UpcomingFollowupItem> {
+class _overdueeFollowupsItemState extends State<UpcomingFollowupItem>
+    with WidgetsBindingObserver {
+  bool _wasCallingPhone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register this class as an observer to track app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remove observer when widget is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // This gets called when app lifecycle state changes
+    if (state == AppLifecycleState.resumed && _wasCallingPhone) {
+      // App is resumed and we marked that user was making a call
+      _wasCallingPhone = false;
+      // Show the mail action dialog after a short delay to ensure app is fully resumed
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _mailAction();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -513,12 +545,18 @@ class _overdueeFollowupsItemState extends State<UpcomingFollowupItem> {
 
     if (widget.mobile.isNotEmpty) {
       try {
+        // Set flag that we're making a phone call
+        _wasCallingPhone = true;
+
         // Simple approach without canLaunchUrl check
         final phoneNumber = 'tel:${widget.mobile}';
         launchUrl(Uri.parse(phoneNumber),
             mode: LaunchMode.externalNonBrowserApplication);
       } catch (e) {
         print('Error launching phone app: $e');
+
+        // Reset flag if there was an error
+        _wasCallingPhone = false;
         // Show error message to user
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

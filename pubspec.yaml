@@ -73,6 +73,8 @@ dependencies:
   screenshot: ^3.0.0
   image: ^4.5.4
   shimmer: ^3.0.0
+  fl_chart: ^0.71.0
+  dropdown_button2: ^2.3.9
 
 
 dev_dependencies:

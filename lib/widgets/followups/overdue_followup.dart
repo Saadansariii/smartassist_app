@@ -9,8 +9,8 @@ import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followu
 import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:smart_assist/utils/storage.dart'; 
-import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart'; 
+import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OverdueFollowup extends StatefulWidget {
@@ -212,7 +212,39 @@ class overdueeFollowupsItem extends StatefulWidget {
   State<overdueeFollowupsItem> createState() => _overdueeFollowupsItemState();
 }
 
-class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
+class _overdueeFollowupsItemState extends State<overdueeFollowupsItem>
+    with WidgetsBindingObserver {
+  bool _wasCallingPhone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register this class as an observer to track app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remove observer when widget is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // This gets called when app lifecycle state changes
+    if (state == AppLifecycleState.resumed && _wasCallingPhone) {
+      // App is resumed and we marked that user was making a call
+      _wasCallingPhone = false;
+      // Show the mail action dialog after a short delay to ensure app is fully resumed
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _mailAction();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -510,6 +542,8 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
   void _phoneAction() {
     print("Call action triggered for ${widget.mobile}");
 
+// Set flag that we're making a phone call
+    _wasCallingPhone = true;
     // String mobile = item['mobile'] ?? '';
 
     if (widget.mobile.isNotEmpty) {
@@ -520,17 +554,19 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
             mode: LaunchMode.externalNonBrowserApplication);
       } catch (e) {
         print('Error launching phone app: $e');
+        // Reset flag if there was an error
+        _wasCallingPhone = false;
         // Show error message to user
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not launch phone dialer')),
+            const SnackBar(content: Text('Could not launch phone dialer')),
           );
         }
       }
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No phone number available')),
+          const SnackBar(content: Text('No phone number available')),
         );
       }
     }
