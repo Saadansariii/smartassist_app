@@ -264,7 +264,9 @@ class _overdueeFollowupsItemState extends State<UpcomingFollowupItem>
           ReusableSlidableAction(
             onPressed: widget.onToggleFavorite, // handle fav toggle
             backgroundColor: Colors.amber,
-            icon: widget.isFavorite ? Icons.star : Icons.star_border,
+            icon: widget.isFavorite
+                ? Icons.star_rounded
+                : Icons.star_border_rounded,
             foregroundColor: Colors.white,
           ),
         ],
@@ -278,19 +280,21 @@ class _overdueeFollowupsItemState extends State<UpcomingFollowupItem>
               onPressed: _phoneAction,
               backgroundColor: Colors.blue,
               icon: Icons.phone,
+              foregroundColor: Colors.white,
             ),
           if (widget.subject == 'Send SMS')
             ReusableSlidableAction(
               onPressed: _messageAction,
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.blueGrey,
               icon: Icons.message_rounded,
+              foregroundColor: Colors.white,
             ),
           // Edit is always shown
           ReusableSlidableAction(
             onPressed: _mailAction,
             backgroundColor: const Color.fromARGB(255, 231, 225, 225),
             icon: Icons.edit,
-            foregroundColor: Colors.red,
+            foregroundColor: Colors.white,
           ),
         ],
       ),
@@ -601,6 +605,7 @@ class ReusableSlidableAction extends StatelessWidget {
   final Color backgroundColor;
   final IconData icon;
   final Color? foregroundColor;
+  final double iconSize;
 
   const ReusableSlidableAction({
     Key? key,
@@ -608,16 +613,27 @@ class ReusableSlidableAction extends StatelessWidget {
     required this.backgroundColor,
     required this.icon,
     this.foregroundColor,
+    this.iconSize = 40.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SlidableAction(
+    // return SlidableAction(
+    //   onPressed: (context) => onPressed(),
+    //   backgroundColor: backgroundColor,
+    //   foregroundColor: foregroundColor ?? Colors.white,
+    //   icon: icon,
+    //   borderRadius: BorderRadius.circular(0),
+    // );
+
+    return CustomSlidableAction(
       onPressed: (context) => onPressed(),
       backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor ?? Colors.white,
-      icon: icon,
-      borderRadius: BorderRadius.circular(8),
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: foregroundColor ?? Colors.white,
+      ),
     );
   }
 }
