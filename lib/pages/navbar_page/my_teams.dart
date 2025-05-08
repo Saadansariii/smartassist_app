@@ -25,6 +25,7 @@ class _MyTeamsState extends State<MyTeams> {
   int _metricIndex = 0; // Selected metric for comparison
   int _selectedProfileIndex = 0; // Default to 'All' profile
   String _selectedUserId = '';
+  String _selectedCheckboxIds = '';
   String _selectedType = 'All';
   Map<String, dynamic> _individualPerformanceData = {};
 
@@ -113,6 +114,7 @@ class _MyTeamsState extends State<MyTeams> {
         ];
         final summaryParam = summaryMetrics[_metricIndex];
         queryParams['user_id'] = _selectedUserId;
+        queryParams['userIds'] = _selectedCheckboxIds;
         queryParams['summary'] = summaryParam;
       }
 
@@ -167,15 +169,34 @@ class _MyTeamsState extends State<MyTeams> {
             _selectedUserData = selectedMember;
 
             final selectedUserPerformance =
-                selectedMember['selectedUserPerformance'] ?? {};
+                _teamData['selectedUserPerformance'] ?? {};
 
             _upcomingFollowups = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['UpComingFollowups'] ?? []);
+                selectedUserPerformance['upComingFollowups'] ?? []);
             _upcomingAppointments = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['UpComingAppointment'] ?? []);
+                selectedUserPerformance['upComingAppointment'] ?? []);
             _upcomingTestDrives = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['UpComingTestDrive'] ?? []);
+                selectedUserPerformance['upComingTestDrive'] ?? []);
           }
+
+          // if (_selectedProfileIndex == 0) {
+          //   _selectedUserData = _teamData['summary'] ?? {};
+          //   _selectedUserData['totalPerformance'] =
+          //       _teamData['totalPerformance'] ?? {};
+          // } else if (_selectedProfileIndex < _teamMembers.length) {
+          //   final selectedMember = _teamMembers[_selectedProfileIndex - 1];
+          //   _selectedUserData = selectedMember;
+
+          //   final selectedUserPerformance =
+          //       selectedMember['selectedUserPerformance'] ?? {};
+
+          //   _upcomingFollowups = List<Map<String, dynamic>>.from(
+          //       selectedUserPerformance['UpComingFollowups'] ?? []);
+          //   _upcomingAppointments = List<Map<String, dynamic>>.from(
+          //       selectedUserPerformance['UpComingAppointment'] ?? []);
+          //   _upcomingTestDrives = List<Map<String, dynamic>>.from(
+          //       selectedUserPerformance['UpComingTestDrive'] ?? []);
+          // }
         });
       } else {
         throw Exception('Failed to fetch team details: ${response.statusCode}');
@@ -193,7 +214,7 @@ class _MyTeamsState extends State<MyTeams> {
   //     String? periodParam;
   //     switch (_periodIndex) {
   //       case 1:
-  //         periodParam = 'MTD';
+  //         per  iodParam = 'MTD';
   //         break;
   //       case 2:
   //         periodParam = 'QTD';
@@ -759,6 +780,7 @@ class _MyTeamsState extends State<MyTeams> {
             setState(() {
               _selectedProfileIndex = index;
               _selectedUserId = userId; // set selected userId
+              _selectedType = 'dynamic';
             });
             await _fetchTeamDetails(); // fetch updated data
           },
@@ -809,103 +831,103 @@ class _MyTeamsState extends State<MyTeams> {
                 _buildIndividualPerformanceMetrics(context),
 
                 // for upcoming
-                if (_selectedType != 'All') ...[
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 0),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLightGrey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              margin:
-                                  const EdgeInsets.only(left: 10, bottom: 0),
-                              child: Text(
-                                'Activities',
-                                style: AppFont.dropDowmLabel(context),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  isHideActivities = !isHideActivities;
-                                });
-                              },
-                              icon: Icon(
-                                isHideActivities
-                                    ? Icons.keyboard_arrow_down_rounded
-                                    : Icons.keyboard_arrow_up_rounded,
-                                size: 35,
-                                color: AppColors.iconGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isHideActivities) ...[
-                    Container(
-                        decoration: BoxDecoration(
-                            color: AppColors.backgroundLightGrey,
-                            borderRadius: BorderRadius.circular(10)),
-                        margin: const EdgeInsets.only(top: 10),
-                        child: _buildUpcomingActivities(context)),
-                  ],
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 0),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLightGrey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              margin:
-                                  const EdgeInsets.only(left: 10, bottom: 0),
-                              child: Text(
-                                'Call Analysis',
-                                style: AppFont.dropDowmLabel(context),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  isHideCalls = !isHideCalls;
-                                });
-                              },
-                              icon: Icon(
-                                isHideCalls
-                                    ? Icons.keyboard_arrow_down_rounded
-                                    : Icons.keyboard_arrow_up_rounded,
-                                size: 35,
-                                color: AppColors.iconGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // if (!isHideCalls) ...[
-                  //   Container(
-                  //       decoration: BoxDecoration(
-                  //           color: AppColors.backgroundLightGrey,
-                  //           borderRadius: BorderRadius.circular(10)),
-                  //       margin: const EdgeInsets.only(top: 10),
-                  //       child: _callLogsWidget(context)),
-                  // ],
-                ],
+                // if (_selectedType != 'All') ...[
+                //   Container(
+                //     margin: const EdgeInsets.symmetric(horizontal: 0),
+                //     decoration: BoxDecoration(
+                //       color: AppColors.backgroundLightGrey,
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //     child: Column(
+                //       children: [
+                //         Row(
+                //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //           children: [
+                //             Container(
+                //               margin:
+                //                   const EdgeInsets.only(left: 10, bottom: 0),
+                //               child: Text(
+                //                 'Activities',
+                //                 style: AppFont.dropDowmLabel(context),
+                //               ),
+                //             ),
+                //             IconButton(
+                //               onPressed: () {
+                //                 setState(() {
+                //                   isHideActivities = !isHideActivities;
+                //                 });
+                //               },
+                //               icon: Icon(
+                //                 isHideActivities
+                //                     ? Icons.keyboard_arrow_down_rounded
+                //                     : Icons.keyboard_arrow_up_rounded,
+                //                 size: 35,
+                //                 color: AppColors.iconGrey,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                //   if (!isHideActivities) ...[
+                //     Container(
+                //         decoration: BoxDecoration(
+                //             color: AppColors.backgroundLightGrey,
+                //             borderRadius: BorderRadius.circular(10)),
+                //         margin: const EdgeInsets.only(top: 10),
+                //         child: _buildUpcomingActivities(context)),
+                //   ],
+                //   const SizedBox(
+                //     height: 10,
+                //   ),
+                //   Container(
+                //     margin: const EdgeInsets.symmetric(horizontal: 0),
+                //     decoration: BoxDecoration(
+                //       color: AppColors.backgroundLightGrey,
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //     child: Column(
+                //       children: [
+                //         Row(
+                //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //           children: [
+                //             Container(
+                //               margin:
+                //                   const EdgeInsets.only(left: 10, bottom: 0),
+                //               child: Text(
+                //                 'Call Analysis',
+                //                 style: AppFont.dropDowmLabel(context),
+                //               ),
+                //             ),
+                //             IconButton(
+                //               onPressed: () {
+                //                 setState(() {
+                //                   isHideCalls = !isHideCalls;
+                //                 });
+                //               },
+                //               icon: Icon(
+                //                 isHideCalls
+                //                     ? Icons.keyboard_arrow_down_rounded
+                //                     : Icons.keyboard_arrow_up_rounded,
+                //                 size: 35,
+                //                 color: AppColors.iconGrey,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                //   // if (!isHideCalls) ...[
+                //   //   Container(
+                //   //       decoration: BoxDecoration(
+                //   //           color: AppColors.backgroundLightGrey,
+                //   //           borderRadius: BorderRadius.circular(10)),
+                //   //       margin: const EdgeInsets.only(top: 10),
+                //   //       child: _callLogsWidget(context)),
+                //   // ],
+                // ],
               ],
             ),
           ),
@@ -925,7 +947,7 @@ class _MyTeamsState extends State<MyTeams> {
                       Container(
                         margin: const EdgeInsets.only(left: 10, bottom: 0),
                         child: Text(
-                          'Activities',
+                          'Activitiess',
                           style: AppFont.dropDowmLabel(context),
                         ),
                       ),
@@ -1234,7 +1256,7 @@ class _MyTeamsState extends State<MyTeams> {
                       Container(
                         margin: const EdgeInsets.only(left: 10, bottom: 0),
                         child: Text(
-                          'Team Comparison',
+                          'Team Comparisons',
                           style: AppFont.dropDowmLabel(context),
                         ),
                       ),
@@ -1409,7 +1431,10 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Upcoming Activities Section
   Widget _buildUpcomingActivities(BuildContext context) {
-    if (_individualPerformanceData.isEmpty) {
+    if (_selectedProfileIndex == 0 ||
+        (_upcomingFollowups.isEmpty &&
+            _upcomingAppointments.isEmpty &&
+            _upcomingTestDrives.isEmpty)) {
       return const SizedBox.shrink();
     }
 
@@ -1417,19 +1442,13 @@ class _MyTeamsState extends State<MyTeams> {
       margin: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [ 
-
-          // Upcoming Followups
+        children: [
           if (_upcomingFollowups.isNotEmpty)
-            _buildActivitySection(context, _upcomingFollowups),
-
-          // Upcoming Appointments
+            _buildActivitySection(context, _upcomingFollowups, 'due_date'),
           if (_upcomingAppointments.isNotEmpty)
-            _buildActivitySection(context, _upcomingAppointments),
-
-          // Upcoming Test Drives
+            _buildActivitySection(context, _upcomingAppointments, 'start_date'),
           if (_upcomingTestDrives.isNotEmpty)
-            _buildActivitySection(context, _upcomingTestDrives),
+            _buildActivitySection(context, _upcomingTestDrives, 'start_date'),
         ],
       ),
     );
@@ -1472,10 +1491,21 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Activity section builder
   Widget _buildActivitySection(
-      BuildContext context, List<Map<String, dynamic>> activities) {
+    BuildContext context,
+    List<Map<String, dynamic>> activities,
+    // String label,
+    String dateKey,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [ 
+      children: [
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        //   child: Text(
+        //     label,
+        //     style: AppFont.mediumText14(context),
+        //   ),
+        // ),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1486,13 +1516,14 @@ class _MyTeamsState extends State<MyTeams> {
               padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
               child: Container(
                 decoration: BoxDecoration(
-                    color: AppColors.containerBg,
-                    borderRadius: BorderRadius.circular(5)),
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(5),
+                ),
                 child: _buildFollowupCard(
                   context,
                   name: activity['name'] ?? '',
                   subject: activity['subject'] ?? '',
-                  date: activity['due_date'] ?? activity['start_date'] ?? '',
+                  date: activity[dateKey] ?? '',
                   leadId: activity['lead_id'] ?? '',
                   vehicle: activity['PMI'] ?? '',
                 ),
@@ -1714,10 +1745,6 @@ class _MyTeamsState extends State<MyTeams> {
       ),
     );
   }
-}
-
-class _buildVerticalDivider {
-  _buildVerticalDivider(int i);
 }
 
 // class FlexibleButton extends StatelessWidget {
