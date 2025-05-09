@@ -380,15 +380,19 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
           periodParam = '?type=MTD';
       }
 
+      final uri = Uri.parse(
+          'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam');
+
       final response = await http.get(
-        Uri.parse(
-            'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam'),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
 
+      print(uri);
+      print(response.body);
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         // Check if the widget is still in the widget tree before calling setState
@@ -434,6 +438,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
   Map<String, dynamic> get currentAllIndiaRank {
     if (_dashboardData == null) {
       // Return empty data if API data isn't available yet
+
       return {};
     }
 
@@ -454,7 +459,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       'Enquiries',
       currentDealershipRank['enquiriesCount']?.toString() ?? '0',
       currentAllIndiaRank['enquiriesCount']?.toString() ?? '0',
-      currentDealershipRank['enquiriesRank']?.toString() ?? '0',
+      currentDealershipRank['enquiriesRank']?.toString() ?? '10',
       currentAllIndiaRank['enquiriesRank']?.toString() ?? '0',
     ]);
 

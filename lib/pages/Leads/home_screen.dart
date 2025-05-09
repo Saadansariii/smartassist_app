@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
@@ -79,11 +81,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     _loadDashboardAnalytics();
     _loadTeamRole();
-    print(_loadTeamRole());
-
-  
+    print(_loadTeamRole()); 
   }
 
+ 
   Future<void> _loadDashboardAnalytics() async {
     setState(() {
       isDashboardLoading = true;
@@ -615,7 +616,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               overdueAppointmentsCount:
                                   overdueAppointmentsCount,
                               overdueTestDrivesCount: overdueTestDrivesCount,
-                             
                             ),
                             const BottomBtnSecond(
                                 // MtdData: MtdData,

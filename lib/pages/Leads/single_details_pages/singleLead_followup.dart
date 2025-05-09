@@ -1457,7 +1457,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   Widget _buildFloatingActionButton(BuildContext context) {
     return Obx(
       () => GestureDetector(
-        onTap: fabController.toggleFab,
+        // onTap: fabController.toggleFab,
+        onTap: fabController.isFabDisabled.value
+            ? null // Disable onTap if FAB is disabled
+            : fabController.toggleFab,
         child: AnimatedContainer(
           padding: EdgeInsets.zero,
           margin: EdgeInsets.zero,
@@ -1468,9 +1471,11 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               width: 1,
-              color: fabController.isFabExpanded.value
-                  ? Colors.red
-                  : AppColors.colorsBlue,
+              color: fabController.isFabDisabled.value
+                  ? Colors.grey // Grey when disabled
+                  : (fabController.isFabExpanded.value
+                      ? Colors.red
+                      : AppColors.colorsBlue),
             ),
             // color: fabController.isFabExpanded.value
             //     ? Colors.red
@@ -1483,9 +1488,11 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               duration: const Duration(milliseconds: 300),
               child: Icon(
                 fabController.isFabExpanded.value ? Icons.close : Icons.add,
-                color: fabController.isFabExpanded.value
-                    ? Colors.red
-                    : AppColors.colorsBlue,
+                color: fabController.isFabDisabled.value
+                    ? Colors.grey // Grey when disabled
+                    : (fabController.isFabExpanded.value
+                        ? Colors.red
+                        : AppColors.colorsBlue),
                 size: 30,
               ),
             ),

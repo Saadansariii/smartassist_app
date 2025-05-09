@@ -158,6 +158,7 @@ import 'package:smart_assist/config/route/route_name.dart';
 import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
 import 'package:smart_assist/pages/login_steps/login_page.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
+import 'package:smart_assist/utils/biometric_prefrence.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
 import 'package:smart_assist/utils/token_manager.dart';
 
@@ -313,7 +314,8 @@ class _SplashScreenState extends State<SplashScreen>
     // Start the authentication check after animations complete
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        checkAuthStatus();
+        // checkAuthStatus();
+        _initializeApp();
       }
     });
   }
@@ -325,34 +327,87 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  // splash_screen.dart
+  Future<void> _initializeApp() async {
+    // Delay for splash screen display
+    await Future.delayed(const Duration(seconds: 2));
+    if (!_mounted) return;
+
+    checkAuthStatus();
+  }
+
   Future<void> checkAuthStatus() async {
     if (!_mounted) return;
 
     try {
+      // Debug preferences
+      await BiometricPreference.printAllPreferences();
+
       // Check if user has a valid token
       bool isTokenValid = await TokenManager.isTokenValid();
+      print("Token is valid: $isTokenValid");
 
       if (!_mounted) return;
 
       if (isTokenValid) {
-        // If token exists and is valid, go to biometric screen
-        Navigator.of(context)
-            .pushReplacementNamed(RoutesName.home); //replashce with biometric
+        // Token is valid, check biometric preference
+        bool useBiometric = await BiometricPreference.getUseBiometric();
+        print("Use biometric: $useBiometric");
+
+        if (!_mounted) return;
+
+        if (useBiometric) {
+          // If biometric is enabled, go to biometric screen
+          Get.offAllNamed(RoutesName.biometricScreen);
+        } else {
+          // If biometric is not enabled, go to home screen directly
+          Get.offAllNamed(RoutesName.home);
+        }
       } else {
         // If no token or invalid token, go to login screen
         await TokenManager.clearAuthData();
         if (!_mounted) return;
 
-        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+        Get.offAllNamed(RoutesName.login);
       }
     } catch (e) {
       // If there's any error in token checking, default to login
       if (_mounted) {
         print("Error checking auth status: $e");
-        Navigator.of(context).pushReplacementNamed(RoutesName.login);
+        Get.offAllNamed(RoutesName.login);
       }
     }
   }
+
+  // Future<void> checkAuthStatus() async {
+  //   if (!_mounted) return;
+
+  //   try {
+  //     // Check if user has a valid token
+  //     bool isTokenValid = await TokenManager.isTokenValid();
+
+  //     if (!_mounted) return;
+
+  //     if (isTokenValid) {
+  //       // If token exists and is valid, go to biometric screen
+  //       Navigator.of(context)
+  //           .pushReplacementNamed(RoutesName.home); //replashce with biometric
+  //     } else {
+  //       // If no token or invalid token, go to login screen
+  //       await TokenManager.clearAuthData();
+  //       if (!_mounted) return;
+
+  //       Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //     }
+  //   } catch (e) {
+  //     // If there's any error in token checking, default to login
+  //     if (_mounted) {
+  //       print("Error checking auth status: $e");
+  //       Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //     }
+  //   }
+  // }
+
   // Future<void> checkAuthentication() async {
   //   // Add a short delay to show splash screen
   //   await Future.delayed(const Duration(seconds: 1));
