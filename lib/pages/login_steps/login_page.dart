@@ -416,79 +416,93 @@ class _LoginPageState extends State<LoginPage>
   //   }
   // }
 
-// Modified login_page.dart (just the submitBtn method)
-Future<void> submitBtn() async {
-  if (!mounted) return;
-  final email = newEmailController.text.trim();
-  final pwd = newPwdController.text.trim();
+  
+// login page
+  Future<void> submitBtn() async {
+    if (!mounted) return;
+    final email = newEmailController.text.trim();
+    final pwd = newPwdController.text.trim();
 
-  if (email.isEmpty || pwd.isEmpty) {
-    showErrorMessage(context, message: 'Email and Password cannot be empty.');
-    return;
-  }
-
-  setState(() => isLoading = true);
-
-  try {
-    final deviceToken = await FirebaseMessaging.instance.getToken();
-    if (deviceToken == null) {
-      throw Exception('Failed to retrieve device token.');
+    if (email.isEmpty || pwd.isEmpty) {
+      showErrorMessage(context, message: 'Email and Password cannot be empty.');
+      return;
     }
 
-    final response = await LeadsSrv.onLogin({
-      "email": email,
-      "password": pwd,
-      "device_token": deviceToken,
-    });
+    setState(() => isLoading = true);
 
-    if (!mounted) return;
+    try {
+      final deviceToken = await FirebaseMessaging.instance.getToken();
+      if (deviceToken == null) {
+        throw Exception('Failed to retrieve device token.');
+      }
 
-    if (response['isSuccess'] == true && response['user'] != null) {
-      final user = response['user'];
-      final userId = user['user_id'];
-      final authToken = response['token'];
-      final userRole = user['user_role'];
+      final response = await LeadsSrv.onLogin({
+        "email": email,
+        "password": pwd,
+        "device_token": deviceToken,
+      });
 
-      if (userId != null && authToken != null) {
-        // Save authentication data
-        await TokenManager.saveAuthData(authToken, userId, userRole);
-        String successMessage =
-            response['message']?.toString() ?? 'Login Successful';
-        Get.snackbar(
-          'Success',
-          successMessage,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+      if (!mounted) return;
 
-        // Reset biometric prompt status since this is a fresh login
-        await BiometricPreference.setHasPromptedBiometric(false);
+      if (response['isSuccess'] == true && response['user'] != null) {
+        final user = response['user'];
+        final userId = user['user_id'];
+        final authToken = response['token'];
+        final userRole = user['user_role'];
 
-        // Check if device supports biometrics
-        final LocalAuthentication auth = LocalAuthentication();
-        bool canCheckBiometrics = false;
+        if (userId != null && authToken != null) {
+          // Save authentication data
+          await TokenManager.saveAuthData(authToken, userId, userRole);
+          String successMessage =
+              response['message']?.toString() ?? 'Login Successful';
+          Get.snackbar(
+            'Success',
+            successMessage,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
 
-        try {
-          canCheckBiometrics = await auth.canCheckBiometrics;
-          List<BiometricType> availableBiometrics = await auth.getAvailableBiometrics();
-          print("Available biometrics: $availableBiometrics");
-        } catch (e) {
-          print("Error checking biometric capability: $e");
-        }
+          // Reset all biometric preferences since this is a fresh login
+          await BiometricPreference.resetBiometricPreferences();
 
-        if (canCheckBiometrics) {
-          // Navigate to BiometricScreen with isFirstTime flag
-          Get.offAll(() => const BiometricScreen(isFirstTime: true));
+          // Check if device supports biometrics
+          final LocalAuthentication auth = LocalAuthentication();
+          bool canCheckBiometrics = false;
+
+          try {
+            canCheckBiometrics = await auth.canCheckBiometrics;
+            List<BiometricType> availableBiometrics =
+                await auth.getAvailableBiometrics();
+            print("Available biometrics: $availableBiometrics");
+          } catch (e) {
+            print("Error checking biometric capability: $e");
+          }
+
+          if (canCheckBiometrics) {
+            // Navigate to BiometricScreen with isFirstTime flag
+            Get.offAll(() => const BiometricScreen(isFirstTime: true));
+          } else {
+            // Device doesn't support biometrics, go directly to home
+            // Also set hasMadeBiometricChoice to avoid future checks
+            await BiometricPreference.setUseBiometric(false);
+            Get.offAll(() => BottomNavigation());
+          }
+
+          widget.onLoginSuccess?.call();
         } else {
-          // Device doesn't support biometrics, go directly to home
-          Get.offAll(() => BottomNavigation());
+          String errorMessage = response['error'] ??
+              response['message'] ??
+              'Something went wrong';
+          Get.snackbar(
+            'Error',
+            errorMessage,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
         }
-
-        widget.onLoginSuccess?.call();
       } else {
-        String errorMessage = response['error'] ??
-            response['message'] ??
-            'Something went wrong';
+        String errorMessage =
+            response['error'] ?? response['message'] ?? 'Something went wrong';
         Get.snackbar(
           'Error',
           errorMessage,
@@ -496,32 +510,22 @@ Future<void> submitBtn() async {
           colorText: Colors.white,
         );
       }
-    } else {
-      String errorMessage =
-          response['error'] ?? response['message'] ?? 'Something went wrong';
+    } catch (error) {
+      if (!mounted) return;
+      print('error');
+
       Get.snackbar(
         'Error',
-        errorMessage,
+        error.toString(),
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    }
-  } catch (error) {
-    if (!mounted) return;
-    print('error');
-
-    Get.snackbar(
-      'Error',
-      error.toString(),
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-    );
-  } finally {
-    if (mounted) {
-      setState(() => isLoading = false);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
-}
 
   // Future<void> submitBtn() async {
   //   if (!mounted) return;

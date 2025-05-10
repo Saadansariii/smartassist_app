@@ -70,7 +70,7 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => const SplashScreen(),
         );
-        
+
       case RoutesName.biometricScreen:
         // Check if args contains isFirstTime parameter
         bool isFirstTime = false;
@@ -81,7 +81,7 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => BiometricScreen(isFirstTime: isFirstTime),
         );
-        
+
       case RoutesName.home:
         return MaterialPageRoute(
           builder: (context) => BottomNavigation(),

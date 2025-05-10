@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class BiometricPreference {
   static const String _useBiometricKey = 'use_biometric';
   static const String _hasPromptedBiometricKey = 'has_prompted_biometric';
+  static const String _hasMadeBiometricChoiceKey = 'has_made_biometric_choice';
 
   // Get whether biometric is enabled
   static Future<bool> getUseBiometric() async {
@@ -16,6 +17,8 @@ class BiometricPreference {
   static Future<void> setUseBiometric(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_useBiometricKey, value);
+    // When setting biometric preference, also mark that user has made a choice
+    await prefs.setBool(_hasMadeBiometricChoiceKey, true);
   }
 
   // Check if the user has been prompted about biometrics before
@@ -30,6 +33,20 @@ class BiometricPreference {
     await prefs.setBool(_hasPromptedBiometricKey, value);
   }
 
+  // Check if the user has made a choice about biometrics (yes or no)
+  static Future<bool> getHasMadeBiometricChoice() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hasMadeBiometricChoiceKey) ?? false;
+  }
+
+  // Reset all biometric preferences (typically on logout)
+  static Future<void> resetBiometricPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_useBiometricKey);
+    await prefs.remove(_hasPromptedBiometricKey);
+    await prefs.remove(_hasMadeBiometricChoiceKey);
+  }
+
   // For debugging purposes
   static Future<void> printAllPreferences() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,7 +55,9 @@ class BiometricPreference {
     
     bool? useBiometric = prefs.getBool(_useBiometricKey);
     bool? hasPrompted = prefs.getBool(_hasPromptedBiometricKey);
+    bool? hasMadeChoice = prefs.getBool(_hasMadeBiometricChoiceKey);
     print("Current use_biometric value: $useBiometric");
     print("Current has_prompted_biometric value: $hasPrompted");
+    print("Current has_made_biometric_choice value: $hasMadeChoice");
   }
 }

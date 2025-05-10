@@ -260,7 +260,7 @@ class LeadsSrv {
   // }
 
   static Future<Map<String, dynamic>> verifyOtp(Map body) async {
-    const url = 'https://api.smartassistapp.in/api/login/verify-otp';
+    const url = 'https://api.smartassistapp.in/api/events/verify-otp';
     final uri = Uri.parse(url);
 
     try {
@@ -505,6 +505,8 @@ class LeadsSrv {
     }
   }
 
+
+ 
 // create followups
 
   static Future<bool> submitFollowups(

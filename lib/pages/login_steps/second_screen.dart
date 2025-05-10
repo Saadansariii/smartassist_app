@@ -1,13 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart';
+import 'package:google_fonts/google_fonts.dart'; 
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/pages/login_steps/first_screen.dart';
 import 'package:smart_assist/pages/login_steps/last_screen.dart';
-import 'package:smart_assist/services/leads_srv.dart';
-import 'package:smart_assist/services/otp_srv.dart';
+import 'package:smart_assist/services/leads_srv.dart'; 
 import 'package:smart_assist/utils/button.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';

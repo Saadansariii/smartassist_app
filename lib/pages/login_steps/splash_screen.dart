@@ -327,7 +327,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  // splash_screen.dart
+// splash screen
   Future<void> _initializeApp() async {
     // Delay for splash screen display
     await Future.delayed(const Duration(seconds: 2));
@@ -350,8 +350,13 @@ class _SplashScreenState extends State<SplashScreen>
       if (!_mounted) return;
 
       if (isTokenValid) {
+        // Check if user has made a choice about biometrics
+        bool hasMadeBiometricChoice =
+            await BiometricPreference.getHasMadeBiometricChoice();
+
         // Token is valid, check biometric preference
         bool useBiometric = await BiometricPreference.getUseBiometric();
+        print("Has made biometric choice: $hasMadeBiometricChoice");
         print("Use biometric: $useBiometric");
 
         if (!_mounted) return;
@@ -359,13 +364,19 @@ class _SplashScreenState extends State<SplashScreen>
         if (useBiometric) {
           // If biometric is enabled, go to biometric screen
           Get.offAllNamed(RoutesName.biometricScreen);
-        } else {
-          // If biometric is not enabled, go to home screen directly
+        } else if (hasMadeBiometricChoice) {
+          // If user has explicitly declined biometrics, go directly to home
           Get.offAllNamed(RoutesName.home);
+        } else {
+          // No choice has been made yet about biometrics
+          Get.offAllNamed(RoutesName.biometricScreen,
+              arguments: {'isFirstTime': true});
         }
       } else {
         // If no token or invalid token, go to login screen
         await TokenManager.clearAuthData();
+        // Also reset biometric preferences on logout/token expiry
+        await BiometricPreference.resetBiometricPreferences();
         if (!_mounted) return;
 
         Get.offAllNamed(RoutesName.login);

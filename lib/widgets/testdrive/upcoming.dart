@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -114,6 +116,37 @@ class _TestUpcomingState extends State<TestUpcoming> {
     }
   }
 
+  Future<void> _getOtp(
+    String eventId,
+  ) async {
+    try {
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/events/$eventId/send-consent');
+      final token = await Storage.getToken();
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Starting test drive for event: ${eventId}');
+      print('this is the get orp api hit');
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        print('Test drive started successfully');
+      } else {}
+    } catch (e) {
+      print('Error starting test drive: $e');
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.upcomingTestDrive.isEmpty) {
@@ -162,6 +195,9 @@ class _TestUpcomingState extends State<TestUpcoming> {
               onToggleFavorite: () {
                 _toggleFavorite(eventId, index);
               },
+              otpTrigger: () {
+                _getOtp(eventId);
+              },
               fetchDashboardData: () {},
               handleTestDrive: () {
                 _handleTestDrive(item);
@@ -183,6 +219,7 @@ class upcomingTestDrivesItem extends StatefulWidget {
   final VoidCallback onToggleFavorite;
   final VoidCallback handleTestDrive;
   final dynamic item;
+  final VoidCallback otpTrigger;
   const upcomingTestDrivesItem({
     super.key,
     required this.name,
@@ -199,6 +236,7 @@ class upcomingTestDrivesItem extends StatefulWidget {
     required this.onToggleFavorite,
     required this.handleTestDrive,
     this.item,
+    required this.otpTrigger,
   });
 
   @override
@@ -263,7 +301,10 @@ class _upcomingTestDrivesItemState extends State<upcomingTestDrivesItem> {
         children: [
           if (widget.subject == 'Test Drive')
             ReusableSlidableAction(
-              onPressed: widget.handleTestDrive,
+              onPressed: () {
+                widget.handleTestDrive();
+                widget.otpTrigger();
+              },
               backgroundColor: Colors.blue,
               icon: Icons.directions_car,
               foregroundColor: Colors.white,

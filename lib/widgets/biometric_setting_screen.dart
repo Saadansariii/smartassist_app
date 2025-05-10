@@ -1,7 +1,9 @@
 // biometric_settings.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/utils/biometric_prefrence.dart';
 
 class BiometricSettingsScreen extends StatefulWidget {
@@ -58,9 +60,12 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(value
-                ? 'Biometric authentication enabled'
-                : 'Biometric authentication disabled'),
+            content: Text(
+              value
+                  ? 'Biometric authentication enabled'
+                  : 'Biometric authentication disabled',
+              style: AppFont.dropDowmLabel(context),
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -82,7 +87,10 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Biometric Settings'),
+        title: Text(
+          'Biometric Settings',
+          style: AppFont.popupTitleWhite(context),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -93,10 +101,7 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
                 children: [
                   Text(
                     'Security Settings',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppFont.dropDowmLabel(context),
                   ),
                   SizedBox(height: 20.h),
                   if (!_isBiometricAvailable)
@@ -105,12 +110,12 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
                         padding: EdgeInsets.all(16.w),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: Colors.orange),
+                          const  Icon(Icons.info_outline, color: Colors.orange),
                             SizedBox(width: 10.w),
                             Expanded(
                               child: Text(
                                 'Biometric authentication is not available on this device.',
-                                style: TextStyle(fontSize: 16.sp),
+                                style: AppFont.dropDowmLabel(context),
                               ),
                             ),
                           ],

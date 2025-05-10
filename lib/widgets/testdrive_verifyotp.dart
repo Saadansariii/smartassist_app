@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,8 +12,10 @@ import 'package:smart_assist/pages/login_steps/last_screen.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/button.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
+import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/utils/style_text.dart';
 import 'package:smart_assist/widgets/license_varification.dart';
+import 'package:http/http.dart' as http;
 
 class TestdriveVerifyotp extends StatefulWidget {
   static const int _otpLength = 6;
@@ -75,14 +79,6 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      // leading: IconButton(
-      //   icon: const Icon(Icons.arrow_back, color: Colors.black),
-      //   onPressed: () => Navigator.pop(context),
-      // ),
-      // ),
       body: Center(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -285,13 +281,8 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 8),
       child: ElevatedButton(
-        onPressed: () {
-          // _handleVerification;
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => LicenseVarification(
-                      eventId: widget.eventId, leadId: widget.leadId)));
+        onPressed: () async {
+          await _handleVerification();
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0276FE),
@@ -376,58 +367,70 @@ class _TestdriveVerifyotpState extends State<TestdriveVerifyotp> {
     }
   }
 
-  // Future<void> _handleVerification() async {
-  //   final otpString = _controllers.map((controller) => controller.text).join();
+  Future<void> _handleVerification() async {
+    final otpString = _controllers.map((controller) => controller.text).join();
 
-  //   if (otpString.length != TestdriveVerifyotp._otpLength) {
-  //     showErrorMessage(context, message: 'Please enter all digits');
-  //     return;
-  //   }
+    if (otpString.length != TestdriveVerifyotp._otpLength) {
+      showErrorMessage(context, message: 'Please enter all digits');
+      return;
+    }
 
-  //   if (int.tryParse(otpString) == null) {
-  //     showErrorMessage(context, message: 'Please enter valid digits');
-  //     return;
-  //   }
+    if (int.tryParse(otpString) == null) {
+      showErrorMessage(context, message: 'Please enter valid digits');
+      return;
+    }
 
-  //   setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  //   try {
-  //     final response = await LeadsSrv.verifyOtp({
-  //       "otp": int.parse(otpString),
-  //       "email": widget.email,
-  //     });
+    try {
+      final url = Uri.parse(
+          'https://api.smartassistapp.in/api/events/${widget.eventId}/verify-otp');
+      final token = await Storage.getToken();
 
-  //     if (!mounted) return;
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({"otp": int.parse(otpString)}),
+      );
 
-  //     if (response['isSuccess'] == true) {
-  //       // Extract the message from the nested data structure if available
-  //       final responseData = response['data'];
-  //       final successMessage =
-  //           responseData?['message'] ?? 'Email verified successfully';
+      if (!mounted) return;
 
-  //       showSuccessMessage(context, message: successMessage);
-  //       _navigateToPasswordScreen();
-  //     } else {
-  //       // Get error message from the proper location in the response
-  //       final errorMessage = response['data']?['message'] ??
-  //           response['message'] ??
-  //           'Invalid OTP. Please try again.';
+      final decoded = jsonDecode(response.body);
 
-  //       showErrorMessage(context, message: errorMessage);
-  //     }
-  //   } catch (error) {
-  //     if (!mounted) return;
-  //     showErrorMessage(
-  //       context,
-  //       message: 'Verification failed. Please try again.',
-  //     );
-  //     debugPrint('OTP verification error: $error');
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() => _isLoading = false);
-  //     }
-  //   }
-  // }
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final successMessage =
+            decoded['message'] ?? 'OTP verified successfully';
+        showSuccessMessage(context, message: successMessage);
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => LicenseVarification(
+              eventId: widget.eventId,
+              leadId: widget.leadId,
+            ),
+          ),
+        );
+      } else {
+        final errorMessage =
+            decoded['message'] ?? 'Invalid OTP. Please try again.';
+        showErrorMessage(context, message: errorMessage);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      showErrorMessage(context,
+          message: 'Verification failed. Please try again.');
+      debugPrint('OTP verification error: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   // _handleVerification() {
   //   Navigator.push(
