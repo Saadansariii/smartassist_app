@@ -1,4 +1,4 @@
-// biometric_screen.dart
+// biometric_screen.dart - Modified to redirect to login when user declines biometrics
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -59,21 +59,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
 
       if (!_mounted) return;
 
-      // If first time after login, show the biometric choice
+      // If this is the first time after login (biometric setup screen)
       if (widget.isFirstTime && _canCheckBiometrics) {
-        // Check if we've already prompted before
-        bool hasPrompted = await BiometricPreference.getHasPromptedBiometric();
-
-        if (!hasPrompted) {
+        // We only show the biometric setup once - even on first login
+        bool hasMadeBiometricChoice = await BiometricPreference.getHasMadeBiometricChoice();
+        
+        if (!hasMadeBiometricChoice) {
+          // User hasn't made a choice yet - show the setup UI
           setState(() {
             _showBiometricChoice = true;
           });
-          // Mark that we've prompted the user
-          await BiometricPreference.setHasPromptedBiometric(true);
         } else {
-          // We've already prompted before, check the preference
+          // User already made a choice previously
           bool useBiometric = await BiometricPreference.getUseBiometric();
+          
           if (useBiometric) {
+            // User previously enabled biometrics
             setState(() {
               _useBiometric = true;
             });
@@ -84,19 +85,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
               }
             });
           } else {
-            // User previously declined, go directly to home
-            _proceedToHome();
+            // User previously declined biometrics, redirect to login
+            _redirectToLogin();
           }
         }
       } else {
-        // Not first time - check saved preference and authenticate if needed
+        // Regular app open - check saved preference
         bool useBiometric = await BiometricPreference.getUseBiometric();
+        bool hasMadeBiometricChoice = await BiometricPreference.getHasMadeBiometricChoice();
 
         if (!_mounted) return;
 
         print("useBiometric from preferences: $useBiometric");
+        print("hasMadeBiometricChoice from preferences: $hasMadeBiometricChoice");
 
         if (useBiometric && _canCheckBiometrics) {
+          // User enabled biometrics, show authentication
           setState(() {
             _useBiometric = true;
           });
@@ -106,16 +110,16 @@ class _BiometricScreenState extends State<BiometricScreen> {
             }
           });
         } else {
-          // Skip biometric and go directly to home
-          _proceedToHome();
+          // User declined biometrics (or no choice made), redirect to login
+          _redirectToLogin();
         }
       }
     } catch (e) {
       if (!_mounted) return;
 
       print("Error checking biometrics: $e");
-      // On error, proceed to home
-      _proceedToHome();
+      // On error, redirect to login
+      _redirectToLogin();
     }
   }
 
@@ -211,21 +215,36 @@ class _BiometricScreenState extends State<BiometricScreen> {
     }
   }
 
+  void _redirectToLogin() {
+    // Navigate to login screen
+    if (_mounted) {
+      Get.offAll(() => LoginPage(
+            onLoginSuccess: () {
+              Get.off(() => BottomNavigation());
+            },
+            email: '',
+          ));
+    }
+  }
+
   void _enableBiometric(bool enable) async {
     print("Setting biometric preference to: $enable");
     await BiometricPreference.setUseBiometric(enable);
-    // This will also set hasMadeBiometricChoice to true
+    // This will also set hasMadeBiometricChoice to true in BiometricPreference.dart
 
     if (!_mounted) return;
 
     if (enable) {
+      // User chose to enable biometrics
       setState(() {
         _showBiometricChoice = false;
         _useBiometric = true;
       });
       _authenticate();
     } else {
-      _proceedToHome();
+      // User clicked "Not Now" - decline biometrics
+      // Always redirect to login page - this is the key requirement
+      _redirectToLogin();
     }
   }
 

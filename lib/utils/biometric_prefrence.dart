@@ -19,6 +19,10 @@ class BiometricPreference {
     await prefs.setBool(_useBiometricKey, value);
     // When setting biometric preference, also mark that user has made a choice
     await prefs.setBool(_hasMadeBiometricChoiceKey, true);
+    
+    // Log for debugging
+    print("Setting _useBiometricKey = $value");
+    print("Setting _hasMadeBiometricChoiceKey = true");
   }
 
   // Check if the user has been prompted about biometrics before
@@ -39,12 +43,20 @@ class BiometricPreference {
     return prefs.getBool(_hasMadeBiometricChoiceKey) ?? false;
   }
 
+  // Directly set whether the user has made a choice
+  static Future<void> setHasMadeBiometricChoice(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasMadeBiometricChoiceKey, value);
+  }
+
   // Reset all biometric preferences (typically on logout)
   static Future<void> resetBiometricPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_useBiometricKey);
     await prefs.remove(_hasPromptedBiometricKey);
     await prefs.remove(_hasMadeBiometricChoiceKey);
+    
+    print("All biometric preferences have been reset");
   }
 
   // For debugging purposes

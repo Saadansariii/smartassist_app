@@ -336,7 +336,7 @@ class _SplashScreenState extends State<SplashScreen>
     checkAuthStatus();
   }
 
-  Future<void> checkAuthStatus() async {
+ Future<void> checkAuthStatus() async {
     if (!_mounted) return;
 
     try {
@@ -350,25 +350,23 @@ class _SplashScreenState extends State<SplashScreen>
       if (!_mounted) return;
 
       if (isTokenValid) {
-        // Check if user has made a choice about biometrics
-        bool hasMadeBiometricChoice =
-            await BiometricPreference.getHasMadeBiometricChoice();
-
-        // Token is valid, check biometric preference
+        // Check biometric preference
         bool useBiometric = await BiometricPreference.getUseBiometric();
+        bool hasMadeBiometricChoice = await BiometricPreference.getHasMadeBiometricChoice();
+        
         print("Has made biometric choice: $hasMadeBiometricChoice");
         print("Use biometric: $useBiometric");
 
         if (!_mounted) return;
 
         if (useBiometric) {
-          // If biometric is enabled, go to biometric screen
+          // If biometric is enabled, go to biometric verification screen
           Get.offAllNamed(RoutesName.biometricScreen);
         } else if (hasMadeBiometricChoice) {
-          // If user has explicitly declined biometrics, go directly to home
-          Get.offAllNamed(RoutesName.home);
+          // User explicitly declined biometrics (clicked "Not Now"), always go to login
+          Get.offAllNamed(RoutesName.login);
         } else {
-          // No choice has been made yet about biometrics
+          // First time login, show biometric setup once
           Get.offAllNamed(RoutesName.biometricScreen,
               arguments: {'isFirstTime': true});
         }
@@ -394,50 +392,53 @@ class _SplashScreenState extends State<SplashScreen>
   //   if (!_mounted) return;
 
   //   try {
+  //     // Debug preferences
+  //     await BiometricPreference.printAllPreferences();
+
   //     // Check if user has a valid token
   //     bool isTokenValid = await TokenManager.isTokenValid();
+  //     print("Token is valid: $isTokenValid");
 
   //     if (!_mounted) return;
 
   //     if (isTokenValid) {
-  //       // If token exists and is valid, go to biometric screen
-  //       Navigator.of(context)
-  //           .pushReplacementNamed(RoutesName.home); //replashce with biometric
+  //       // Check if user has made a choice about biometrics
+  //       bool hasMadeBiometricChoice =
+  //           await BiometricPreference.getHasMadeBiometricChoice();
+
+  //       // Token is valid, check biometric preference
+  //       bool useBiometric = await BiometricPreference.getUseBiometric();
+  //       print("Has made biometric choice: $hasMadeBiometricChoice");
+  //       print("Use biometric: $useBiometric");
+
+  //       if (!_mounted) return;
+
+  //       if (useBiometric) {
+  //         // If biometric is enabled, go to biometric screen
+  //         Get.offAllNamed(RoutesName.biometricScreen);
+  //       } else if (hasMadeBiometricChoice) {
+  //         // If user has explicitly declined biometrics, go directly to home
+  //         Get.offAllNamed(RoutesName.home);
+  //       } else {
+  //         // No choice has been made yet about biometrics
+  //         Get.offAllNamed(RoutesName.biometricScreen,
+  //             arguments: {'isFirstTime': true});
+  //       }
   //     } else {
   //       // If no token or invalid token, go to login screen
   //       await TokenManager.clearAuthData();
+  //       // Also reset biometric preferences on logout/token expiry
+  //       await BiometricPreference.resetBiometricPreferences();
   //       if (!_mounted) return;
 
-  //       Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //       Get.offAllNamed(RoutesName.login);
   //     }
   //   } catch (e) {
   //     // If there's any error in token checking, default to login
   //     if (_mounted) {
   //       print("Error checking auth status: $e");
-  //       Navigator.of(context).pushReplacementNamed(RoutesName.login);
+  //       Get.offAllNamed(RoutesName.login);
   //     }
-  //   }
-  // }
-
-  // Future<void> checkAuthentication() async {
-  //   // Add a short delay to show splash screen
-  //   await Future.delayed(const Duration(seconds: 1));
-
-  //   bool isValid = await TokenManager.isTokenValid();
-
-  //   if (isValid) {
-  //     // Initialize notifications if token is valid
-  //     await NotificationService.instance.initialize();
-
-  //     // Navigate to home screen
-  //     Get.offAll(() => BottomNavigation());
-  //   } else {
-  //     // Clear any invalid tokens and navigate to login
-  //     await TokenManager.clearAuthData();
-  //     Get.offAll(() => LoginPage(
-  //           email: '',
-  //           onLoginSuccess: () {},
-  //         ));
   //   }
   // }
 
