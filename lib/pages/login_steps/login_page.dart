@@ -12,10 +12,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
 import 'package:smart_assist/utils/biometric_prefrence.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/connection_service.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';
 import 'package:smart_assist/utils/token_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:smart_assist/widgets/interneterror_screed.dart';
 
 class LoginPage extends StatefulWidget {
   final String email;
@@ -416,7 +418,6 @@ class _LoginPageState extends State<LoginPage>
   //   }
   // }
 
-  
 // login page
   Future<void> submitBtn() async {
     if (!mounted) return;
@@ -425,6 +426,23 @@ class _LoginPageState extends State<LoginPage>
 
     if (email.isEmpty || pwd.isEmpty) {
       showErrorMessage(context, message: 'Email and Password cannot be empty.');
+      return;
+    }
+    await ConnectionService().checkConnection();
+    final isConnected = ConnectionService().isConnected;
+    print("Internet connection status: $isConnected");
+    if (!isConnected) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          content: InternetErrorWidget(
+            onRetry: () {
+              Navigator.pop(context);
+              submitBtn(); // retry login
+            },
+          ),
+        ),
+      );
       return;
     }
 

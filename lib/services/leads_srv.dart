@@ -1,207 +1,15 @@
-// import 'dart:convert';
-// import 'package:get/get.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:intl/intl.dart';
-// import 'package:smart_assist/pages/login/login_page.dart';
-// import 'package:smart_assist/utils/storage.dart';
-// import 'package:smart_assist/utils/token_manager.dart';
-
-// class LeadsSrv {
-//   static const String _baseUrl = 'https://api.smartassistapp.in/api';
-
-//   /// 🔹 **Reusable API Request Method**
-//   static Future<http.Response> _sendRequest(
-//     String endpoint, {
-//     String method = 'GET',
-//     Map<String, dynamic>? body,
-//     bool isAuthRequired = true,
-//   }) async {
-//     final token = isAuthRequired ? await Storage.getToken() : null;
-//     final headers = {
-//       'Content-Type': 'application/json',
-//       if (token != null) 'Authorization': 'Bearer $token',
-//     };
-
-//     Uri url = Uri.parse("$_baseUrl/$endpoint");
-
-//     print("🔹 API Request: $method $url");
-//     if (body != null) print("📤 Request Body: ${jsonEncode(body)}");
-
-//     try {
-//       late http.Response response;
-//       if (method == 'POST') {
-//         response =
-//             await http.post(url, headers: headers, body: jsonEncode(body));
-//       } else if (method == 'PUT') {
-//         response =
-//             await http.put(url, headers: headers, body: jsonEncode(body));
-//       } else {
-//         response = await http.get(url, headers: headers);
-//       }
-
-//       print("🔹 API Response (${response.statusCode}): ${response.body}");
-//       return response;
-//     } catch (error) {
-//       print("❌ API Error: $error");
-//       throw Exception("Failed to connect to the server.");
-//     }
-//   }
-
-//   /// ✅ **Verify Email**
-//   static Future<Map<String, dynamic>> verifyEmail(Map body) async {
-//     final response =
-//         await _sendRequest('login/verify-email', method: 'POST', body: body);
-//     return _processResponse(response);
-//   }
-
-//   /// ✅ **Login API**
-//   static Future<Map<String, dynamic>> onLogin(Map body) async {
-//     final response = await _sendRequest('login', method: 'POST', body: body);
-//     final data = _processResponse(response);
-
-//     if (data['isSuccess']) {
-//       await Storage.saveToken(data['token']);
-//     }
-//     return data;
-//   }
-
-//   /// ✅ **Set Password**
-//   static Future<Map<String, dynamic>> setPassword(Map body) async {
-//     final response =
-//         await _sendRequest('login/create-pwd', method: 'PUT', body: body);
-//     return _processResponse(response);
-//   }
-
-//   /// ✅ **Submit Follow-Ups**
-//   static Future<bool> submitFollowups(
-//       Map<String, dynamic> followupsData, String leadId) async {
-//     final response = await _sendRequest(
-//       'admin/leads/$leadId/create-task',
-//       method: 'POST',
-//       body: followupsData,
-//     );
-//     return response.statusCode == 201;
-//   }
-
-//   /// ✅ **Submit Appointment**
-//   static Future<bool> submitAppointment(
-//       Map<String, dynamic> appointmentData, String leadId) async {
-//     final response = await _sendRequest(
-//       'admin/records/$leadId/events/create-appointment',
-//       method: 'POST',
-//       body: appointmentData,
-//     );
-//     return response.statusCode == 201;
-//   }
-
-//   /// ✅ **Fetch Leads By ID**
-//   static Future<Map<String, dynamic>> fetchLeadsById(String leadId) async {
-//     final response = await _sendRequest('leads/$leadId');
-//     return _processResponse(response);
-//   }
-
-//   /// ✅ **Fetch Single Follow-Ups By ID**
-//   static Future<Map<String, dynamic>> singleFollowupsById(String leadId) async {
-//     final response = await _sendRequest('admin/leads/$leadId');
-//     return _processResponse(response);
-//   }
-
-//   /// ✅ **Fetch Single Event By ID**
-//   static Future<List<Map<String, dynamic>>> singleEventById(
-//       String leadId) async {
-//     final response = await _sendRequest('admin/leads/events/all/$leadId');
-//     return _processResponse(response)['allEvents']['rows'] ?? [];
-//   }
-
-//   /// ✅ **Fetch Tasks By ID**
-//   static Future<List<Map<String, dynamic>>> singleTasksById(
-//       String leadId) async {
-//     final response = await _sendRequest('admin/leads/tasks/all/$leadId');
-//     return _processResponse(response)['allTasks']['rows'] ?? [];
-//   }
-
-//   /// ✅ **Fetch Single Appointment By ID**
-//   static Future<Map<String, dynamic>> singleAppointmentById(
-//       String eventId) async {
-//     final response = await _sendRequest('admin/events/$eventId');
-//     return _processResponse(response);
-//   }
-
-//   /// ✅ **Fetch Appointments**
-//   static Future<List<dynamic>> fetchAppointments(DateTime selectedDate) async {
-//     final formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
-//     final response =
-//         await _sendRequest('calendar/events/all/asondate?date=$formattedDate');
-//     return _processResponse(response)['rows'] ?? [];
-//   }
-
-//   /// ✅ **Fetch Tasks**
-//   static Future<List<dynamic>> fetchTasks(DateTime selectedDate) async {
-//     final formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
-//     final response =
-//         await _sendRequest('calendar/tasks/all/asondate?date=$formattedDate');
-//     return _processResponse(response)['rows'] ?? [];
-//   }
-
-//   /// ✅ **Fetch Event Counts**
-//   static Future<Map<String, int>> fetchCount(DateTime selectedDate) async {
-//     final formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
-//     final response =
-//         await _sendRequest('calendar/data-count/asondate?date=$formattedDate');
-//     return {
-//       'upcomingFollowupsCount': response.body['upcomingFollowupsCount'] ?? 0,
-//       'overdueFollowupsCount': response.body['overdueFollowupsCount'] ?? 0,
-//       'upcomingAppointmentsCount':
-//           response.body['upcomingAppointmentsCount'] ?? 0,
-//       'overdueAppointmentsCount':
-//           response.body['overdueAppointmentsCount'] ?? 0,
-//     };
-//   }
-
-//   /// ✅ **Fetch Dashboard Data**
-//   static Future<Map<String, dynamic>> fetchDashboardData() async {
-//     final response = await _sendRequest('users/dashboard');
-//     final data = _processResponse(response);
-
-//     if (response.statusCode == 401) {
-//       await TokenManager.clearAuthData();
-//       Get.offAll(() => LoginPage(email: '', onLoginSuccess: () {}));
-//       throw Exception('Unauthorized. Redirecting to login.');
-//     }
-//     return data;
-//   }
-
-//   /// ✅ **Process API Response (Common)**
-//   static Map<String, dynamic> _processResponse(http.Response response) {
-//     try {
-//       final Map<String, dynamic> data = json.decode(response.body);
-//       return response.statusCode == 200
-//           ? {'isSuccess': true, 'data': data}
-//           : {
-//               'isSuccess': false,
-//               'message': data['message'] ?? 'Request failed'
-//             };
-//     } catch (error) {
-//       print("❌ Error parsing response: $error");
-//       return {'isSuccess': false, 'message': 'Invalid response format'};
-//     }
-//   }
-// }
-
 import 'dart:convert';
-import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:http/http.dart' as http;
-import 'package:call_log/call_log.dart';
+import 'package:get/get.dart'; 
+import 'package:http/http.dart' as http; 
 import 'package:intl/intl.dart';
-import 'package:smart_assist/pages/login_steps/login_page.dart';
-import 'package:smart_assist/pages/test_drive_pages/verify_otp.dart';
-import 'package:smart_assist/services/helper.dart';
+import 'package:smart_assist/pages/login_steps/login_page.dart'; 
+import 'package:smart_assist/utils/connection_service.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/utils/token_manager.dart';
 
 class LeadsSrv {
   static const String baseUrl = 'https://api.smartassistapp.in/api/';
+  static final ConnectionService _connectionService = ConnectionService();
 
   // ApiService(this.baseUrl);
 
@@ -232,32 +40,7 @@ class LeadsSrv {
     }
   }
 
-  // static Future<Map<String, dynamic>> verifyEmail(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login/verify-email';
-  //   final uri = Uri.parse(url);
-
-  //   try {
-  //     final response = await http.post(
-  //       uri,
-  //       body: jsonEncode(body),
-  //       headers: {'Content-Type': 'application/json'},
-  //     );
-
-  //     // Log the response for debugging
-  //     print('API Status Code: ${response.statusCode}');
-  //     print('API Response Body: ${response.body}');
-
-  //     if (response.statusCode == 200) {
-  //       return {'isSuccess': true, 'data': jsonDecode(response.body)};
-  //     } else {
-  //       return {'isSuccess': false, 'data': jsonDecode(response.body)};
-  //     }
-  //   } catch (error) {
-  //     // Log any error that occurs during the API call
-  //     print('Error: $error');
-  //     return {'isSuccess': false, 'error': error.toString()};
-  //   }
-  // }
+  
 
   static Future<Map<String, dynamic>> verifyOtp(Map body) async {
     const url = 'https://api.smartassistapp.in/api/events/verify-otp';
@@ -288,33 +71,7 @@ class LeadsSrv {
       return {'isSuccess': false, 'error': error.toString()};
     }
   }
-  //   static Future<Map<String, dynamic>> verifyOtp(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login/verify-otp';
-  //   final uri = Uri.parse(url);
-
-  //   try {
-  //     final response = await http.post(
-  //       uri,
-  //       body: jsonEncode(body),
-  //       headers: {'Content-Type': 'application/json'},
-  //     );
-
-  //     // Log the response for debugging
-  //     print('API Status Code: ${response.statusCode}');
-  //     print('API Response Body: ${response.body}');
-
-  //     if (response.statusCode == 200) {
-  //       final responseData = jsonDecode(response.body);
-  //       return {'isSuccess': true, 'data': responseData};
-  //     } else {
-  //       final errorData = jsonDecode(response.body);
-  //       return {'isSuccess': false, 'data': errorData};
-  //     }
-  //   } catch (error) {
-  //     print('Error: $error'); // Log error
-  //     return {'isSuccess': false, 'error': error.toString()};
-  //   }
-  // }
+ 
 
   // login api
 
@@ -323,6 +80,7 @@ class LeadsSrv {
     final uri = Uri.parse(url);
 
     try {
+      
       final response = await http.post(
         uri,
         body: jsonEncode(body),
@@ -505,8 +263,6 @@ class LeadsSrv {
     }
   }
 
-
- 
 // create followups
 
   static Future<bool> submitFollowups(
