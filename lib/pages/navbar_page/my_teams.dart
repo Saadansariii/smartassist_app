@@ -11,6 +11,10 @@ import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/appointment_teams.dart';
+import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/followups_teams.dart';
+import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/lead_teams.dart';
+import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/testdrive_teams.dart';
 
 class MyTeams extends StatefulWidget {
   const MyTeams({Key? key}) : super(key: key);
@@ -26,6 +30,7 @@ class _MyTeamsState extends State<MyTeams> {
   int _metricIndex = 0; // Selected metric for comparison
   int _selectedProfileIndex = 0; // Default to 'All' profile
   String _selectedUserId = '';
+  bool _isComparing = false;
   // String _selectedCheckboxIds = '';
   String _selectedType = 'All';
   Map<String, dynamic> _individualPerformanceData = {};
@@ -34,9 +39,12 @@ class _MyTeamsState extends State<MyTeams> {
   List<Map<String, dynamic>> selectedItems = [];
   Set<String> selectedUserIds = {};
 
+  int _upcommingButtonIndex = 0;
+
   bool isHideActivities = false;
   bool isHide = false;
   bool isHideCalls = false;
+  bool isHideCheckbox = false;
   // Data state
   bool isLoading = false;
   Map<String, dynamic> _teamData = {};
@@ -184,43 +192,71 @@ class _MyTeamsState extends State<MyTeams> {
           }
 
           if (_selectedProfileIndex == 0) {
+            // Summary data
             _selectedUserData = _teamData['summary'] ?? {};
             _selectedUserData['totalPerformance'] =
                 _teamData['totalPerformance'] ?? {};
-          } else if (_selectedProfileIndex < _teamMembers.length) {
+          } else if (_selectedProfileIndex - 1 < _teamMembers.length) {
+            // Specific user selected
             final selectedMember = _teamMembers[_selectedProfileIndex - 1];
             _selectedUserData = selectedMember;
 
             final selectedUserPerformance =
                 _teamData['selectedUserPerformance'] ?? {};
+            final upcoming = selectedUserPerformance['Upcoming'] ?? {};
+            final overdue = selectedUserPerformance['Overdue'] ?? {};
 
-            _upcomingFollowups = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['upComingFollowups'] ?? []);
-            _upcomingAppointments = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['upComingAppointment'] ?? []);
-            _upcomingTestDrives = List<Map<String, dynamic>>.from(
-                selectedUserPerformance['upComingTestDrive'] ?? []);
+            if (_upcommingButtonIndex == 0) {
+              _upcomingFollowups = List<Map<String, dynamic>>.from(
+                  upcoming['upComingFollowups'] ?? []);
+              _upcomingAppointments = List<Map<String, dynamic>>.from(
+                  upcoming['upComingAppointment'] ?? []);
+              _upcomingTestDrives = List<Map<String, dynamic>>.from(
+                  upcoming['upComingTestDrive'] ?? []);
+            } else {
+              _upcomingFollowups = List<Map<String, dynamic>>.from(
+                  overdue['overdueFollowups'] ?? []);
+              _upcomingAppointments = List<Map<String, dynamic>>.from(
+                  overdue['overdueAppointments'] ?? []);
+              _upcomingTestDrives = List<Map<String, dynamic>>.from(
+                  overdue['overdueTestDrives'] ?? []);
+            }
           }
-
-          // if (_selectedProfileIndex == 0) {
-          //   _selectedUserData = _teamData['summary'] ?? {};
-          //   _selectedUserData['totalPerformance'] =
-          //       _teamData['totalPerformance'] ?? {};
-          // } else if (_selectedProfileIndex < _teamMembers.length) {
-          //   final selectedMember = _teamMembers[_selectedProfileIndex - 1];
-          //   _selectedUserData = selectedMember;
-
-          //   final selectedUserPerformance =
-          //       selectedMember['selectedUserPerformance'] ?? {};
-
-          //   _upcomingFollowups = List<Map<String, dynamic>>.from(
-          //       selectedUserPerformance['UpComingFollowups'] ?? []);
-          //   _upcomingAppointments = List<Map<String, dynamic>>.from(
-          //       selectedUserPerformance['UpComingAppointment'] ?? []);
-          //   _upcomingTestDrives = List<Map<String, dynamic>>.from(
-          //       selectedUserPerformance['UpComingTestDrive'] ?? []);
-          // }
         });
+
+        //   if (_selectedProfileIndex == 0) {
+        //     _selectedUserData = _teamData['summary'] ?? {};
+        //     _selectedUserData['totalPerformance'] =
+        //         _teamData['totalPerformance'] ?? {};
+        //   } else if (_selectedProfileIndex < _teamMembers.length) {
+        //     final selectedMember = _teamMembers[_selectedProfileIndex - 1];
+        //     _selectedUserData = selectedMember;
+
+        //     final selectedUserPerformance =
+        //         _teamData['selectedUserPerformance'] ?? {};
+
+        //     final upcoming = selectedUserPerformance['Upcoming'] ?? {};
+        //     final overdue = selectedUserPerformance['Overdue'] ?? {};
+
+        //     if (_upcommingButtonIndex == 0) {
+        //       // Show upcoming
+        //       _upcomingFollowups = List<Map<String, dynamic>>.from(
+        //           upcoming['upComingFollowups'] ?? []);
+        //       _upcomingAppointments = List<Map<String, dynamic>>.from(
+        //           upcoming['upComingAppointment'] ?? []);
+        //       _upcomingTestDrives = List<Map<String, dynamic>>.from(
+        //           upcoming['upComingTestDrive'] ?? []);
+        //     } else {
+        //       // Show overdue
+        //       _upcomingFollowups = List<Map<String, dynamic>>.from(
+        //           overdue['overdueFollowups'] ?? []);
+        //       _upcomingAppointments = List<Map<String, dynamic>>.from(
+        //           overdue['overdueAppointments'] ?? []);
+        //       _upcomingTestDrives = List<Map<String, dynamic>>.from(
+        //           overdue['overdueTestDrives'] ?? []);
+        //     }
+        //   }
+        // });
       } else {
         throw Exception('Failed to fetch team details: ${response.statusCode}');
       }
@@ -380,16 +416,16 @@ class _MyTeamsState extends State<MyTeams> {
                 ),
 
           // Floating Action Button
-          // Positioned(
-          //   bottom: 16,
-          //   right: 16,
-          //   child: _buildFloatingActionButton(context),
-          // ),
+          Positioned(
+            bottom: 26,
+            right: 18,
+            child: _buildFloatingActionButton(context),
+          ),
 
-          // Popup Menu (Conditionally Rendered)
-          // Obx(() => fabController.isFabExpanded.value
-          //     ? _buildPopupMenu(context)
-          //     : const SizedBox.shrink()),
+          //Popup Menu (Conditionally Rendered)
+          Obx(() => fabController.isFabExpanded.value
+              ? _buildPopupMenu(context)
+              : const SizedBox.shrink()),
         ],
       ),
     );
@@ -421,54 +457,6 @@ class _MyTeamsState extends State<MyTeams> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // Popup Menu Builder
-  Widget _buildPopupMenu(BuildContext context) {
-    return GestureDetector(
-      onTap: fabController.closeFab,
-      child: Stack(
-        children: [
-          // Background overlay
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.7),
-            ),
-          ),
-
-          // Popup Items Container aligned bottom right
-          Positioned(
-            bottom: 90,
-            right: 20,
-            child: SizedBox(
-              width: 200,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _buildPopupItem(Icons.people, "Create New Team", -40,
-                      onTap: () {
-                    fabController.closeFab();
-                    // _showFollowupPopup(context, widget.leadId);
-                  }),
-                  _buildPopupItem(Icons.person, "Create User", -80, onTap: () {
-                    fabController.closeFab();
-                    // _showAppointmentPopup(context, widget.leadId);
-                  }),
-                ],
-              ),
-            ),
-          ),
-
-          // ✅ FAB positioned above the overlay
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: _buildFloatingActionButton(context),
-          ),
-        ],
       ),
     );
   }
@@ -521,77 +509,155 @@ class _MyTeamsState extends State<MyTeams> {
         ));
   }
 
-  // Tab buttons for switching between Individual Performance and Team Comparison
-  Widget _buildTabButtons() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 16, 10, 0),
-      child: Container(
-        height: 35,
-        decoration: BoxDecoration(
-          color: AppColors.backgroundLightGrey,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          children: [
-            // Individual Performance Button
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _tabIndex = 0;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: _tabIndex == 0 ? Colors.blue : Colors.transparent,
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Individual Performance',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: _tabIndex == 0 ? Colors.blue : Colors.black54,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+  void _showAppointmentPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero, // Remove default padding
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: AppointmentTeams(
+              onFormSubmit: () {},
+            ), // Appointment modal
+          ),
+        );
+      },
+    );
+  }
 
-            // Team Comparison Button
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _tabIndex = 1;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: _tabIndex == 1 ? Colors.blue : Colors.transparent,
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Team Comparison',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: _tabIndex == 1 ? Colors.blue : Colors.black54,
-                      ),
-                    ),
-                  ),
-                ),
+  void _showTestdrivePopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero, // Remove default padding
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: TestdriveTeams(
+              onFormSubmit: () {},
+            ), // Appointment modal
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLeadPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16), // Add some margin for better UX
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: LeadTeams(
+              onFormSubmit: () {},
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFollowupPopup(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: FollowupsTeams(
+              onFormSubmit: () {}, // Pass the function here
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context) {
+    return GestureDetector(
+      onTap: fabController.closeFab,
+      child: Stack(
+        children: [
+          // Background overlay
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.7),
+            ),
+          ),
+
+          // Popup Items Container aligned bottom right
+          Positioned(
+            bottom: 90,
+            right: 20,
+            child: SizedBox(
+              width: 200,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildPopupItem(
+                      Icons.calendar_month_outlined, "Appointment", -80,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showAppointmentPopup(context);
+                  }),
+                  _buildPopupItem(Icons.people_alt_rounded, "Enquiry", -60,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showLeadPopup(context);
+                  }),
+                  _buildPopupItem(Icons.call, "Followup", -40, onTap: () {
+                    fabController.closeFab();
+                    _showFollowupPopup(context);
+                  }),
+                  _buildPopupItem(Icons.directions_car, "Test Drive", -20,
+                      onTap: () {
+                    fabController.closeFab();
+                    _showTestdrivePopup(context);
+                  }),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+
+          // ✅ FAB positioned above the overlay
+          Positioned(
+            bottom: 26,
+            right: 18,
+            child: _buildFloatingActionButton(context),
+          ),
+        ],
       ),
     );
   }
@@ -644,28 +710,6 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-  // Profile avatars row
-  // Widget _buildProfileAvatars() {
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: Container(
-  //       margin: const EdgeInsets.only(top: 10),
-  //       height: 90,
-  //       padding: const EdgeInsets.only(right: 10),
-  //       child: Row(
-  //         crossAxisAlignment: CrossAxisAlignment.center,
-  //         children: [
-  //           for (int i = 1; i < _teamMembers.length; i++)
-  //             _buildProfileAvatar(
-  //               _teamMembers[i]['fname'] ?? '',
-  //               i,
-  //               _teamMembers[i]['user_id'] ?? '',
-  //             ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
   Widget _buildProfileAvatars() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -748,105 +792,6 @@ class _MyTeamsState extends State<MyTeams> {
               children: [
                 _buildPeriodFilter(screenWidth),
                 _buildIndividualPerformanceMetrics(context),
-
-                // for upcoming
-                // if (_selectedType != 'All') ...[
-                //   Container(
-                //     margin: const EdgeInsets.symmetric(horizontal: 0),
-                //     decoration: BoxDecoration(
-                //       color: AppColors.backgroundLightGrey,
-                //       borderRadius: BorderRadius.circular(10),
-                //     ),
-                //     child: Column(
-                //       children: [
-                //         Row(
-                //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //           children: [
-                //             Container(
-                //               margin:
-                //                   const EdgeInsets.only(left: 10, bottom: 0),
-                //               child: Text(
-                //                 'Activities',
-                //                 style: AppFont.dropDowmLabel(context),
-                //               ),
-                //             ),
-                //             IconButton(
-                //               onPressed: () {
-                //                 setState(() {
-                //                   isHideActivities = !isHideActivities;
-                //                 });
-                //               },
-                //               icon: Icon(
-                //                 isHideActivities
-                //                     ? Icons.keyboard_arrow_down_rounded
-                //                     : Icons.keyboard_arrow_up_rounded,
-                //                 size: 35,
-                //                 color: AppColors.iconGrey,
-                //               ),
-                //             ),
-                //           ],
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                //   if (!isHideActivities) ...[
-                //     Container(
-                //         decoration: BoxDecoration(
-                //             color: AppColors.backgroundLightGrey,
-                //             borderRadius: BorderRadius.circular(10)),
-                //         margin: const EdgeInsets.only(top: 10),
-                //         child: _buildUpcomingActivities(context)),
-                //   ],
-                //   const SizedBox(
-                //     height: 10,
-                //   ),
-                //   Container(
-                //     margin: const EdgeInsets.symmetric(horizontal: 0),
-                //     decoration: BoxDecoration(
-                //       color: AppColors.backgroundLightGrey,
-                //       borderRadius: BorderRadius.circular(10),
-                //     ),
-                //     child: Column(
-                //       children: [
-                //         Row(
-                //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //           children: [
-                //             Container(
-                //               margin:
-                //                   const EdgeInsets.only(left: 10, bottom: 0),
-                //               child: Text(
-                //                 'Call Analysis',
-                //                 style: AppFont.dropDowmLabel(context),
-                //               ),
-                //             ),
-                //             IconButton(
-                //               onPressed: () {
-                //                 setState(() {
-                //                   isHideCalls = !isHideCalls;
-                //                 });
-                //               },
-                //               icon: Icon(
-                //                 isHideCalls
-                //                     ? Icons.keyboard_arrow_down_rounded
-                //                     : Icons.keyboard_arrow_up_rounded,
-                //                 size: 35,
-                //                 color: AppColors.iconGrey,
-                //               ),
-                //             ),
-                //           ],
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                //   // if (!isHideCalls) ...[
-                //   //   Container(
-                //   //       decoration: BoxDecoration(
-                //   //           color: AppColors.backgroundLightGrey,
-                //   //           borderRadius: BorderRadius.circular(10)),
-                //   //       margin: const EdgeInsets.only(top: 10),
-                //   //       child: _callLogsWidget(context)),
-                //   // ],
-                // ],
               ],
             ),
           ),
@@ -980,56 +925,6 @@ class _MyTeamsState extends State<MyTeams> {
             color: _periodIndex == index ? Colors.blue : Colors.black,
             fontWeight: FontWeight.w500,
             fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Metric selection buttons for Team Comparison
-  Widget _buildMetricButtons() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Row(
-        children: [
-          _buildMetricButton('Enquiriess', 0),
-          _buildMetricButton('Test Drives', 1),
-          _buildMetricButton('Net Orders', 2),
-          _buildMetricButton('New Orders', 3),
-          _buildMetricButton('Cancellations', 4),
-          _buildMetricButton('Retail', 5),
-        ],
-      ),
-    );
-  }
-
-  // Individual metric button
-  Widget _buildMetricButton(String label, int index) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _metricIndex = index;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            border: Border.all(
-              color: _metricIndex == index ? Colors.blue : Colors.grey.shade300,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: _metricIndex == index ? Colors.blue : Colors.black87,
-              fontWeight: FontWeight.w400,
-              fontSize: 14,
-            ),
           ),
         ),
       ),
@@ -1238,8 +1133,52 @@ class _MyTeamsState extends State<MyTeams> {
                   ),
                   margin: const EdgeInsets.only(top: 10),
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    children: teamData.map((item) {
+                  child: Column(children: [
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if (_isComparing) {
+                                // Currently showing comparison, switch to show all
+                                _isComparing = false;
+                                isHideCheckbox = true; // Show checkboxes again
+                                selectedUserIds.clear();
+                                _selectedCheckboxIds.clear();
+                                _fetchTeamDetails(); // Fetch all team data
+                              } else if (selectedUserIds.length == 2) {
+                                // We have 2 users selected, do the comparison
+                                _isComparing = true;
+                                _selectedCheckboxIds =
+                                    Set<String>.from(selectedUserIds);
+                                _fetchTeamDetails(); // Fetch comparison data
+                              } else {
+                                // Not enough users selected
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        "Please select exactly 2 users to compare"),
+                                  ),
+                                );
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.homeContainerLeads,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _isComparing ? 'Show All' : 'Compare',
+                              style: AppFont.mediumText14Black(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    ...teamData.map((item) {
                       final value = item[currentMetric] is num
                           ? (item[currentMetric] as num).toInt()
                           : int.tryParse(
@@ -1256,99 +1195,90 @@ class _MyTeamsState extends State<MyTeams> {
                       final bool isSelected =
                           selectedUserIds.contains(item['user_id']);
 
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 5, horizontal: 8),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: isSelected,
-                              onChanged: (bool? val) {
-                                setState(() {
-                                  final id = item['user_id'];
+                      // Only show items that are either:
+                      // 1. Not in comparison mode, or
+                      // 2. In comparison mode AND this item is one of the selected ones
+                      final bool shouldShowItem =
+                          !_isComparing || (_isComparing && isSelected);
 
-                                  if (val == true) {
-                                    if (selectedUserIds.length < 2) {
-                                      selectedUserIds.add(id);
-                                      if (selectedUserIds.length == 2) {
-                                        _selectedCheckboxIds =
-                                            Set<String>.from(selectedUserIds);
-                                        _fetchTeamDetails(); // Call API immediately when 2 selected
-                                      }
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              "You can only compare 2 users at a time"),
-                                        ),
-                                      );
-                                    }
-                                  } else {
-                                    selectedUserIds.remove(id);
-                                    _selectedCheckboxIds =
-                                        Set<String>.from(selectedUserIds);
-
-                                    if (_selectedCheckboxIds.length == 2) {
-                                      _fetchTeamDetails(); // Also re-fetch if user deselects and still 2 remain
-                                    } else {
-                                      // You may want to clear previous comparison data if less than 2
-                                      _teamData.clear();
-                                    }
-                                  }
-                                });
-                              },
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            SizedBox(
-                              width: 70,
-                              child: Text(
-                                item['name'] ?? '',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Expanded(
+                      return shouldShowItem
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 8),
                               child: Row(
                                 children: [
+                                  if (!_isComparing) // Only show checkboxes when not comparing
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged: (bool? val) {
+                                        setState(() {
+                                          final id = item['user_id'];
+
+                                          if (val == true) {
+                                            if (selectedUserIds.length < 2) {
+                                              selectedUserIds.add(id);
+                                            } else {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                      "You can only compare 2 teams at a time"),
+                                                ),
+                                              );
+                                            }
+                                          } else {
+                                            selectedUserIds.remove(id);
+                                          }
+                                        });
+                                      },
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                   SizedBox(
-                                    width: 20,
+                                    width:
+                                        MediaQuery.sizeOf(context).width * .15,
                                     child: Text(
-                                      value.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.fontColor,
-                                      ),
-                                      textAlign: TextAlign.center,
+                                      item['fname'] ?? '',
+                                      style: AppFont.dropDowmLabel(context),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    height: 20,
-                                    width: barWidth,
-                                    decoration: BoxDecoration(
-                                      color: metricColor,
-                                      borderRadius: BorderRadius.circular(4),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 5,
+                                          child: Text(
+                                            value.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.fontColor,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          height: 20,
+                                          width: barWidth,
+                                          decoration: BoxDecoration(
+                                            color: metricColor,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
+                            )
+                          : Container(); // Empty container for items that shouldn't be shown
                     }).toList(),
-                  ),
+                  ]),
                 ),
             ],
-          ]
+          ],
         ],
       ),
     );
@@ -1424,6 +1354,40 @@ class _MyTeamsState extends State<MyTeams> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 0),
+            child: Row(
+              children: [
+                // const SizedBox(height: 10),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10, top: 5),
+                  width: 150,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFF767676),
+                      width: .5,
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildFilterButton(
+                        index: 0,
+                        text: 'Upcoming',
+                        activeColor: const Color.fromARGB(255, 81, 223, 121),
+                      ),
+                      _buildFilterButton(
+                        index: 1,
+                        text: 'Overdue',
+                        activeColor: const Color.fromRGBO(238, 59, 59, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (_upcomingFollowups.isNotEmpty)
             _buildActivitySection(context, _upcomingFollowups, 'due_date'),
           if (_upcomingAppointments.isNotEmpty)
@@ -1435,40 +1399,64 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 
-  // Widget _buildUpcomingActivities(BuildContext context) {
-  //   // Only show if we have data and not in "All" view
-  //   if (_selectedProfileIndex == 0 ||
-  //       (_upcomingFollowups.isEmpty &&
-  //           _upcomingAppointments.isEmpty &&
-  //           _upcomingTestDrives.isEmpty)) {
-  //     return const SizedBox.shrink();
-  //   }
+  Widget _buildFilterButton({
+    required int index,
+    required String text,
+    required Color activeColor,
+  }) {
+    return Expanded(
+      child: TextButton(
+        onPressed: () {
+          setState(() {
+            _upcommingButtonIndex = index;
 
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Padding(
-  //         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-  //         child: Text(
-  //           "Upcoming Activities",
-  //           style: AppFont.mediumText14(context),
-  //         ),
-  //       ),
+            // ✅ Prevent clearing if no user is selected
+            if (_selectedProfileIndex == 0) return;
 
-  //       // Upcoming Followups
-  //       if (_upcomingFollowups.isNotEmpty)
-  //         _buildActivitySection(context, _upcomingFollowups),
+            final selectedUserPerformance =
+                _teamData['selectedUserPerformance'] ?? {};
 
-  //       // Upcoming Appointments
-  //       if (_upcomingAppointments.isNotEmpty)
-  //         _buildActivitySection(context, _upcomingAppointments),
+            final upcoming = selectedUserPerformance['Upcoming'] ?? {};
+            final overdue = selectedUserPerformance['Overdue'] ?? {};
 
-  //       // Upcoming Test Drives
-  //       if (_upcomingTestDrives.isNotEmpty)
-  //         _buildActivitySection(context, _upcomingTestDrives),
-  //     ],
-  //   );
-  // }
+            if (_upcommingButtonIndex == 0) {
+              _upcomingFollowups = List<Map<String, dynamic>>.from(
+                  upcoming['upComingFollowups'] ?? []);
+              _upcomingAppointments = List<Map<String, dynamic>>.from(
+                  upcoming['upComingAppointment'] ?? []);
+              _upcomingTestDrives = List<Map<String, dynamic>>.from(
+                  upcoming['upComingTestDrive'] ?? []);
+            } else {
+              _upcomingFollowups = List<Map<String, dynamic>>.from(
+                  overdue['overdueFollowups'] ?? []);
+              _upcomingAppointments = List<Map<String, dynamic>>.from(
+                  overdue['overdueAppointments'] ?? []);
+              _upcomingTestDrives = List<Map<String, dynamic>>.from(
+                  overdue['overdueTestDrives'] ?? []);
+            }
+          });
+        },
+        style: TextButton.styleFrom(
+          backgroundColor: _upcommingButtonIndex == index
+              ? activeColor.withOpacity(0.29)
+              : null,
+          foregroundColor:
+              _upcommingButtonIndex == index ? Colors.blueGrey : Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          side: BorderSide(
+            color: _upcommingButtonIndex == index
+                ? activeColor
+                : Colors.transparent,
+            width: .5,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        child: Text(text, style: AppFont.smallText(context)),
+      ),
+    );
+  }
 
   // Activity section builder
   Widget _buildActivitySection(
