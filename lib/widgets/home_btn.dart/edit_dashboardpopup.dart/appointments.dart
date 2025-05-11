@@ -134,7 +134,7 @@ class _AppointmentsEditState extends State<AppointmentsEdit> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        final String comment = data['data']['feedback_comments'] ?? '';
+        final String comment = data['data']['remarks'] ?? '';
         final String status = data['data']['status'] ?? '';
         descriptionController.text = comment;
         // statusController.text = status;

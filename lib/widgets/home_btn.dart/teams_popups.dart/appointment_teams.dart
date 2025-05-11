@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -28,16 +29,27 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
 
+  bool isSubmitting = false; //for one time submit
+
   bool _isLoadingSearch = false;
+  bool _isLoadingAssignee = false;
   String _query = '';
+  String _assigneeQuery = '';
   String? selectedLeads;
   String _selectedSubject = '';
+
   String? selectedLeadsName;
   String? selectedPriority;
+// for assignee
+  String? selectedAssigneName;
+  String? selectedAssigne;
 
   List<dynamic> _searchResults = [];
+  List<dynamic> _searchResultsAssignee = [];
 
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchControllerAssignee =
+      TextEditingController();
   TextEditingController startDateController = TextEditingController();
   TextEditingController endDateController = TextEditingController();
   TextEditingController startTimeController = TextEditingController();
@@ -48,10 +60,22 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _searchControllerAssignee.addListener(_onAssigneeSearchChanged);
     // fetchDropdownData();
+    print("Search listeners initialized");
 
     _speech = stt.SpeechToText();
     _initSpeech();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controllers when the widget is disposed
+    _searchController.removeListener(_onSearchChanged);
+    _searchControllerAssignee.removeListener(_onAssigneeSearchChanged);
+    _searchController.dispose();
+    _searchControllerAssignee.dispose();
+    super.dispose();
   }
 
   // Initialize speech recognition
@@ -152,6 +176,75 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_query == _searchController.text.trim()) {
         _fetchSearchResults(_query);
+      }
+    });
+  }
+
+  Future<void> _fetchAssigneeSearchResults(String query) async {
+    print(
+        "Inside _fetchAssigneeSearchResults with query: '$query'"); // Debug print
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchResultsAssignee.clear();
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingAssignee = true;
+    });
+
+    try {
+      final token = await Storage.getToken();
+      print(
+          "Token retrieved: ${token != null ? 'Yes' : 'No'}"); // Debug token presence
+
+      final apiUrl =
+          'https://api.smartassistapp.in/api/search/global?query=$query';
+      print("API URL: $apiUrl"); // Debug URL
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print(
+          "API Response status: ${response.statusCode}"); // Debug response code
+      print("API Response body: ${response.body}"); // Debug response data
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        setState(() {
+          _searchResultsAssignee = data['data']['suggestions'] ?? [];
+          print(
+              "Search results loaded: ${_searchResultsAssignee.length}"); // Debug results
+        });
+      } else {
+        print("API error: ${response.statusCode} - ${response.body}");
+        showErrorMessage(context, message: 'API Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Exception during API call: $e"); // Debug exception
+      showErrorMessage(context, message: 'Something went wrong..! $e');
+    } finally {
+      setState(() {
+        _isLoadingAssignee = false;
+      });
+    }
+  }
+
+  void _onAssigneeSearchChanged() {
+    final newQuery = _searchControllerAssignee.text.trim();
+    if (newQuery == _assigneeQuery) return;
+
+    _assigneeQuery = newQuery;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_assigneeQuery == _searchControllerAssignee.text.trim()) {
+        _fetchAssigneeSearchResults(_assigneeQuery);
       }
     });
   }
@@ -432,6 +525,11 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
                 },
               ),
 
+              const SizedBox(
+                height: 10,
+              ),
+              _buildAssigneSearch(),
+
               const SizedBox(height: 10),
               _buildTextField(
                   label: 'Comments:',
@@ -460,7 +558,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
                       backgroundColor: AppColors.colorsBlueButton,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5))),
-                  onPressed: submitForm,
+                  onPressed: _submitForms,
                   child: Text("Create", style: AppFont.buttons(context)),
                 ),
               ),
@@ -468,6 +566,122 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAssigneSearch() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Assignee', style: AppFont.dropDowmLabel(context)),
+        const SizedBox(height: 10),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.055,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchControllerAssignee,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.containerBg,
+                    hintText: selectedAssigneName ?? 'Select Assignee',
+                    hintStyle: TextStyle(
+                      color: selectedAssigneName != null
+                          ? Colors.black
+                          : Colors.grey,
+                    ),
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      size: 15,
+                      color: AppColors.fontColor,
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  onTap: () {
+                    // If there is a selected lead, populate the text field with its name
+                    if (selectedAssigneName != null &&
+                        _searchControllerAssignee.text.isEmpty) {
+                      _searchControllerAssignee.text = selectedAssigneName!;
+                      _searchControllerAssignee.selection =
+                          TextSelection.fromPosition(
+                        TextPosition(
+                            offset: _searchControllerAssignee.text.length),
+                      );
+                    }
+                  },
+                  onChanged: (value) {
+                    print("TextField onChanged: '$value'"); // Additional debug
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Show loading indicator
+        if (_isLoadingAssignee)
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+
+        // Show search results
+        if (_searchResultsAssignee.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 4)
+              ],
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _searchResultsAssignee.length,
+              itemBuilder: (context, index) {
+                final result = _searchResultsAssignee[index];
+                return ListTile(
+                  onTap: () {
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                      selectedAssigne = result['lead_id'];
+                      selectedAssigneName = result['lead_name'];
+                      _searchControllerAssignee.clear();
+                      _searchResultsAssignee.clear();
+                    });
+                  },
+                  title: Text(
+                    result['lead_name'] ?? 'No Name',
+                    style: TextStyle(
+                      color: selectedAssigne == result['lead_id']
+                          ? Colors.black
+                          : AppColors.fontBlack,
+                    ),
+                  ),
+                  leading: const Icon(Icons.person),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 
@@ -503,16 +717,6 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
                       size: 15,
                       color: AppColors.fontColor,
                     ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(
-                        FontAwesomeIcons.microphone,
-                        color: AppColors.fontColor,
-                        size: 15,
-                      ),
-                      onPressed: () {
-                        print('Microphone button pressed');
-                      },
-                    ),
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
                     border: OutlineInputBorder(
@@ -525,6 +729,34 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
+
+                  // new code for text edit
+                  onTap: () {
+                    // If there is a selected lead, populate the text field with its name
+                    if (selectedLeadsName != null &&
+                        _searchController.text.isEmpty) {
+                      _searchController.text = selectedLeadsName!;
+                      _searchController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: _searchController.text.length),
+                      );
+                    }
+                  },
+                  // onChanged: (value) {
+                  //   if (value.isEmpty) {
+                  //     setState(() {
+                  //       selectedLeads = null;
+                  //       selectedLeadsName = null;
+                  //       _searchResults.clear();
+                  //     });
+                  //   } else {
+                  //     // Update the selected lead name if the user is editing it
+                  //     if (selectedLeads != null) {
+                  //       setState(() {
+                  //         selectedLeadsName = value;
+                  //       });
+                  //     }
+                  //   }
+                  // },
                 ),
               ),
             ],
@@ -877,6 +1109,26 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
     );
   }
 
+  Future<void> _submitForms() async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      await submitForm(); // Your actual API call
+      // Optionally show a success snackbar or navigate
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Submission failed: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
   Future<void> submitForm() async {
     final prefs = await SharedPreferences.getInstance();
     final spId = prefs.getString('user_id');
@@ -917,6 +1169,8 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
         'priority': selectedPriority,
         'subject': _selectedSubject,
         'sp_id': spId,
+        // 'lead_name' : _searchController,
+        // 'assignee' : _searchControllerAssignee,
         'comments': descriptionController.text,
       };
 

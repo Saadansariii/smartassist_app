@@ -417,12 +417,12 @@ class _MyTeamsState extends State<MyTeams> {
 
           // Floating Action Button
           Positioned(
-            bottom: 26,
-            right: 18,
+            bottom: 16,
+            right: 28,
             child: _buildFloatingActionButton(context),
           ),
 
-          //Popup Menu (Conditionally Rendered)
+          // //Popup Menu (Conditionally Rendered)
           Obx(() => fabController.isFabExpanded.value
               ? _buildPopupMenu(context)
               : const SizedBox.shrink()),
@@ -653,8 +653,8 @@ class _MyTeamsState extends State<MyTeams> {
 
           // ✅ FAB positioned above the overlay
           Positioned(
-            bottom: 26,
-            right: 18,
+            bottom: 16,
+            right: 28,
             child: _buildFloatingActionButton(context),
           ),
         ],
@@ -1342,12 +1342,12 @@ class _MyTeamsState extends State<MyTeams> {
 
   // Upcoming Activities Section
   Widget _buildUpcomingActivities(BuildContext context) {
-    if (_selectedProfileIndex == 0 ||
-        (_upcomingFollowups.isEmpty &&
-            _upcomingAppointments.isEmpty &&
-            _upcomingTestDrives.isEmpty)) {
-      return const SizedBox.shrink();
-    }
+    // if (_selectedProfileIndex == 0 ||
+    //     (_upcomingFollowups.isEmpty &&
+    //         _upcomingAppointments.isEmpty &&
+    //         _upcomingTestDrives.isEmpty)) {
+    //   return const SizedBox.shrink();
+    // }
 
     return Container(
       margin: const EdgeInsets.all(10),
