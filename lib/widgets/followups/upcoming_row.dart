@@ -258,6 +258,7 @@ class _overdueeFollowupsItemState extends State<UpcomingFollowupItem>
     return Slidable(
       key: ValueKey(widget.leadId), // Always good to set keys
       startActionPane: ActionPane(
+        extentRatio: 0.2,
         motion: const ScrollMotion(),
         children: [
           ReusableSlidableAction(
@@ -272,6 +273,7 @@ class _overdueeFollowupsItemState extends State<UpcomingFollowupItem>
       ),
 
       endActionPane: ActionPane(
+        extentRatio: 0.4,
         motion: const StretchMotion(),
         children: [
           if (widget.subject == 'Call')
@@ -617,15 +619,8 @@ class ReusableSlidableAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // return SlidableAction(
-    //   onPressed: (context) => onPressed(),
-    //   backgroundColor: backgroundColor,
-    //   foregroundColor: foregroundColor ?? Colors.white,
-    //   icon: icon,
-    //   borderRadius: BorderRadius.circular(0),
-    // );
-
     return CustomSlidableAction(
+      padding: EdgeInsets.zero,
       onPressed: (context) => onPressed(),
       backgroundColor: backgroundColor,
       child: Icon(

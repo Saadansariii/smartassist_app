@@ -311,6 +311,7 @@ class _OppUpcomingItemState extends State<OppUpcomingItem>
     return Slidable(
       key: ValueKey(widget.eventId), // Always good to set keys
       startActionPane: ActionPane(
+        extentRatio: 0.2,
         motion: const ScrollMotion(),
         children: [
           ReusableSlidableAction(
@@ -325,6 +326,7 @@ class _OppUpcomingItemState extends State<OppUpcomingItem>
       ),
 
       endActionPane: ActionPane(
+        extentRatio: 0.4,
         motion: const StretchMotion(),
         children: [
           // if (widget.subject == 'Meeting')
@@ -706,6 +708,7 @@ class ReusableSlidableAction extends StatelessWidget {
     // );
 
     return CustomSlidableAction(
+      padding: EdgeInsets.zero,
       onPressed: (context) => onPressed(),
       backgroundColor: backgroundColor,
       child: Icon(

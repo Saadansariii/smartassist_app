@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -44,6 +45,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
   String? selectedStatus;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool isSubmitting = false;
 
   @override
   void initState() {
@@ -195,10 +197,30 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
   //   return isValid;
   // }
 
-  void _submit() {
-    // if (_validation()) {
-    submitForm();
-    // }
+  // void _submit() {
+  //   // if (_validation()) {
+  //   submitForm();
+  //   // }
+  // }
+
+  Future<void> _submitForms() async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      await submitForm(); // Your actual API call
+      // Optionally show a success snackbar or navigate
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Submission failed: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
   }
 
   /// Submit form
@@ -606,7 +628,7 @@ class _CreateFollowupsPopupsState extends State<CreateFollowupsPopups> {
                         backgroundColor: AppColors.colorsBlue,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5))),
-                    onPressed: _submit,
+                    onPressed: _submitForms,
                     child: Text("I'll do it", style: AppFont.buttons(context)),
                   ),
                 ),
