@@ -159,7 +159,7 @@ class _LeadsState extends State<Leads> {
                     child: _buildInfoCard1(
                       context,
                       'Enquiries you have',
-                      '${selectedData['totalEnquiries'] ?? 0}',
+                      '${selectedData['newEnquiries'] ?? 0}',
                       screenWidth,
                       Colors.green,
                     ),

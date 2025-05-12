@@ -33,6 +33,8 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
 
   bool _isLoadingSearch = false;
   bool _isLoadingAssignee = false;
+  String? spId;
+
   String _query = '';
   String _assigneeQuery = '';
   String? selectedLeads;
@@ -43,6 +45,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
 // for assignee
   String? selectedAssigneName;
   String? selectedAssigne;
+  String? selectedAssigneEmail;
 
   List<dynamic> _searchResults = [];
   List<dynamic> _searchResultsAssignee = [];
@@ -201,7 +204,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
           "Token retrieved: ${token != null ? 'Yes' : 'No'}"); // Debug token presence
 
       final apiUrl =
-          'https://api.smartassistapp.in/api/search/global?query=$query';
+          'https://api.smartassistapp.in/api/search/users?user=$query';
       print("API URL: $apiUrl"); // Debug URL
 
       final response = await http.get(
@@ -219,7 +222,9 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         setState(() {
-          _searchResultsAssignee = data['data']['suggestions'] ?? [];
+          // _searchResultsAssignee = data['data']['suggestions'] ?? [];
+          _searchResultsAssignee = data['data']['results'] ?? [];
+
           print(
               "Search results loaded: ${_searchResultsAssignee.length}"); // Debug results
         });
@@ -662,16 +667,28 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
                   onTap: () {
                     setState(() {
                       FocusScope.of(context).unfocus();
-                      selectedAssigne = result['lead_id'];
-                      selectedAssigneName = result['lead_name'];
+                      spId = result['user_id'];
+                      selectedAssigne = result['user_id'];
+                      selectedAssigneName = result['name'];
+                      selectedAssigneEmail = result['email'];
+
                       _searchControllerAssignee.clear();
                       _searchResultsAssignee.clear();
                     });
                   },
                   title: Text(
-                    result['lead_name'] ?? 'No Name',
-                    style: TextStyle(
-                      color: selectedAssigne == result['lead_id']
+                    result['name'] ?? 'No Name',
+                    style: GoogleFonts.poppins(
+                      color: selectedAssigne == result['user_id']
+                          ? Colors.black
+                          : AppColors.fontBlack,
+                    ),
+                  ),
+                  subtitle: Text(
+                    result['email'] ?? 'No Email',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: selectedAssigne == result['user_id']
                           ? Colors.black
                           : AppColors.fontBlack,
                     ),
@@ -1131,8 +1148,6 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
 
   Future<void> submitForm() async {
     final prefs = await SharedPreferences.getInstance();
-    final spId = prefs.getString('user_id');
-
     if (selectedLeads == null) {
       showErrorMessage(context, message: 'Please select a lead.');
       return;
@@ -1169,8 +1184,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
         'priority': selectedPriority,
         'subject': _selectedSubject,
         'sp_id': spId,
-        // 'lead_name' : _searchController,
-        // 'assignee' : _searchControllerAssignee,
+        'assignee': selectedAssigne,
         'comments': descriptionController.text,
       };
 

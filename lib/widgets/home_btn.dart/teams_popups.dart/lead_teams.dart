@@ -40,6 +40,14 @@ class _LeadTeamsState extends State<LeadTeams> {
   bool _isListening = false;
   bool isSubmitting = false;
 
+  bool _isLoadingAssignee = false;
+  String? spId;
+  String _assigneeQuery = '';
+  List<dynamic> _searchResultsAssignee = [];
+  String? selectedAssigneName;
+  String? selectedAssigne;
+  String? selectedAssigneEmail;
+
   List<dynamic> _searchResults = [];
   List<String> colorOptions = [];
   String? selectedColor;
@@ -84,6 +92,7 @@ class _LeadTeamsState extends State<LeadTeams> {
     _rangeAmount = RangeValues(_minValue, _maxValue);
     // fetchVehicleData();
     _searchController.addListener(_onSearchChanged);
+    _searchControllerAssignee.addListener(_onAssigneeSearchChanged);
 
     // Initialize speech recognition
     _speech = stt.SpeechToText();
@@ -119,6 +128,77 @@ class _LeadTeamsState extends State<LeadTeams> {
       showErrorMessage(context,
           message: 'Speech recognition not available on this device');
     }
+  }
+
+  Future<void> _fetchAssigneeSearchResults(String query) async {
+    print(
+        "Inside _fetchAssigneeSearchResults with query: '$query'"); // Debug print
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchResultsAssignee.clear();
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingAssignee = true;
+    });
+
+    try {
+      final token = await Storage.getToken();
+      print(
+          "Token retrieved: ${token != null ? 'Yes' : 'No'}"); // Debug token presence
+
+      final apiUrl =
+          'https://api.smartassistapp.in/api/search/users?user=$query';
+      print("API URL: $apiUrl"); // Debug URL
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print(
+          "API Response status: ${response.statusCode}"); // Debug response code
+      print("API Response body: ${response.body}"); // Debug response data
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        setState(() {
+          // _searchResultsAssignee = data['data']['suggestions'] ?? [];
+          _searchResultsAssignee = data['data']['results'] ?? [];
+
+          print(
+              "Search results loaded: ${_searchResultsAssignee.length}"); // Debug results
+        });
+      } else {
+        print("API error: ${response.statusCode} - ${response.body}");
+        showErrorMessage(context, message: 'API Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Exception during API call: $e"); // Debug exception
+      showErrorMessage(context, message: 'Something went wrong..! $e');
+    } finally {
+      setState(() {
+        _isLoadingAssignee = false;
+      });
+    }
+  }
+
+  void _onAssigneeSearchChanged() {
+    final newQuery = _searchControllerAssignee.text.trim();
+    if (newQuery == _assigneeQuery) return;
+
+    _assigneeQuery = newQuery;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_assigneeQuery == _searchControllerAssignee.text.trim()) {
+        _fetchAssigneeSearchResults(_assigneeQuery);
+      }
+    });
   }
 
   // Toggle listening
@@ -268,6 +348,9 @@ class _LeadTeamsState extends State<LeadTeams> {
   //     ],
   //   );
   // }
+
+  final TextEditingController _searchControllerAssignee =
+      TextEditingController();
 
   Future<void> fetchVehicleData(String query) async {
     if (query.isEmpty) {
@@ -1187,6 +1270,10 @@ class _LeadTeamsState extends State<LeadTeams> {
                           });
                         },
                       ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      _buildAssigneSearch(),
                     ],
                   ),
                 ),
@@ -2002,6 +2089,134 @@ class _LeadTeamsState extends State<LeadTeams> {
     );
   }
 
+  Widget _buildAssigneSearch() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Assignee', style: AppFont.dropDowmLabel(context)),
+        const SizedBox(height: 10),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.055,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: AppColors.containerBg,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchControllerAssignee,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.containerBg,
+                    hintText: selectedAssigneName ?? 'Select Assignee',
+                    hintStyle: TextStyle(
+                      color: selectedAssigneName != null
+                          ? Colors.black
+                          : Colors.grey,
+                    ),
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      size: 15,
+                      color: AppColors.fontColor,
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  onTap: () {
+                    // If there is a selected lead, populate the text field with its name
+                    if (selectedAssigneName != null &&
+                        _searchControllerAssignee.text.isEmpty) {
+                      _searchControllerAssignee.text = selectedAssigneName!;
+                      _searchControllerAssignee.selection =
+                          TextSelection.fromPosition(
+                        TextPosition(
+                            offset: _searchControllerAssignee.text.length),
+                      );
+                    }
+                  },
+                  onChanged: (value) {
+                    print("TextField onChanged: '$value'"); // Additional debug
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Show loading indicator
+        if (_isLoadingAssignee)
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+
+        // Show search results
+        if (_searchResultsAssignee.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 4)
+              ],
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _searchResultsAssignee.length,
+              itemBuilder: (context, index) {
+                final result = _searchResultsAssignee[index];
+                return ListTile(
+                  onTap: () {
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                      spId = result['user_id'];
+                      selectedAssigne = result['user_id'];
+                      selectedAssigneName = result['name'];
+                      selectedAssigneEmail = result['email'];
+
+                      _searchControllerAssignee.clear();
+                      _searchResultsAssignee.clear();
+                    });
+                  },
+                  title: Text(
+                    result['name'] ?? 'No Name',
+                    style: GoogleFonts.poppins(
+                      color: selectedAssigne == result['user_id']
+                          ? Colors.black
+                          : AppColors.fontBlack,
+                    ),
+                  ),
+                  subtitle: Text(
+                    result['email'] ?? 'No Email',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: selectedAssigne == result['user_id']
+                          ? Colors.black
+                          : AppColors.fontBlack,
+                    ),
+                  ),
+                  leading: const Icon(Icons.person),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildButtons({
     required Map<String, String>
         options, // ✅ Use a Map for short display & actual value
@@ -2126,19 +2341,19 @@ class _LeadTeamsState extends State<LeadTeams> {
 
   Future<void> submitForm() async {
     try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? spId = prefs.getString('user_id');
+      // SharedPreferences prefs = await SharedPreferences.getInstance();
+      // String? spId = prefs.getString('user_id');
 
-      if (spId == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('User ID not found. Please log in again.')),
-          );
-        }
-        print("Error: User ID not found."); // ✅ Print error in console
-        return;
-      }
+      // if (spId == null) {
+      //   if (context.mounted) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       const SnackBar(
+      //           content: Text('User ID not found. Please log in again.')),
+      //     );
+      //   }
+      //   print("Error: User ID not found."); // ✅ Print error in console
+      //   return;
+      // }
 
 // When preparing the leadData:
       String mobileNumber = mobileController.text;
@@ -2162,7 +2377,6 @@ class _LeadTeamsState extends State<LeadTeams> {
         'brand': _selectedBrand,
         'type': 'Product',
         'sub_type': selectedSubType,
-        'sp_id': spId,
         'chat_id': "91${mobileController.text}@c.us",
         'PMI': selectedVehicleName,
         'expected_date_purchase': endDateController.text,
@@ -2171,6 +2385,8 @@ class _LeadTeamsState extends State<LeadTeams> {
         'lead_source': _selectedType,
         'consent': consentValue,
         'budget': highestBudgetValue,
+        'sp_id': spId,
+        'assignee': selectedAssigne,
         // 'pincode': pinController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor

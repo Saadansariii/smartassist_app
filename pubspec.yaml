@@ -76,6 +76,7 @@ dependencies:
   fl_chart: ^0.71.0
   dropdown_button2: ^2.3.9
   connectivity_plus: ^6.1.4
+  google_places_flutter: ^2.1.0 
 
 
 dev_dependencies:

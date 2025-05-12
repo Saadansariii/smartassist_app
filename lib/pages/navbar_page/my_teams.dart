@@ -111,14 +111,22 @@ class _MyTeamsState extends State<MyTeams> {
       String? periodParam;
       switch (_periodIndex) {
         case 1:
-          periodParam = 'MTD';
+          periodParam = 'DAY';
           break;
         case 2:
-          periodParam = 'QTD';
+          periodParam = 'WEEK';
           break;
         case 3:
+          periodParam = 'MTD';
+          break;
+        case 4:
+          periodParam = 'QTD';
+          break;
+        case 5:
           periodParam = 'YTD';
           break;
+        default:
+          periodParam = 'DAY';
       }
 
       final Map<String, String> queryParams = {};
@@ -875,10 +883,12 @@ class _MyTeamsState extends State<MyTeams> {
             ),
             child: Row(
               children: [
-                _buildPeriodButton('All', 0),
-                _buildPeriodButton('MTD', 1),
-                _buildPeriodButton('QTD', 2),
-                _buildPeriodButton('YTD', 3),
+                _buildPeriodButton('1D', 0),
+                _buildPeriodButton('1W', 1),
+                _buildPeriodButton('1M', 2),
+                _buildPeriodButton('1M', 3),
+                _buildPeriodButton('1Q', 4),
+                _buildPeriodButton('1Y', 5),
               ],
             ),
           ),

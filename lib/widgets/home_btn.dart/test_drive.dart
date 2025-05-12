@@ -142,7 +142,7 @@ class _TestDriveState extends State<TestDrive> {
                         context,
                         'You have given',
                         'Unique test drives',
-                        '${selectedData['totalTestDrives'] ?? 0}',
+                        '${selectedData['uniqueTestDrives'] ?? 0}',
                         screenWidth,
                         Colors.green,
                       ),
@@ -196,7 +196,8 @@ class _TestDriveState extends State<TestDrive> {
                 margin: const EdgeInsets.only(right: 10),
                 child: _buildInfoCard3(
                   context,
-                  '45%',
+                  // '45%',
+                  '${selectedData['enquiryToUniqueTestdriveRatio'] ?? 0} %',
                   'Enquiry to Unique test drive ratio',
                   screenWidth,
                 ),
@@ -209,7 +210,9 @@ class _TestDriveState extends State<TestDrive> {
                 // margin: const EdgeInsets.only(right: 10),
                 child: _buildInfoCard3(
                   context,
-                  '29%',
+                  // '29%',
+
+                  '${selectedData['testDriveRatio'] ?? 0} %',
                   'Enquiry to Test Drive Ratio',
                   screenWidth,
                 ),
