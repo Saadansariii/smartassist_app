@@ -24,6 +24,7 @@ class _LeadsState extends State<Leads> {
   final PageController _pageController = PageController();
 
   Map<String, dynamic> getSelectedData() {
+    // print('this is data selected');
     Map<String, dynamic> periodData;
 
     // Select the appropriate period data
@@ -42,7 +43,7 @@ class _LeadsState extends State<Leads> {
     }
 
     // Make sure allData exists, otherwise return empty map
-    return periodData['allData'] ?? {};
+    return periodData['data'] ?? {};
   }
 
   @override
@@ -100,13 +101,6 @@ class _LeadsState extends State<Leads> {
                         color: Colors.blue,
                       ),
                     ),
-
-                    // Text(
-                    //   '137',
-                    //   style: AppFont.smallTextBold(context).copyWith(
-                    //     color: Colors.blue,
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
@@ -189,7 +183,7 @@ class _LeadsState extends State<Leads> {
                 context,
                 'You must pursue',
                 'More enquiries to achieve your target',
-                '${selectedData['remainingEnquiries'] ?? 0}',
+                '${selectedData['enquiriesToAchieveTarget'] ?? 0}',
                 screenWidth,
               ),
             ),
@@ -228,7 +222,7 @@ class _LeadsState extends State<Leads> {
                 Expanded(
                   child: _buildInfoCard(
                     context,
-                    'Follow-ups done by you per lost digital enquiry', 
+                    'Follow-ups done by you per lost digital enquiry',
                     'Follow-ups recommended for order',
                     '3',
                     '2',

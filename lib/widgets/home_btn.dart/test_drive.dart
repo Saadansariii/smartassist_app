@@ -57,7 +57,7 @@ class _TestDriveState extends State<TestDrive> {
     }
 
     // Make sure allData exists, otherwise return empty map
-    return periodData['allData'] ?? {};
+    return periodData['data'] ?? {};
   }
 
   @override

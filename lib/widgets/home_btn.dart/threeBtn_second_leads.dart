@@ -1,5 +1,4 @@
 // import 'dart:convert';
-
 // import 'package:flutter/material.dart';
 // import 'package:smart_assist/config/component/color/colors.dart';
 // import 'package:smart_assist/config/component/font/font.dart';
@@ -262,7 +261,6 @@
 // }
 
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
@@ -347,14 +345,19 @@ class _BottomBtnSecondState extends State<BottomBtnSecond> {
     try {
       final token = await Storage.getToken();
 
+      final uri = Uri.parse(
+          'https://api.smartassistapp.in/api/users/dashboard/analytics?type=$period');
+
       final response = await http.get(
-        Uri.parse(
-            'https://api.smartassistapp.in/api/users/dashboard/analytics?type=$period'),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
+
+      print(uri);
+      // print('hiii');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);

@@ -110,21 +110,21 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       // Return empty data if API data isn't available yet
       return {};
     }
-    return _dashboardData!['dealershipRank'] ?? {};
+    return _dashboardData!['dealerShipRank'] ??
+        {}; // Fixed key from 'dealershipRank' to 'dealerShipRank'
   }
 
   Map<String, dynamic> get currentAllIndiaRank {
     if (_dashboardData == null) {
       // Return empty data if API data isn't available yet
-
       return {};
     }
 
-    // Using allINDRank from API response
-    return _dashboardData!['allINDRank'] ?? {};
+    // Using allIndiaRank from API response - fixed key from 'allINDRank' to 'allIndiaRank'
+    return _dashboardData!['allIndiaRank'] ?? {};
   }
 
-  // Generate dynamic table rows based on API data
+// Generate dynamic table rows based on API data
   List<List<String>> get tableData {
     final List<List<String>> data = [];
 
@@ -135,26 +135,26 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Enquiries row
     data.add([
       'Enquiries',
-      currentDealershipRank['enquiriesCount']?.toString() ?? '10',
+      currentDealershipRank['enquiriesCount']?.toString() ?? '0',
       currentAllIndiaRank['enquiriesCount']?.toString() ?? '0',
-      currentDealershipRank['enquiriesRank']?.toString() ?? '10',
+      currentDealershipRank['enquiriesRank']?.toString() ?? '0',
       currentAllIndiaRank['enquiriesRank']?.toString() ?? '0',
     ]);
 
     // Add Lost Enquiries row
     data.add([
       'Lost Enquiries',
-      _dashboardData!['allData']['lostEnquiries']?.toString() ?? '0',
-      '0', // No data in API response for all India lost enquiries
-      '0', // No rank data for lost enquiries
-      '0', // No rank data for lost enquiries
+      currentDealershipRank['lostEnquiriesCount']?.toString() ?? '0',
+      currentAllIndiaRank['lostEnquiriesCount']?.toString() ?? '0',
+      currentDealershipRank['lostEnquiriesRank']?.toString() ?? '0',
+      currentAllIndiaRank['lostEnquiriesRank']?.toString() ?? '0',
     ]);
 
     // Add Test drives row
     data.add([
       'Test drives',
-      currentDealershipRank['testDrivesCount']?.toString() ?? '10',
-      currentAllIndiaRank['testDrivesCount']?.toString() ?? '10',
+      currentDealershipRank['testDrivesCount']?.toString() ?? '0',
+      currentAllIndiaRank['testDrivesCount']?.toString() ?? '0',
       currentDealershipRank['testDrivesRank']?.toString() ?? '0',
       currentAllIndiaRank['testDrivesRank']?.toString() ?? '0',
     ]);
@@ -162,7 +162,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add New Orders row
     data.add([
       'New Orders',
-      currentDealershipRank['newOrdersCount']?.toString() ?? '10',
+      currentDealershipRank['newOrdersCount']?.toString() ?? '0',
       currentAllIndiaRank['newOrdersCount']?.toString() ?? '0',
       currentDealershipRank['newOrdersRank']?.toString() ?? '0',
       currentAllIndiaRank['newOrdersRank']?.toString() ?? '0',
@@ -171,7 +171,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Cancellations row
     data.add([
       'Cancellations',
-      currentDealershipRank['cancellationsCount']?.toString() ?? '9',
+      currentDealershipRank['cancellationsCount']?.toString() ?? '0',
       currentAllIndiaRank['cancellationsCount']?.toString() ?? '0',
       currentDealershipRank['cancellationsRank']?.toString() ?? '0',
       currentAllIndiaRank['cancellationsRank']?.toString() ?? '0',
@@ -193,19 +193,19 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
 
     data.add([
       'Net Orders',
-      myNetOrders.toString(),
-      allIndiaNetOrders.toString(),
+      '0',
+      '0',
       '0', // No specific rank data for net orders
       '0', // No specific rank data for net orders
     ]);
 
-    // Add Retail row - assuming allData.ConvertedOrder contains retail data
+    // Add Retail row
     data.add([
       'Retail',
-      _dashboardData!['allData']['ConvertedOrder']?.toString() ?? '0',
-      '0', // No data in API response for all India retail
-      '0', // No rank data for retail
-      '0', // No rank data for retail
+      currentDealershipRank['retailCount']?.toString() ?? '0',
+      currentAllIndiaRank['retailCount']?.toString() ?? '0',
+      currentDealershipRank['retailRank']?.toString() ?? '0',
+      currentAllIndiaRank['retailRank']?.toString() ?? '0',
     ]);
 
     return data;

@@ -55,7 +55,7 @@ class _OrderState extends State<Order> {
     }
 
     // Make sure allData exists, otherwise return empty map
-    return periodData['allData'] ?? {};
+    return periodData['data'] ?? {};
   }
 
   @override

@@ -73,7 +73,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController mobileController = TextEditingController();
-  TextEditingController pinController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
   TextEditingController modelInterestController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   bool consentValue = false;
@@ -154,120 +154,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Modified _buildSearchField with speech recognition
-  // Widget _buildSearchField() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(height: 10),
-  //       Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
-  //       const SizedBox(height: 5),
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * 0.055,
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: AppColors.containerBg,
-  //         ),
-  //         child: Row(
-  //           children: [
-  //             Expanded(
-  //               child: TextField(
-  //                 controller: _searchController,
-  //                 decoration: InputDecoration(
-  //                   filled: true,
-  //                   fillColor: AppColors.containerBg,
-  //                   hintText: selectedVehicleName ?? 'Vehicle Name',
-  //                   hintStyle: TextStyle(
-  //                     color: selectedVehicleName != null
-  //                         ? Colors.black
-  //                         : Colors.grey,
-  //                   ),
-  //                   prefixIcon: const Icon(
-  //                     FontAwesomeIcons.magnifyingGlass,
-  //                     size: 15,
-  //                     color: AppColors.iconGrey,
-  //                   ),
-  //                   suffixIcon: IconButton(
-  //                     icon: Icon(
-  //                       _isListening
-  //                           ? FontAwesomeIcons.stop
-  //                           : FontAwesomeIcons.microphone,
-  //                       color: _isListening ? Colors.red : AppColors.iconGrey,
-  //                       size: 15,
-  //                     ),
-  //                     onPressed: _toggleListening,
-  //                   ),
-  //                   contentPadding:
-  //                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-  //                   border: OutlineInputBorder(
-  //                     borderRadius: BorderRadius.circular(5),
-  //                     borderSide: BorderSide.none,
-  //                   ),
-  //                 ),
-  //                 style: GoogleFonts.poppins(
-  //                   fontSize: 14,
-  //                   fontWeight: FontWeight.w500,
-  //                   color: Colors.black,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-
-  //       // Show loading indicator
-  //       if (_isLoadingSearch)
-  //         const Padding(
-  //           padding: EdgeInsets.only(top: 8.0),
-  //           child: Center(child: CircularProgressIndicator()),
-  //         ),
-
-  //       // Show search results
-  //       if (_searchResults.isNotEmpty)
-  //         Container(
-  //           margin: const EdgeInsets.only(top: 8),
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(5),
-  //             boxShadow: const [
-  //               BoxShadow(color: Colors.black12, blurRadius: 4)
-  //             ],
-  //           ),
-  //           child: ListView.builder(
-  //             shrinkWrap: true,
-  //             physics: const NeverScrollableScrollPhysics(),
-  //             itemCount: _searchResults.length,
-  //             itemBuilder: (context, index) {
-  //               final result = _searchResults[index];
-  //               return ListTile(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     FocusScope.of(context).unfocus();
-  //                     // selectedLeads = result['lead_id'];
-  //                     selectedVehicleName = result['vehicle_name'];
-  //                     _searchController.clear();
-  //                     _searchResults.clear();
-  //                   });
-  //                   // ✅ Call the color-fetching function here!
-  //                   fetchVehicleColors(result['vehicle_name']);
-  //                 },
-  //                 title: Text(
-  //                   result['vehicle_name'] ?? 'No Name',
-  //                   style: TextStyle(
-  //                     color: selectedVehicleName == result['vehicle_name']
-  //                         ? Colors.black
-  //                         : AppColors.fontBlack,
-  //                   ),
-  //                 ),
-  //                 leading: const Icon(Icons.directions_car),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
 
   Future<void> fetchVehicleData(String query) async {
     if (query.isEmpty) {
@@ -1025,13 +911,12 @@ class _CreateLeadsState extends State<CreateLeads> {
                             });
                           }),
                       // const SizedBox(height: 5),
-                      // _buildNumberWidget(
-                      //     label: 'Pin Code',
-                      //     controller: pinController,
-                      //     // errorText: _errors['PIN Code'],
-                      //     hintText: '11220',
+                      // _buildLocationTextField(
+                      //     label: 'Locations',
+                      //     controller: locationController, 
+                      //     hintText: '',
                       //     onChanged: (value) {
-                      //       if (_errors.containsKey('pin')) {
+                      //       if (_errors.containsKey('location')) {
                       //         setState(() {
                       //           // _errors.remove('pin');
                       //         });
@@ -1693,6 +1578,73 @@ class _CreateLeadsState extends State<CreateLeads> {
       ],
     );
   }
+
+//  Widget _buildLocationTextField({
+//     required TextEditingController controller,
+//     required String hintText,
+//     required String label,
+//     required ValueChanged<String> onChanged,
+//     bool isRequired = false,
+//     String? errorText,
+//   }) {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const SizedBox(
+//           height: 5,
+//         ),
+//         Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
+//           child: RichText(
+//             text: TextSpan(
+//               style: GoogleFonts.poppins(
+//                 fontSize: 14,
+//                 fontWeight: FontWeight.w500,
+//                 color: AppColors.fontBlack,
+//               ),
+//               children: [
+//                 TextSpan(text: label),
+//                 if (isRequired)
+//                   const TextSpan(
+//                     text: " *",
+//                     style: TextStyle(color: Colors.red),
+//                   ),
+//               ],
+//             ),
+//           ),
+//         ),
+//         const SizedBox(
+//           height: 5,
+//         ),
+//         Container(
+//           width: double.infinity,
+//           decoration: BoxDecoration(
+//             borderRadius: BorderRadius.circular(5),
+//             color: const Color.fromARGB(255, 248, 247, 247),
+//             border: errorText != null
+//                 ? Border.all(color: Colors.red, width: 1.0)
+//                 : null,
+//           ),
+//           child: Align(
+//             alignment: Alignment.centerLeft,
+//             child: TextField(
+//               controller: controller,
+//               style: AppFont.dropDowmLabel(context),
+//               decoration: InputDecoration(
+//                 hintText: hintText,
+//                 hintStyle:
+//                     GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+//                 contentPadding:
+//                     const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+//                 border: InputBorder.none,
+//               ),
+//               onChanged: onChanged,
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
 
   Widget _buildDatePicker({
     required String label,
