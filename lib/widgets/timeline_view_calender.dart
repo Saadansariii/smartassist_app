@@ -31,8 +31,17 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
   bool _isLoading = false;
   ScrollController _timelineScrollController = ScrollController();
 
+  // Track all hours (0-23) for a complete timeline
+  List<int> _allHours = List.generate(24, (index) => index);
+  
   // Track active hours (hours with data)
   Set<int> _activeHours = {};
+  
+  // Map to track expanded hour slots
+  Map<int, int> _expandedHours = {};
+  
+  // Map to track items by exact time (hour:minute)
+  Map<String, List<dynamic>> _timeSlotItems = {};
 
   @override
   void initState() {
@@ -40,9 +49,9 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     _selectedDay = _focusedDay;
     _fetchInitialData();
 
-    // Scroll to first active hour when view loads
+    // Scroll to current hour when view loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToFirstActiveHour();
+      _scrollToCurrentHour();
     });
   }
 
@@ -52,23 +61,23 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     super.dispose();
   }
 
-  void _scrollToFirstActiveHour() {
-    if (_activeHours.isEmpty || !_timelineScrollController.hasClients) return;
+  void _scrollToCurrentHour() {
+    if (!_timelineScrollController.hasClients) return;
 
-    // Find the earliest active hour
-    final earliestHour = _activeHours.reduce((a, b) => a < b ? a : b);
+    // Get current hour
+    final currentHour = DateTime.now().hour;
+    
+    // Calculate scroll position - 60 pixels per hour
+    double scrollPosition = currentHour * 60.0;
+    
+    // Subtract a small offset for better visibility
+    scrollPosition = scrollPosition > 60 ? scrollPosition - 60 : 0;
 
-    // Scroll to that hour position (with a small offset for better visibility)
-    final scrollPosition =
-        earliestHour * 60 - 30; // 30px offset for better visibility
-
-    if (scrollPosition >= 0) {
-      _timelineScrollController.animateTo(
-        scrollPosition as double,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    _timelineScrollController.animateTo(
+      scrollPosition,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   Future<void> _fetchInitialData() async {
@@ -81,7 +90,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     try {
       await _fetchAppointments(_selectedDay ?? _focusedDay);
       await _fetchTasks(_selectedDay ?? _focusedDay);
-      _updateActiveHours();
+      _processTimeSlots();
     } catch (e) {
       print("Error fetching initial data: $e");
     } finally {
@@ -93,21 +102,36 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     }
   }
 
-  void _updateActiveHours() {
+  // New method to process all items into time slots
+  void _processTimeSlots() {
     _activeHours.clear();
-
-    // Add hours from appointments
+    _expandedHours.clear();
+    _timeSlotItems.clear();
+    
+    // Process appointments
     for (var appointment in appointments) {
       final startTime = _parseTimeString(appointment['start_time'] ?? '00:00');
       final endTime = _parseTimeString(appointment['end_time'] ?? '00:00');
-
-      // Add all hours covered by this appointment
+      
+      // Mark all hours covered by this appointment as active
       for (int hour = startTime.hour; hour <= endTime.hour; hour++) {
         _activeHours.add(hour);
       }
+      
+      // Add to time slot map
+      final timeKey = '${startTime.hour}:${startTime.minute}';
+      if (!_timeSlotItems.containsKey(timeKey)) {
+        _timeSlotItems[timeKey] = [];
+      }
+      _timeSlotItems[timeKey]!.add({
+        'item': appointment,
+        'type': 'appointment',
+        'startTime': startTime,
+        'endTime': endTime
+      });
     }
-
-    // Add hours from tasks
+    
+    // Process tasks
     for (var task in tasks) {
       String dueDate = task['due_date'] ?? '00:00';
       DateTime taskTime;
@@ -117,16 +141,71 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       } else {
         taskTime = DateTime(2022, 1, 1, 9, 0); // Default to 9 AM
       }
-
+      
       _activeHours.add(taskTime.hour);
+      
+      // Add to time slot map
+      final timeKey = '${taskTime.hour}:${taskTime.minute}';
+      if (!_timeSlotItems.containsKey(timeKey)) {
+        _timeSlotItems[timeKey] = [];
+      }
+      _timeSlotItems[timeKey]!.add({
+        'item': task,
+        'type': 'task',
+        'startTime': taskTime,
+        'endTime': taskTime.add(Duration(minutes: 30)) // Default task duration
+      });
     }
-
-    // If no active hours are found, add current hour as default
+    
+    // Only add current hour if no active hours AND we're on today's date
     if (_activeHours.isEmpty) {
-      _activeHours.add(DateTime.now().hour);
+      // Only add current hour if we're viewing today
+      if (_isSameDay(_selectedDay ?? _focusedDay, DateTime.now())) {
+        _activeHours.add(DateTime.now().hour);
+      } else {
+        // For empty days not today, add a default business hour (9 AM)
+        _activeHours.add(9);
+      }
     }
-
+    
+    // Calculate expanded hours
+    _calculateExpandedHours();
+    
     print("Active hours: $_activeHours");
+    print("Time slots: ${_timeSlotItems.keys.length}");
+  }
+  
+  // Check if two dates are the same day
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+  
+  void _calculateExpandedHours() {
+    _expandedHours.clear();
+    
+    // Count items per hour
+    Map<int, int> itemsPerHour = {};
+    
+    _timeSlotItems.forEach((timeKey, items) {
+      final hour = int.parse(timeKey.split(':')[0]);
+      itemsPerHour[hour] = (itemsPerHour[hour] ?? 0) + items.length;
+    });
+    
+    // Calculate expanded height for each hour
+    itemsPerHour.forEach((hour, count) {
+      if (count > 1) {
+        // Each hour gets height based on number of items (with some minimum)
+        _expandedHours[hour] = count;
+      }
+    });
+  }
+
+  // Get the appropriate height for an hour based on whether it's expanded
+  double _getHourHeight(int hour) {
+    // Default height is 60
+    return _expandedHours.containsKey(hour) 
+        ? 60.0 * (_expandedHours[hour] ?? 1) // Expanded height based on number of items
+        : 60.0; // Default height
   }
 
   Future<void> _fetchAppointments(DateTime selectedDate) async {
@@ -137,7 +216,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       _isLoading = false;
     });
     print("Appointments Fetched: $appointments");
-    _updateActiveHours();
+    _processTimeSlots();
   }
 
   Future<void> _fetchTasks(DateTime selectedDate) async {
@@ -148,7 +227,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       _isLoading = false;
     });
     print("Tasks Fetched: $tasks");
-    _updateActiveHours();
+    _processTimeSlots();
   }
 
   void _handleDateSelected(DateTime selectedDate) {
@@ -158,6 +237,8 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       appointments = [];
       tasks = [];
       _activeHours.clear();
+      _expandedHours.clear();
+      _timeSlotItems.clear();
       _isLoading = true;
     });
 
@@ -223,14 +304,14 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
             _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.blue))
-                : Expanded(child: _buildCompactTimelineView()),
+                : Expanded(child: _buildImprovedTimelineView()),
           ],
         ),
       ]),
     );
   }
 
-  Widget _buildCompactTimelineView() {
+  Widget _buildImprovedTimelineView() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: Colors.blue));
     }
@@ -252,25 +333,15 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       );
     }
 
-    // Sort items by start time
-    combinedItems.sort((a, b) {
-      final aTime = _parseTimeString(a['start_time'] ?? '00:00');
-      final bTime = _parseTimeString(b['start_time'] ?? '00:00');
-      return aTime.compareTo(bTime);
-    });
-
-    // Group overlapping appointments
-    final groupedItems = _groupOverlappingItems(combinedItems);
-
-    // Get sorted list of active hours for timeline
-    final sortedHours = _activeHours.toList()..sort();
+    // Only show hours with actual appointments/tasks
+    final List<int> displayHours = _getDisplayHours();
 
     return SingleChildScrollView(
       controller: _timelineScrollController,
       child: Row(
         children: [
-          // Left time column - only shows active hours
-          _buildCompactTimeColumn(sortedHours),
+          // Left time column
+          _buildTimeColumn(displayHours),
 
           // Divider line
           Container(width: 1, color: Colors.grey.shade300),
@@ -279,18 +350,11 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
           Expanded(
             child: Stack(
               children: [
-                // Time grid lines for active hours only
-                _buildCompactTimeGridLines(sortedHours),
+                // Time grid lines
+                _buildTimeGridLines(displayHours),
 
-                // Render tasks
-                // ...tasks.map((task) => _buildTaskItem(task)).toList(),
-                ..._buildPositionedTaskItems(tasks),
-
-                // Render appointments
-                ..._buildPositionedAppointments(appointments),
-                // ...appointments
-                //     .map((appointment) => _buildAppointmentItem(appointment))
-                //     .toList(),
+                // Build all items from time slots
+                ..._buildAllTimeSlotItems(displayHours),
               ],
             ),
           ),
@@ -298,14 +362,37 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       ),
     );
   }
+  
+  // Modified to only return hours with actual content
+  List<int> _getDisplayHours() {
+    // Start with active hours that have content
+    Set<int> hours = Set<int>.from(_activeHours);
+    
+    // If we have appointments or tasks spanning several hours, add buffer hours
+    if (hours.isNotEmpty) {
+      int minHour = hours.reduce((a, b) => a < b ? a : b);
+      int maxHour = hours.reduce((a, b) => a > b ? a : b);
+      
+      // Add one hour before and after for context, but only if they exist
+      if (minHour > 0) hours.add(minHour - 1);
+      if (maxHour < 23) hours.add(maxHour + 1);
+    }
+    
+    // Sort hours
+    List<int> sortedHours = hours.toList()..sort();
+    return sortedHours.isEmpty ? [DateTime.now().hour] : sortedHours;
+  }
 
-  Widget _buildCompactTimeColumn(List<int> activeHours) {
+  Widget _buildTimeColumn(List<int> displayHours) {
     return Container(
       width: 50,
       child: Column(
-        children: activeHours.map((hour) {
+        children: displayHours.map((hour) {
+          // Get appropriate height for this hour slot
+          final hourHeight = _getHourHeight(hour);
+          
           return Container(
-            height: 60,
+            height: hourHeight,
             padding: EdgeInsets.only(right: 8),
             alignment: Alignment.topRight,
             child: Text(
@@ -321,11 +408,14 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
-  Widget _buildCompactTimeGridLines(List<int> activeHours) {
+  Widget _buildTimeGridLines(List<int> displayHours) {
     return Column(
-      children: activeHours.map((hour) {
+      children: displayHours.map((hour) {
+        // Get appropriate height for this hour slot
+        final hourHeight = _getHourHeight(hour);
+        
         return Container(
-          height: 60,
+          height: hourHeight,
           decoration: BoxDecoration(
             border: Border(
               top: BorderSide(
@@ -339,93 +429,101 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
-  List<Widget> _buildPositionedAppointments(List<dynamic> appointments) {
-    // Group appointments by their start_time
-    Map<String, List<dynamic>> groupedAppointments = {};
-
-    for (var appointment in appointments) {
-      final key = appointment['start_time'] ?? '00:00';
-      groupedAppointments.putIfAbsent(key, () => []).add(appointment);
+  List<Widget> _buildAllTimeSlotItems(List<int> displayHours) {
+    List<Widget> allWidgets = [];
+    
+    // Calculate hour positions first
+    Map<int, double> hourPositions = {};
+    double currentPosition = 0.0;
+    
+    for (int hour in displayHours) {
+      hourPositions[hour] = currentPosition;
+      currentPosition += _getHourHeight(hour);
     }
-
-    List<Widget> widgets = [];
-    const double verticalSpacing = 62;
-
-    for (var group in groupedAppointments.entries) {
-      final groupList = group.value;
-      final count = groupList.length;
-
-      for (int i = 0; i < count; i++) {
-        final appointment = groupList[i];
-
-        widgets.add(_buildAppointmentItem(
-          appointment,
-          verticalOffset: i * verticalSpacing,
-        ));
+    
+    // Sort time slots by time for consistent processing
+    List<String> sortedTimeKeys = _timeSlotItems.keys.toList()..sort();
+    
+    // Process each time slot
+    for (String timeKey in sortedTimeKeys) {
+      final items = _timeSlotItems[timeKey]!;
+      final parts = timeKey.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      
+      // Skip if hour isn't in display hours
+      if (!hourPositions.containsKey(hour)) continue;
+      
+      // Base position for this time slot
+      final basePosition = hourPositions[hour]! + (minute / 60.0) * _getHourHeight(hour);
+      
+      // Process items in this time slot
+      for (int i = 0; i < items.length; i++) {
+        final itemData = items[i];
+        final itemType = itemData['type'];
+        final item = itemData['item'];
+        
+        // Position vertically to avoid overlaps
+        double verticalOffset = 0.0;
+        if (items.length > 1) {
+          // If multiple items at same time, stack them with vertical offset
+          verticalOffset = i * 60.0;
+        }
+        
+        final itemPosition = basePosition + verticalOffset;
+        
+        // Add widget based on type
+        if (itemType == 'appointment') {
+          allWidgets.add(_buildAppointmentItem(
+            item,
+            basePosition: itemPosition,
+            width: MediaQuery.of(context).size.width - 67,
+            height: 60.0,
+            widthFactor: 1.0,
+            leftOffset: 0.0,
+          ));
+        } else if (itemType == 'task') {
+          allWidgets.add(_buildTaskItem(
+            item,
+            basePosition: itemPosition,
+            width: MediaQuery.of(context).size.width - 67,
+            height: 60.0,
+            widthFactor: 1.0,
+            leftOffset: 0.0,
+          ));
+        }
       }
     }
-
-    return widgets;
+    
+    return allWidgets;
   }
 
   Widget _buildAppointmentItem(
     dynamic item, {
+    double basePosition = 0.0,
+    double width = 200.0,
+    double height = 60.0,
     double widthFactor = 1.0,
     double leftOffset = 0.0,
-    double verticalOffset = 0.0,
   }) {
-    final startTime = _parseTimeString(item['start_time'] ?? '00:00');
-    final endTime = _parseTimeString(item['end_time'] ?? '00:00');
-
-    // For compact timeline, we need to position relative to the active hours
-    List<int> sortedHours = _activeHours.toList()..sort();
-    final startHourIndex = sortedHours.indexOf(startTime.hour);
-
-    if (startHourIndex < 0)
-      return SizedBox.shrink(); // Skip if hour isn't in active list
-
-    // Calculate position and height
-    final startPosition = startHourIndex * 60 + (startTime.minute / 60) * 60;
-
-    // Calculate end position based on end hour position in active hours
-    double endPosition;
-    final endHourIndex = sortedHours.indexOf(endTime.hour);
-
-    if (endHourIndex >= 0) {
-      // If end hour is in active hours
-      endPosition = endHourIndex * 60 + (endTime.minute / 60) * 60;
-    } else {
-      // If end hour isn't in active hours, find the next active hour after this one
-      int nextActiveHourIndex =
-          sortedHours.indexWhere((h) => h > startTime.hour);
-      if (nextActiveHourIndex >= 0) {
-        endPosition = nextActiveHourIndex * 60;
-      } else {
-        // Default to 1 hour if no next active hour
-        endPosition = startPosition + 60;
-      }
-    }
-
-    final height = endPosition - startPosition;
-
-    // Ensure minimum height for items
-    final double finalHeight = height < 40 ? 40 : height.toDouble();
-
     // Determine color and title for appointment
     Color cardColor = _getAppointmentColor(item);
 
-    // Get the lead_id from the item - ensure proper access
+    // Get the lead_id from the item
     String leadId = item['lead_id']?.toString() ?? '';
 
+    // Format the time in 12-hour format with AM/PM
+    String formattedStartTime = _formatTimeFor12Hour(item['start_time'] ?? '00:00');
+    String formattedEndTime = _formatTimeFor12Hour(item['end_time'] ?? '00:00');
+    
     String title = 'Appointment: ${item['name'] ?? 'No Name'}';
-    String time =
-        '${item['start_time'] ?? '00:00'} - ${item['end_time'] ?? '00:00'}';
+    String time = '$formattedStartTime - $formattedEndTime';
 
     return Positioned(
-      top: startPosition + verticalOffset,
-      left: 8 + (MediaQuery.of(context).size.width - 59) * leftOffset,
-      width: (MediaQuery.of(context).size.width - 59) * widthFactor - 16,
-      height: finalHeight,
+      top: basePosition,
+      left: 8 + (width * leftOffset),
+      width: (width * widthFactor) - 8, // Account for right margin
+      height: height,
       child: Card(
         margin: EdgeInsets.only(bottom: 4, right: 4),
         color: cardColor,
@@ -473,7 +571,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                   ],
                 ),
                 const SizedBox(height: 2),
-                if (finalHeight >= 50)
+                if (height >= 55)
                   Row(
                     children: [
                       const Icon(
@@ -498,94 +596,35 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       ),
     );
   }
-
-
-
-  List<Widget> _buildPositionedTaskItems(List<dynamic> tasks) {
-    // Group tasks by their due date string
-    Map<String, List<dynamic>> groupedTasks = {};
-
-    for (var task in tasks) {
-      final key = task['due_date'] ?? '00:00';
-      groupedTasks.putIfAbsent(key, () => []).add(task);
-    }
-
-    List<Widget> widgets = [];
-
-    const double verticalSpacing = 62;
-
-    for (var group in groupedTasks.entries) {
-      final groupTasks = group.value;
-      final count = groupTasks.length;
-
-      for (int i = 0; i < count; i++) {
-        final task = groupTasks[i];
-
-        // Calculate how much width each should take
-        final widthFactor = 1.0 / count;
-        final leftOffset = i * widthFactor;
-
-        widgets.add(_buildTaskItem(
-          task,
-          verticalOffset: i * verticalSpacing,
-          // widthFactor: widthFactor,
-          // leftOffset: leftOffset,
-        ));
-      }
-    }
-
-    return widgets;
-  }
-
+  
   Widget _buildTaskItem(
-
     dynamic item, {
+    double basePosition = 0.0,
+    double width = 200.0,
+    double height = 60.0,
     double widthFactor = 1.0,
     double leftOffset = 0.0,
-    double verticalOffset = 0.0,
   }) {
-    // Parse due_date properly
-    String dueDate = item['due_date'] ?? '00:00';
-
-    final defaultHour = 9; // Default to 9 AM for tasks without specific time
-
-    // Create a proper DateTime object to calculate position
-    DateTime taskTime;
-    if (dueDate.contains(':')) {
-      // If it has time component already
-      taskTime = _parseTimeString(dueDate);
-    } else {
-      // If it's just a date, add the default time
-      taskTime = DateTime(2022, 1, 1, defaultHour, 0);
-    }
-
-    // For compact timeline, position based on the active hours list
-    List<int> sortedHours = _activeHours.toList()..sort();
-    final hourIndex = sortedHours.indexOf(taskTime.hour);
-
-    if (hourIndex < 0)
-      return SizedBox.shrink(); // Skip if hour isn't in active list
-
-    // Calculate position based on hour index in active hours
-    final taskPosition = hourIndex * 60 + (taskTime.minute / 60) * 60;
-
-    // Set a fixed height for tasks
-    final double taskHeight = 60.0;
-
-    // Get the lead_id from the item - ensure proper access
+    // Get the lead_id from the item
     String leadId = item['lead_id']?.toString() ?? '';
+
+    // Format the time in 12-hour format with AM/PM
+    String formattedDueTime = _formatTimeFor12Hour(item['due_date'] ?? '00:00');
 
     // Determine color and title for task
     Color cardColor = _getTaskColor(item);
     String title = 'Task: ${item['subject'] ?? 'No Subject'}';
     String status = item['status'] ?? 'Unknown';
     String priority = item['priority'] ?? 'Normal';
+    
+    // Add due time to status display if available
+    String timeInfo = formattedDueTime.isNotEmpty ? ' • $formattedDueTime' : '';
 
     return Positioned(
-      top: taskPosition + verticalOffset,
-      left: 8 + (MediaQuery.of(context).size.width - 59) * leftOffset,
-      width: (MediaQuery.of(context).size.width - 59) * widthFactor - 16,
-      height: taskHeight,
+      top: basePosition,
+      left: 8 + (width * leftOffset),
+      width: (width * widthFactor) - 8, // Account for right margin
+      height: height,
       child: Card(
         margin: const EdgeInsets.only(bottom: 4, right: 4),
         color: cardColor,
@@ -656,7 +695,7 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                     ),
                    const SizedBox(width: 4),
                     Text(
-                      status,
+                      '$status$timeInfo',
                       style:const TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
@@ -664,14 +703,6 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
                     ),
                   ],
                 ),
-                // SizedBox(height: 2),
-                // Text(
-                //   'Due: ${item['due_date'] ?? 'No date'}',
-                //   style: TextStyle(
-                //     fontSize: 12,
-                //     color: Colors.white70,
-                //   ),
-                // ),
               ],
             ),
           ),
@@ -680,65 +711,39 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     );
   }
 
- 
-
-  List<List<dynamic>> _groupOverlappingItems(List<dynamic> items) {
-    if (items.isEmpty) return [];
-
-    List<List<dynamic>> groups = [];
-    List<dynamic> currentGroup = [items[0]];
-
-    // Ensure the 'start_time' is not null, default to '00:00' if null
-    DateTime currentEndTime =
-        _parseTimeString(items[0]['start_time'] ?? '00:00');
-
-    for (int i = 1; i < items.length; i++) {
-      // Ensure 'start_time' is not null, default to '00:00' if null
-      DateTime itemStartTime =
-          _parseTimeString(items[i]['start_time'] ?? '00:00');
-
-      // If this item starts before the current group ends, add to current group
-      if (itemStartTime.isBefore(currentEndTime)) {
-        currentGroup.add(items[i]);
-
-        // Update end time if this item ends later
-        DateTime itemEndTime =
-            _parseTimeString(items[i]['end_time'] ?? '00:00');
-        if (itemEndTime.isAfter(currentEndTime)) {
-          currentEndTime = itemEndTime;
-        }
-      } else {
-        // Start a new group
-        groups.add(currentGroup);
-        currentGroup = [items[i]];
-
-        // Update currentEndTime to this item's end time
-        currentEndTime = _parseTimeString(items[i]['end_time'] ?? '00:00');
-      }
-    }
-
-    // Add the last group
-    if (currentGroup.isNotEmpty) {
-      groups.add(currentGroup);
-    }
-
-    return groups;
-  }
-
   DateTime _parseTimeString(String timeStr) {
     // If timeStr is null or empty, return a default time
     if (timeStr.isEmpty) {
       return DateTime(2022, 1, 1, 0, 0); // Default time (midnight)
     }
 
-    final parts = timeStr.split(':');
+    // Handle both 12-hour and 24-hour time formats
+    bool isPM = timeStr.toLowerCase().contains('pm');
+    bool isAM = timeStr.toLowerCase().contains('am');
+    
+    // Remove AM/PM indicator for parsing
+    String cleanTime = timeStr
+        .toLowerCase()
+        .replaceAll('am', '')
+        .replaceAll('pm', '')
+        .replaceAll(' ', '')
+        .trim();
+
+    final parts = cleanTime.split(':');
     if (parts.length < 2)
       return DateTime(2022, 1, 1, 0, 0); // Invalid time format fallback
 
     try {
-      final hour = int.parse(parts[0]);
+      int hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
-      // Ignore seconds if present
+      
+      // Convert 12-hour format to 24-hour if needed
+      if (isPM && hour < 12) {
+        hour += 12; // Add 12 to PM hours except 12 PM
+      } else if (isAM && hour == 12) {
+        hour = 0; // 12 AM is 0 in 24-hour format
+      }
+      
       return DateTime(2022, 1, 1, hour, minute);
     } catch (e) {
       print("Error parsing time: $timeStr - $e");
@@ -746,16 +751,32 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
     }
   }
 
+  // Format time to 12-hour format with AM/PM for display consistency
+  String _formatTimeFor12Hour(String timeStr) {
+    if (timeStr.isEmpty || !timeStr.contains(':')) {
+      return timeStr; // Return unchanged if not in time format
+    }
+    
+    // Parse the time first to normalize it
+    DateTime parsedTime = _parseTimeString(timeStr);
+    
+    // Format to 12-hour time
+    String period = parsedTime.hour >= 12 ? 'PM' : 'AM';
+    int hour12 = parsedTime.hour > 12 ? parsedTime.hour - 12 : (parsedTime.hour == 0 ? 12 : parsedTime.hour);
+    
+    return '${hour12}:${parsedTime.minute.toString().padLeft(2, '0')} $period';
+  }
+
   Color _getTaskColor(dynamic task) {
     final type = task['taskType']?.toString().toLowerCase() ?? '';
     if (type == 'follow-up' || type == 'followup') {
-      return AppColors.colorsBlue; // Orange for follow-up tasks
+      return AppColors.colorsBlue; // Blue for follow-up tasks
     } else if (type == 'urgent') {
       return Colors.red; // Red for urgent tasks
     } else if (type == 'reminder') {
       return Colors.green; // Green for reminders
     } else {
-      return AppColors.colorsBlueButton; // Default color for tasks
+      return AppColors.colorsBlue; // Default color for tasks
     }
   }
 
@@ -771,136 +792,4 @@ class _CalendarWithTimelineState extends State<CalendarWithTimeline> {
       return Colors.teal; // Teal for default appointments
     }
   }
-
-  List<Widget> _buildTimelineItems(List<dynamic> appointmentsAndTasks) {
-    final groupedItems = _groupOverlappingItems(appointmentsAndTasks);
-
-    List<Widget> positionedItems = [];
-
-    for (var group in groupedItems) {
-      final count = group.length;
-      for (int i = 0; i < count; i++) {
-        var item = group[i];
-
-        double widthFactor = 1.0 / count;
-        double leftOffset = i * widthFactor;
-
-        // Determine if it's an appointment or task
-        if (item.containsKey('start_time')) {
-          positionedItems.add(
-            _buildAppointmentItem(item,
-                widthFactor: widthFactor, leftOffset: leftOffset),
-          );
-        } else {
-          positionedItems.add(
-            _buildTaskItem(item,
-                widthFactor: widthFactor, leftOffset: leftOffset),
-          );
-        }
-      }
-    }
-
-    return positionedItems;
-  }
-
-  // Widget _buildCurrentTimeIndicator() {
-  //   final now = DateTime.now();
-  //   final isToday = (_selectedDay ?? _focusedDay).year == now.year &&
-  //       (_selectedDay ?? _focusedDay).month == now.month &&
-  //       (_selectedDay ?? _focusedDay).day == now.day;
-
-  //   if (!isToday) return SizedBox.shrink();
-
-  //   final position = _calculateTimePosition(now);
-
-  //   return Positioned(
-  //     top: position,
-  //     left: 0,
-  //     right: 0,
-  //     child: Container(
-  //       height: 2,
-  //       color: Colors.red,
-  //       child: Align(
-  //         alignment: Alignment.centerLeft,
-  //         child: Container(
-  //           width: 8,
-  //           height: 8,
-  //           decoration: BoxDecoration(
-  //             color: Colors.red,
-  //             shape: BoxShape.circle,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // List<List<dynamic>> _groupOverlappingItems(List<dynamic> items) {
-  //   if (items.isEmpty) return [];
-
-  //   List<List<dynamic>> groups = [];
-  //   List<dynamic> currentGroup = [items[0]];
-
-  //   // Ensure the 'start_time' is not null, default to '00:00' if null
-  //   DateTime currentEndTime =
-  //       _parseTimeString(items[0]['start_time'] ?? '00:00');
-
-  //   for (int i = 1; i < items.length; i++) {
-  //     // Ensure 'start_time' is not null, default to '00:00' if null
-  //     DateTime itemStartTime =
-  //         _parseTimeString(items[i]['start_time'] ?? '00:00');
-
-  //     // If this item starts before the current group ends, add to current group
-  //     if (itemStartTime.isBefore(currentEndTime)) {
-  //       currentGroup.add(items[i]);
-
-  //       // Update end time if this item ends later
-  //       DateTime itemEndTime =
-  //           _parseTimeString(items[i]['end_time'] ?? '00:00');
-  //       if (itemEndTime.isAfter(currentEndTime)) {
-  //         currentEndTime = itemEndTime;
-  //       }
-  //     } else {
-  //       // Start a new group
-  //       groups.add(currentGroup);
-  //       currentGroup = [items[i]];
-
-  //       // Update currentEndTime to this item's end time
-  //       currentEndTime = _parseTimeString(items[i]['end_time'] ?? '00:00');
-  //     }
-  //   }
-
-  //   // Add the last group
-  //   if (currentGroup.isNotEmpty) {
-  //     groups.add(currentGroup);
-  //   }
-
-  //   return groups;
-  // }
-
-  // double _calculateTimePosition(DateTime time) {
-  //   final hours = time.hour + (time.minute / 60);
-  //   return hours * 60; // Each hour is 60 pixels
-  // }
-
-  // DateTime _parseTimeString(String timeStr) {
-  //   // If timeStr is null or empty, return a default time
-  //   if (timeStr.isEmpty) {
-  //     return DateTime(2022, 1, 1, 0, 0); // Default time (midnight)
-  //   }
-
-  //   final parts = timeStr.split(':');
-  //   if (parts.length < 2)
-  //     return DateTime(2022, 1, 1, 0, 0); // Invalid time format fallback
-
-  //   try {
-  //     final hour = int.parse(parts[0]);
-  //     final minute = int.parse(parts[1]);
-  //     // Ignore seconds if present
-  //     return DateTime(2022, 1, 1, hour, minute);
-  //   } catch (e) {
-  //     print("Error parsing time: $timeStr - $e");
-  //     return DateTime(2022, 1, 1, 0, 0); // Default to midnight if parsing fails
-  //   }
-  // }
 }
