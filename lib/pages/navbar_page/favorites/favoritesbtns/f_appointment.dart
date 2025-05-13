@@ -57,7 +57,7 @@ class _FAppointmentState extends State<FAppointment> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -98,7 +98,7 @@ class _FAppointmentState extends State<FAppointment> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/favourites/events/appointments/all'),
+            'https://dev.smartassistapp.in/api/favourites/events/appointments/all'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json'
@@ -239,7 +239,7 @@ class _TaskItemState extends State<TaskItem> {
   //   try {
   //     final response = await http.put(
   //       Uri.parse(
-  //         'https://api.smartassistapp.in/api/favourites/mark-fav/event/${widget.eventId}',
+  //         'https://dev.smartassistapp.in/api/favourites/mark-fav/event/${widget.eventId}',
   //       ),
   //       headers: {
   //         'Authorization': 'Bearer $token',
@@ -605,7 +605,7 @@ class _TaskItemState extends State<TaskItem> {
 //     try {
 //       final response = await http.get(
 //         Uri.parse(
-//             'https://api.smartassistapp.in/api/favourites/events/appointments/all'),
+//             'https://dev.smartassistapp.in/api/favourites/events/appointments/all'),
 //         headers: {
 //           'Authorization': 'Bearer $token',
 //           'Content-Type': 'application/json'
@@ -741,7 +741,7 @@ class _TaskItemState extends State<TaskItem> {
 //     try {
 //       final response = await http.put(
 //         Uri.parse(
-//           'https://api.smartassistapp.in/api/favourites/mark-fav/event/${widget.eventId}',
+//           'https://dev.smartassistapp.in/api/favourites/mark-fav/event/${widget.eventId}',
 //         ),
 //         headers: {
 //           'Authorization': 'Bearer $token',

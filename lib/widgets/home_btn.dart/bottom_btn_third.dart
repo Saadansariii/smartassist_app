@@ -59,7 +59,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       }
 
       final uri = Uri.parse(
-          'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam');
+          'https://dev.smartassistapp.in/api/users/dashboard/analytics$periodParam');
 
       final response = await http.get(
         uri,
@@ -110,8 +110,9 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
       // Return empty data if API data isn't available yet
       return {};
     }
-    return _dashboardData!['dealerShipRank'] ??
-        {}; // Fixed key from 'dealershipRank' to 'dealerShipRank'
+    return _dashboardData!['performance'] ?? {};
+    // return _dashboardData!['dealerShipRank'] ??
+    //     {}; // Fixed key from 'dealershipRank' to 'dealerShipRank'
   }
 
   Map<String, dynamic> get currentAllIndiaRank {
@@ -124,6 +125,15 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     return _dashboardData!['allIndiaRank'] ?? {};
   }
 
+  //new code remove us unused
+
+  // Map<String, dynamic> get dealerShip {
+  //   if (_dashboardData == null) {
+  //     return {};
+  //   }
+  //   return _dashboardData!['dealerShipRank'] ?? {};
+  // }
+
 // Generate dynamic table rows based on API data
   List<List<String>> get tableData {
     final List<List<String>> data = [];
@@ -135,7 +145,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Enquiries row
     data.add([
       'Enquiries',
-      currentDealershipRank['enquiriesCount']?.toString() ?? '0',
+      currentDealershipRank['enquiry']?.toString() ?? '0',
       currentAllIndiaRank['enquiriesCount']?.toString() ?? '0',
       currentDealershipRank['enquiriesRank']?.toString() ?? '0',
       currentAllIndiaRank['enquiriesRank']?.toString() ?? '0',
@@ -144,7 +154,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Lost Enquiries row
     data.add([
       'Lost Enquiries',
-      currentDealershipRank['lostEnquiriesCount']?.toString() ?? '0',
+      currentDealershipRank['lostEnq']?.toString() ?? '0',
       currentAllIndiaRank['lostEnquiriesCount']?.toString() ?? '0',
       currentDealershipRank['lostEnquiriesRank']?.toString() ?? '0',
       currentAllIndiaRank['lostEnquiriesRank']?.toString() ?? '0',
@@ -153,7 +163,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Test drives row
     data.add([
       'Test drives',
-      currentDealershipRank['testDrivesCount']?.toString() ?? '0',
+      currentDealershipRank['testDriveData']?.toString() ?? '0',
       currentAllIndiaRank['testDrivesCount']?.toString() ?? '0',
       currentDealershipRank['testDrivesRank']?.toString() ?? '0',
       currentAllIndiaRank['testDrivesRank']?.toString() ?? '0',
@@ -162,7 +172,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add New Orders row
     data.add([
       'New Orders',
-      currentDealershipRank['newOrdersCount']?.toString() ?? '0',
+      currentDealershipRank['orders']?.toString() ?? '0',
       currentAllIndiaRank['newOrdersCount']?.toString() ?? '0',
       currentDealershipRank['newOrdersRank']?.toString() ?? '0',
       currentAllIndiaRank['newOrdersRank']?.toString() ?? '0',
@@ -171,7 +181,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Cancellations row
     data.add([
       'Cancellations',
-      currentDealershipRank['cancellationsCount']?.toString() ?? '0',
+      currentDealershipRank['dealerCancellation']?.toString() ?? '0',
       currentAllIndiaRank['cancellationsCount']?.toString() ?? '0',
       currentDealershipRank['cancellationsRank']?.toString() ?? '0',
       currentAllIndiaRank['cancellationsRank']?.toString() ?? '0',

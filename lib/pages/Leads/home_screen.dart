@@ -81,10 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     _loadDashboardAnalytics();
     _loadTeamRole();
-    print(_loadTeamRole()); 
+    print(_loadTeamRole());
   }
 
- 
   Future<void> _loadDashboardAnalytics() async {
     setState(() {
       isDashboardLoading = true;
@@ -196,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

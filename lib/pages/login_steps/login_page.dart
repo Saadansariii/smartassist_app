@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
 import 'package:smart_assist/pages/login_steps/first_screen.dart';
+import 'package:smart_assist/pages/login_steps/forget_password.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
@@ -136,6 +137,12 @@ class _LoginPageState extends State<LoginPage>
                                 "Forgot Password ? ",
                                 "Reset Password",
                                 () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (cotext) => ForgetPassword(
+                                                text: '',
+                                              )));
                                   // TODO: Implement forgot password functionality
                                 },
                               ),

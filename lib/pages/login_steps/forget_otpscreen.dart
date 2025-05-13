@@ -10,14 +10,14 @@ import 'package:smart_assist/utils/button.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';
 
-class OTPVerificationScreen extends StatefulWidget {
+class ForgetOtpscreen extends StatefulWidget {
   static const int _otpLength = 6;
 
   final String email;
   final String text;
   final TextStyle? style;
 
-  const OTPVerificationScreen({
+  const ForgetOtpscreen({
     super.key,
     required this.email,
     required this.text,
@@ -25,14 +25,14 @@ class OTPVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<OTPVerificationScreen> createState() => _OTPVerificationScreenState();
+  State<ForgetOtpscreen> createState() => _ForgetOtpscreenState();
 }
 
-class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
+class _ForgetOtpscreenState extends State<ForgetOtpscreen> {
   final List<TextEditingController> _controllers = List.generate(
-      OTPVerificationScreen._otpLength, (index) => TextEditingController());
+      ForgetOtpscreen._otpLength, (index) => TextEditingController());
   final List<FocusNode> _focusNodes =
-      List.generate(OTPVerificationScreen._otpLength, (index) => FocusNode());
+      List.generate(ForgetOtpscreen._otpLength, (index) => FocusNode());
 
   bool _isLoading = false;
   bool _isResendingOTP = false;
@@ -114,7 +114,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Widget _buildTitle() {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 10),
-      child: StyleText('Verify Your Email Address'),
+      child: StyleText('Verify OTP  '),
     );
   }
 
@@ -160,7 +160,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   //   return Row(
   //     mainAxisAlignment: MainAxisAlignment.center,
   //     children: List.generate(
-  //       OTPVerificationScreen._otpLength,
+  //       ForgetOtpscreen._otpLength,
   //       (index) => Container(
   //         margin: const EdgeInsets.symmetric(horizontal: 5),
   //         width: 45,
@@ -206,8 +206,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     final spacing = 8.0;
     // Calculate field width based on available space
     final fieldWidth =
-        (availableWidth - (spacing * (OTPVerificationScreen._otpLength - 1))) /
-            OTPVerificationScreen._otpLength;
+        (availableWidth - (spacing * (ForgetOtpscreen._otpLength - 1))) /
+            ForgetOtpscreen._otpLength;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -216,11 +216,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            OTPVerificationScreen._otpLength,
+            ForgetOtpscreen._otpLength,
             (index) => Container(
               margin: EdgeInsets.only(
-                right:
-                    index < OTPVerificationScreen._otpLength - 1 ? spacing : 0,
+                right: index < ForgetOtpscreen._otpLength - 1 ? spacing : 0,
               ),
               width: fieldWidth.clamp(35, 45),
               height: 50,
@@ -315,7 +314,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _handleOTPInput(String value, int index) {
-    if (value.isNotEmpty && index < OTPVerificationScreen._otpLength - 1) {
+    if (value.isNotEmpty && index < ForgetOtpscreen._otpLength - 1) {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -398,7 +397,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Future<void> _handleVerification() async {
     final otpString = _controllers.map((controller) => controller.text).join();
 
-    if (otpString.length != OTPVerificationScreen._otpLength) {
+    if (otpString.length != ForgetOtpscreen._otpLength) {
       showErrorMessage(context, message: 'Please enter all digits');
       return;
     }
@@ -411,7 +410,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await LeadsSrv.verifyOtp({
+      final response = await LeadsSrv.forgetOtp({
         "otp": int.parse(otpString),
         "email": widget.email,
       });

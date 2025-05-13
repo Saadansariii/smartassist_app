@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 // class SetPwdSrv {
   // static Future<Map<String, dynamic>> SetPwd(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login/create-pwd';
+  //   const url = 'https://dev.smartassistapp.in/api/login/create-pwd';
   //   final uri = Uri.parse(url);
 
   //   try {

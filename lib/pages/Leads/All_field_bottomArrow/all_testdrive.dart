@@ -42,8 +42,8 @@ class _AllTestdriveState extends State<AllTestdrive> {
     try {
       final token = await Storage.getToken();
       const String apiUrl =
-          // "https://api.smartassistapp.in/api/events/all-events";
-          "https://api.smartassistapp.in/api/events/all-events?subject=Test%20Drive";
+          // "https://dev.smartassistapp.in/api/events/all-events";
+          "https://dev.smartassistapp.in/api/events/all-events?subject=Test%20Drive";
 
       final response = await http.get(
         Uri.parse(apiUrl),

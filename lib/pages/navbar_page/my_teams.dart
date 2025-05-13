@@ -1,15 +1,14 @@
 import 'dart:convert';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
+import 'package:smart_assist/pages/Leads/single_details_pages/teams_enquiryIds.dart';
 import 'package:smart_assist/utils/storage.dart';
 import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/appointment_teams.dart';
 import 'package:smart_assist/widgets/home_btn.dart/teams_popups.dart/followups_teams.dart';
@@ -38,6 +37,7 @@ class _MyTeamsState extends State<MyTeams> {
   Set<String> _selectedCheckboxIds = {}; //remove this
   List<Map<String, dynamic>> selectedItems = [];
   Set<String> selectedUserIds = {};
+  // String? selectedUserIds;
 
   int _upcommingButtonIndex = 0;
 
@@ -90,17 +90,17 @@ class _MyTeamsState extends State<MyTeams> {
     }
   }
 
-  void _onCheckboxToggle(String userId) {
-    setState(() {
-      if (_selectedCheckboxIds.contains(userId)) {
-        _selectedCheckboxIds.remove(userId);
-      } else {
-        _selectedCheckboxIds.add(userId);
-      }
-    });
+  // void _onCheckboxToggle(String userId) {
+  //   setState(() {
+  //     if (_selectedCheckboxIds.contains(userId)) {
+  //       _selectedCheckboxIds.remove(userId);
+  //     } else {
+  //       _selectedCheckboxIds.add(userId);
+  //     }
+  //   });
 
-    _fetchTeamDetails(); // Fetch new comparison each time
-  }
+  //   _fetchTeamDetails(); // Fetch new comparison each time
+  // }
 
   // Fetch team details using the new API endpoint
   Future<void> _fetchTeamDetails() async {
@@ -158,7 +158,7 @@ class _MyTeamsState extends State<MyTeams> {
       }
 
       final baseUri = Uri.parse(
-        'https://api.smartassistapp.in/api/users/sm/dashboard/team-dashboard',
+        'https://dev.smartassistapp.in/api/users/sm/dashboard/team-dashboard',
       );
 
       final uri = baseUri.replace(queryParameters: queryParams);
@@ -274,45 +274,45 @@ class _MyTeamsState extends State<MyTeams> {
   }
 
   // Select a different user profile
-  void _selectUserProfile(int index, String userId) {
-    setState(() {
-      _selectedProfileIndex = index;
-      _selectedUserId = userId;
-    });
+  // void _selectUserProfile(int index, String userId) {
+  //   setState(() {
+  //     _selectedProfileIndex = index;
+  //     _selectedUserId = userId;
+  //   });
 
-    // Refresh data for the selected user
-    _fetchTeamDetails();
-  }
+  //   // Refresh data for the selected user
+  //   _fetchTeamDetails();
+  // }
 
   // Helper method to get metric value for comparison
-  int _getMetricValue(Map<String, dynamic> userData) {
-    final stats = userData['stats'] ?? {};
-    switch (_metricIndex) {
-      case 0:
-        return stats['Enquiries'] ?? 0;
-      case 1:
-        return stats['TestDrives'] ?? 0;
-      case 2:
-        return stats['Orders'] ?? 0;
-      case 3:
-        return stats['Cancellation'] ?? 0; // New Orders (using same field)
-      case 4:
-        return stats['Cancellation'] ?? 0;
-      case 5:
-        return stats['Retail'] ?? 0;
-      default:
-        return stats['Enquiries'] ?? 0;
-    }
-  }
+  // int _getMetricValue(Map<String, dynamic> userData) {
+  //   final stats = userData['stats'] ?? {};
+  //   switch (_metricIndex) {
+  //     case 0:
+  //       return stats['Enquiries'] ?? 0;
+  //     case 1:
+  //       return stats['TestDrives'] ?? 0;
+  //     case 2:
+  //       return stats['Orders'] ?? 0;
+  //     case 3:
+  //       return stats['Cancellation'] ?? 0; // New Orders (using same field)
+  //     case 4:
+  //       return stats['Cancellation'] ?? 0;
+  //     case 5:
+  //       return stats['Retail'] ?? 0;
+  //     default:
+  //       return stats['Enquiries'] ?? 0;
+  //   }
+  // }
 
   // Calculate team total by summing member metrics
-  int _calculateTeamTotal(List<Map<String, dynamic>> members) {
-    int total = 0;
-    for (var member in members) {
-      total += _getMetricValue(member);
-    }
-    return total;
-  }
+  // int _calculateTeamTotal(List<Map<String, dynamic>> members) {
+  //   int total = 0;
+  //   for (var member in members) {
+  //     total += _getMetricValue(member);
+  //   }
+  //   return total;
+  // }
 
   // Process team data for team comparison display
   List<Map<String, dynamic>> _processTeamComparisonData() {
@@ -819,7 +819,7 @@ class _MyTeamsState extends State<MyTeams> {
                       Container(
                         margin: const EdgeInsets.only(left: 10, bottom: 0),
                         child: Text(
-                          'Activitiess',
+                          'Activities',
                           style: AppFont.dropDowmLabel(context),
                         ),
                       ),
@@ -886,9 +886,8 @@ class _MyTeamsState extends State<MyTeams> {
                 _buildPeriodButton('1D', 0),
                 _buildPeriodButton('1W', 1),
                 _buildPeriodButton('1M', 2),
-                _buildPeriodButton('1M', 3),
-                _buildPeriodButton('1Q', 4),
-                _buildPeriodButton('1Y', 5),
+                _buildPeriodButton('1Q', 3),
+                _buildPeriodButton('1Y', 4),
               ],
             ),
           ),
@@ -953,8 +952,8 @@ class _MyTeamsState extends State<MyTeams> {
 
     final metrics = [
       {'label': 'Enquiries', 'key': 'enquiries'},
-      {'label': 'Test Drive\nDone', 'key': 'testDrives'},
-      {'label': 'Order Taken', 'key': 'orders'},
+      {'label': 'Test Drive', 'key': 'testDrives'},
+      {'label': 'Orders', 'key': 'orders'},
       {'label': 'Cancellations', 'key': 'cancellation'},
       {
         'label': 'Net Orders',
@@ -1321,24 +1320,28 @@ class _MyTeamsState extends State<MyTeams> {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: backgroundColor == Colors.white ? valueColor : textColor,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              textAlign: TextAlign.start,
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: backgroundColor == Colors.white ? valueColor : textColor,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 10),
           Align(
-            alignment: Alignment.centerRight,
+            alignment: Alignment.centerLeft,
             child: Text(
               label,
               maxLines: 3,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.end,
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 color: textColor,
@@ -1478,13 +1481,6 @@ class _MyTeamsState extends State<MyTeams> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-        //   child: Text(
-        //     label,
-        //     style: AppFont.mediumText14(context),
-        //   ),
-        // ),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1521,6 +1517,7 @@ class _MyTeamsState extends State<MyTeams> {
     required String date,
     required String leadId,
     required String vehicle,
+    // required String userId,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
@@ -1571,7 +1568,8 @@ class _MyTeamsState extends State<MyTeams> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => FollowupsDetails(leadId: leadId)),
+                      builder: (context) => TeamsEnquiryids(
+                          leadId: leadId, userId: _selectedUserId)),
                 );
               } else {
                 print("Invalid leadId");
@@ -1725,545 +1723,3 @@ class _MyTeamsState extends State<MyTeams> {
     );
   }
 }
-
-// class FlexibleButton extends StatelessWidget {
-//   final String title;
-//   final VoidCallback onPressed;
-//   final BoxDecoration decoration;
-//   final TextStyle textStyle;
-
-//   const FlexibleButton(
-//       {super.key,
-//       required this.title,
-//       required this.onPressed,
-//       required this.decoration,
-//       required this.textStyle});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-//       height: 30,
-//       decoration: decoration,
-//       child: TextButton(
-//         style: TextButton.styleFrom(
-//           backgroundColor: Color(0xffF3F9FF),
-//           padding: EdgeInsets.symmetric(
-//             horizontal: 10,
-//           ),
-//           minimumSize: const Size(0, 0),
-//           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-//         ),
-//         onPressed: onPressed,
-//         child: Text(
-//           title,
-//           style: textStyle,
-//           textAlign: TextAlign.center,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// import 'package:flutter/material.dart';
-// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-// import 'package:get/get.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:smart_assist/config/component/color/colors.dart';
-// import 'package:smart_assist/config/component/font/font.dart';
-
-// class MyTeams extends StatefulWidget {
-//   const MyTeams({super.key});
-
-//   @override
-//   State<MyTeams> createState() => _MyTeamsState();
-// }
-
-// class _MyTeamsState extends State<MyTeams> {
-//   int _childButtonIndex = 0;
-//   int _activeButtonIndex = 0;
-//   int _selectedProfileIndex = -1;
-//   int _tabIndex = 0;
-
-//   late Widget? currentWidget;
-
-//   Map<String, dynamic> getSelectedData() {
-//     switch (_childButtonIndex) {
-//       case 0:
-//       // return MtdData;
-//       case 1:
-//       // return QtdData;
-//       case 2:
-//       // return YtdData;
-//       default:
-//         return {};
-//     }
-//   }
-
-//   //   // Sample profile data
-//   final List<Map<String, String>> teamProfiles = [
-//     {'name': 'Abhey', 'lastName': 'Dayal'},
-//     {'name': 'Amit', 'lastName': 'Arora'},
-//     {'name': 'Gia', 'lastName': 'Valecha'},
-//     {'name': 'Jigar', 'lastName': 'Shah'},
-//     {'name': 'Pritesh', 'lastName': 'Gamali'},
-//   ];
-
-//   @override
-//   Widget build(BuildContext context) {
-//     double screenWidth = MediaQuery.of(context).size.width;
-//     return Scaffold(
-//       appBar: AppBar(
-//         leading: IconButton(
-//           onPressed: () {
-//             // Navigator.push(
-//             //   context,
-//             //   MaterialPageRoute(builder: (context) => BottomNavigation()),
-//             // );
-
-//             Navigator.pop(context);
-//           },
-//           icon: const Icon(
-//             FontAwesomeIcons.angleLeft,
-//             color: Colors.white,
-//           ),
-//         ),
-//         automaticallyImplyLeading: false,
-//         backgroundColor: const Color(0xFF1380FE),
-//         title: Text('My Team', style: AppFont.appbarfontWhite(context)),
-//       ),
-//       body: SingleChildScrollView(
-//         child: Column(
-//           children: [
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 Padding(
-//                   padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-//                   child: Container(
-//                     width: MediaQuery.of(context).size.width * .95,
-//                     height: 35,
-//                     decoration: BoxDecoration(
-//                       color: AppColors.containerBg,
-//                       border: Border.all(
-//                           color: const Color(0xFF767676).withOpacity(0.3),
-//                           width: 0.5), // Border around the container
-//                       borderRadius: BorderRadius.circular(30),
-//                     ),
-//                     child: Row(
-//                       children: [
-//                         // Upcoming Button
-//                         Expanded(
-//                           child: TextButton(
-//                               onPressed: () {
-//                                 setState(() {
-//                                   _childButtonIndex =
-//                                       0; // Set Upcoming as active
-//                                   // _childSelection[_activeButtonIndex] = 0;
-//                                 });
-//                               },
-//                               style: TextButton.styleFrom(
-//                                 alignment: Alignment.center,
-
-//                                 backgroundColor: _childButtonIndex == 0
-//                                     ? Colors.blue // Green for Upcoming
-//                                     : Colors.transparent,
-//                                 foregroundColor: _childButtonIndex == 0
-//                                     ? Colors.white
-//                                     : Colors.black,
-//                                 // padding: const EdgeInsets.symmetric(vertical: 5),
-//                                 padding: EdgeInsets.zero,
-
-//                                 shape: RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.circular(
-//                                       30), // Optional: Rounded corners
-//                                 ),
-//                               ),
-//                               child: Text(
-//                                 'Individual Performance',
-//                                 style: GoogleFonts.poppins(
-//                                     fontSize: 14,
-//                                     fontWeight: FontWeight.w400,
-//                                     color: _childButtonIndex == 0
-//                                         ? Colors.white
-//                                         : const Color(0xff000000)
-//                                             .withOpacity(0.56)),
-//                               )),
-//                         ),
-
-//                         // Overdue Button
-//                         Expanded(
-//                           child: TextButton(
-//                             onPressed: () {
-//                               setState(() {
-//                                 _childButtonIndex =
-//                                     1; // Mark this button as active
-//                                 // _childSelection[_activeButtonIndex] = 1;
-//                               });
-//                             },
-//                             style: TextButton.styleFrom(
-//                               backgroundColor: _childButtonIndex == 1
-//                                   ? Colors.blue // Red highlight when active
-//                                   : Colors.transparent,
-//                               foregroundColor: _childButtonIndex == 1
-//                                   ? Colors.white
-//                                   : Colors.black,
-//                               padding: EdgeInsets.zero,
-//                               shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(30),
-//                               ),
-//                             ),
-//                             child: Row(
-//                               mainAxisAlignment: MainAxisAlignment.center,
-//                               children: [
-//                                 Text(
-//                                   'Team Comparision',
-//                                   style: GoogleFonts.poppins(
-//                                     fontSize: 14,
-//                                     fontWeight: FontWeight.w400,
-//                                     color: _childButtonIndex == 1
-//                                         ? Colors.white
-//                                         : const Color(0xff000000)
-//                                             .withOpacity(0.56),
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//             Row(
-//               children: [Text('Select a PS to view their statistic')],
-//             ),
-//             if (_tabIndex == 0) _buildProfileAvatars(),
-//             Row(
-//               children: [
-//                 Container(
-//                   padding:
-//                       const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-//                   decoration: BoxDecoration(
-//                     color: AppColors.backgroundLightGrey,
-//                     borderRadius: BorderRadius.circular(16),
-//                   ),
-//                   child: Container(
-//                     decoration: BoxDecoration(
-//                       color: Colors.white,
-//                       borderRadius: BorderRadius.circular(30),
-//                     ),
-//                     padding: const EdgeInsets.all(12),
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         // Row with filter buttons and calendar
-//                         Row(
-//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                           children: [
-//                             Row(
-//                               children: [
-//                                 _buildButton('ALL', 0),
-//                                 _buildButton('MTD', 1),
-//                                 _buildButton('QTD', 2),
-//                                 _buildButton('YTD', 3),
-//                               ],
-//                             ),
-//                             const Image(
-//                               image: AssetImage('assets/calendar.png'),
-//                               height: 24,
-//                               width: 24,
-//                             ),
-//                           ],
-//                         ),
-
-//                         const SizedBox(height: 12),
-
-//                         // _buildFirstSlide should render below, not inside Row
-//                         SizedBox(
-//                           height: MediaQuery.of(context).size.height *
-//                               0.4, // 40% of screen height
-//                           child: _buildFirstSlide(context, screenWidth),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             )
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildFirstSlide(BuildContext context, double screenWidth) {
-//     final selectedData = getSelectedData();
-
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 10),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Expanded(
-//             child: Column(
-//               children: [
-//                 Expanded(
-//                   flex: 1,
-//                   child: _buildInfoCard1(
-//                     context,
-//                     'Enquiries you have',
-//                     '${selectedData['totalEnquiries'] ?? 0}',
-//                     screenWidth,
-//                     Colors.green,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Expanded(
-//                   flex: 1,
-//                   child: _buildInfoCard1(
-//                     context,
-//                     'Enquiries lost',
-//                     '${selectedData['lostEnquiries'] ?? 0}',
-//                     screenWidth,
-//                     Colors.red,
-//                   ),
-//                 )
-//               ],
-//             ),
-//           ),
-//           const SizedBox(width: 10),
-//           Expanded(
-//             child: Column(
-//               children: [
-//                 Expanded(
-//                   flex: 1,
-//                   child: _buildInfoCard1(
-//                     context,
-//                     'Enquiries you have',
-//                     '${selectedData['totalEnquiries'] ?? 0}',
-//                     screenWidth,
-//                     Colors.green,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Expanded(
-//                   flex: 1,
-//                   child: _buildInfoCard1(
-//                     context,
-//                     'Enquiries lost',
-//                     '${selectedData['lostEnquiries'] ?? 0}',
-//                     screenWidth,
-//                     Colors.red,
-//                   ),
-//                 )
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildInfoCard1(BuildContext context, String title, String value,
-//       double screenWidth, Color valueColor) {
-//     return Align(
-//       alignment: Alignment.center,
-//       child: Container(
-//         width: double.infinity,
-//         padding: EdgeInsets.all(screenWidth * 0.04),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(10),
-//         ),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             Container(
-//               decoration:
-//                   BoxDecoration(border: Border.all(color: Colors.transparent)),
-//               child: Text(
-//                 title,
-//                 softWrap: true,
-//                 // textAlign: TextAlign.center,
-//                 overflow: TextOverflow.ellipsis,
-//                 maxLines: 4,
-//                 style: GoogleFonts.poppins(
-//                     fontSize: 12,
-//                     fontWeight: FontWeight.w400,
-//                     color: Colors.grey[700]),
-//               ),
-//             ),
-//             // const SizedBox(height: 5),
-//             Text(
-//               softWrap: true,
-//               overflow: TextOverflow.ellipsis,
-//               textAlign: TextAlign.center,
-//               maxLines: 4,
-//               value,
-//               style: GoogleFonts.poppins(
-//                   fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildProfileAvatars() {
-//     return Container(
-//       height: 120,
-//       padding: const EdgeInsets.symmetric(horizontal: 16),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//         children: List.generate(
-//           teamProfiles.length,
-//           (index) => _buildProfileAvatar(
-//             teamProfiles[index]['name'] ?? '',
-//             teamProfiles[index]['lastName'] ?? '',
-//             index,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildProfileAvatar(String firstName, String lastName, int index) {
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         InkWell(
-//           onTap: () {
-//             setState(() {
-//               _selectedProfileIndex = index;
-//             });
-//           },
-//           child: Container(
-//             width: 60,
-//             height: 60,
-//             decoration: BoxDecoration(
-//               shape: BoxShape.circle,
-//               color: Colors.grey.shade300,
-//               border: _selectedProfileIndex == index
-//                   ? Border.all(color: Colors.blue, width: 2)
-//                   : null,
-//             ),
-//             child: Center(
-//               child: Icon(
-//                 Icons.person,
-//                 color: Colors.grey.shade400,
-//                 size: 32,
-//               ),
-//             ),
-//           ),
-//         ),
-//         const SizedBox(height: 8),
-//         Text(
-//           firstName,
-//           style: GoogleFonts.poppins(
-//             fontSize: 12,
-//             fontWeight: FontWeight.w500,
-//           ),
-//         ),
-//         Text(
-//           lastName,
-//           style: GoogleFonts.poppins(
-//             fontSize: 12,
-//             fontWeight: FontWeight.w500,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildInfoCard2(BuildContext context, String title, String value,
-//       double screenWidth, Color valueColor) {
-//     return Align(
-//       alignment: Alignment.center,
-//       child: Container(
-//         width: double.infinity,
-//         padding: EdgeInsets.all(screenWidth * 0.04),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(10),
-//         ),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             Container(
-//               decoration:
-//                   BoxDecoration(border: Border.all(color: Colors.transparent)),
-//               child: Expanded(
-//                 child: Text(
-//                   title,
-//                   softWrap: true,
-//                   // textAlign: TextAlign.center,
-//                   overflow: TextOverflow.ellipsis,
-//                   maxLines: 4,
-//                   style: GoogleFonts.poppins(
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.w400,
-//                       color: Colors.grey[700]),
-//                 ),
-//               ),
-//             ),
-//             // const SizedBox(height: 5),
-//             Text(
-//               softWrap: true,
-//               overflow: TextOverflow.ellipsis,
-//               textAlign: TextAlign.center,
-//               maxLines: 4,
-//               value,
-//               style: GoogleFonts.poppins(
-//                   fontSize: 24, fontWeight: FontWeight.w700, color: valueColor),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // Button Builder
-//   Widget _buildButton(String text, int index) {
-//     bool isSelected = _childButtonIndex == index;
-
-//     return Expanded(
-//       child: Container(
-//         decoration: BoxDecoration(
-//           border: Border.all(
-//             color: isSelected ? Colors.blue : Colors.transparent,
-//             width: 1,
-//           ),
-//           borderRadius: BorderRadius.circular(30),
-//         ),
-//         child: TextButton(
-//           onPressed: () {
-//             setState(() {
-//               _childButtonIndex = index;
-//             });
-//           },
-//           style: TextButton.styleFrom(
-//             foregroundColor: isSelected ? Colors.blue : Colors.black,
-//             backgroundColor: Colors.transparent,
-//             padding: const EdgeInsets.symmetric(vertical: 5),
-//             shape: RoundedRectangleBorder(
-//               borderRadius: BorderRadius.circular(30),
-//             ),
-//           ),
-//           child: Text(
-//             text,
-//             style: GoogleFonts.poppins(
-//               fontSize: 12,
-//               fontWeight: FontWeight.w500,
-//               color: isSelected ? Colors.blue : Colors.black,
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

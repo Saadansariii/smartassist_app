@@ -73,7 +73,7 @@ class _LeadFirstStepState extends State<LeadFirstStep> {
   }
 
   Future<void> fetchDropdownData() async {
-    const String apiUrl = "https://api.smartassistapp.in/api/admin/users/all";
+    const String apiUrl = "https://dev.smartassistapp.in/api/admin/users/all";
 
     final token = await Storage.getToken();
     if (token == null) {

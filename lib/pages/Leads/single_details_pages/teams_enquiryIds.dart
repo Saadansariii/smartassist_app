@@ -26,15 +26,17 @@ import 'package:smart_assist/widgets/timeline/timeline_completed.dart';
 import 'package:smart_assist/widgets/whatsapp_chat.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-class FollowupsDetails extends StatefulWidget {
+class TeamsEnquiryids extends StatefulWidget {
   final String leadId;
-  const FollowupsDetails({super.key, required this.leadId});
+  final String userId;
+  const TeamsEnquiryids(
+      {super.key, required this.leadId, required this.userId});
 
   @override
-  State<FollowupsDetails> createState() => _FollowupsDetailsState();
+  State<TeamsEnquiryids> createState() => _TeamsEnquiryidsState();
 }
 
-class _FollowupsDetailsState extends State<FollowupsDetails> {
+class _TeamsEnquiryidsState extends State<TeamsEnquiryids> {
   // Placeholder data
   String mobile = 'Loading...';
   String chatId = 'Loading...';
@@ -96,7 +98,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   @override
   void initState() {
     super.initState();
-    eventandtask(widget.leadId);
+    eventandtask(widget.leadId, widget.userId);
     fetchSingleIdData(widget.leadId).then((_) {
       fetchCallLogs(mobile);
       // _fetchCallLogs();
@@ -278,10 +280,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   List<Map<String, dynamic>> allTasks = [];
   List<Map<String, dynamic>> allTestdrive = [];
 
-  Future<void> eventandtask(String leadId) async {
+  Future<void> eventandtask(String leadId, userId) async {
     setState(() => isLoading = true);
     try {
-      final data = await LeadsSrv.eventTaskByLead(leadId);
+      final data = await LeadsSrv.eventTaskByLeadTeams(leadId, userId);
 
       setState(() {
         // Ensure that upcomingTasks and completedTasks are correctly cast to List<Map<String, dynamic>>.
@@ -1435,12 +1437,12 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 60,
-                height: 45,
-                child: _buildFloatingActionButton(context),
-              ),
+              // const SizedBox(width: 10),
+              // SizedBox(
+              //   width: 60,
+              //   height: 45,
+              //   child: _buildFloatingActionButton(context),
+              // ),
 
               // Popup Menu (Conditionally Rendered)
               // Obx(() => fabController.isFabExpanded.value

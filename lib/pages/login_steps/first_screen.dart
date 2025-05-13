@@ -43,20 +43,22 @@ class _EmailSetupScreenState extends State<EmailSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(_horizontalPadding),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildHeaderImage(),
-                  _buildTitleSection(),
-                  _buildEmailInput(),
-                  _buildSubmitButton(),
-                ],
+      body: Center(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(_horizontalPadding),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildHeaderImage(),
+                    _buildTitleSection(),
+                    _buildEmailInput(),
+                    _buildSubmitButton(),
+                  ],
+                ),
               ),
             ),
           ),

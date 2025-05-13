@@ -57,7 +57,7 @@ class _AddTaskPopupState extends State<AddTaskPopup> {
   }
 
   Future<void> fetchLeadsData() async {
-    const String apiUrl = "https://api.smartassistapp.in/api/leads/all";
+    const String apiUrl = "https://dev.smartassistapp.in/api/leads/all";
 
     final token = await Storage.getToken();
     if (token == null) {

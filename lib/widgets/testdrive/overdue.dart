@@ -94,7 +94,7 @@ class _TestOverdueState extends State<TestOverdue> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
         ),
         headers: {
           'Authorization': 'Bearer $token',

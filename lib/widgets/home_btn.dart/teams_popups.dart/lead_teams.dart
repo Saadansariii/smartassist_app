@@ -151,7 +151,7 @@ class _LeadTeamsState extends State<LeadTeams> {
           "Token retrieved: ${token != null ? 'Yes' : 'No'}"); // Debug token presence
 
       final apiUrl =
-          'https://api.smartassistapp.in/api/search/users?user=$query';
+          'https://dev.smartassistapp.in/api/search/users?user=$query';
       print("API URL: $apiUrl"); // Debug URL
 
       final response = await http.get(
@@ -370,7 +370,7 @@ class _LeadTeamsState extends State<LeadTeams> {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://api.smartassistapp.in/api/search/vehicles?vehicle=${Uri.encodeComponent(query)}',
+          'https://dev.smartassistapp.in/api/search/vehicles?vehicle=${Uri.encodeComponent(query)}',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -424,7 +424,7 @@ class _LeadTeamsState extends State<LeadTeams> {
     final encodedName = Uri.encodeComponent(vehicleName);
 
     final url =
-        'https://api.smartassistapp.in/api/users/vehicles/all?vehicle_name=$encodedName';
+        'https://dev.smartassistapp.in/api/users/vehicles/all?vehicle_name=$encodedName';
 
     try {
       final response = await http.get(
@@ -483,7 +483,7 @@ class _LeadTeamsState extends State<LeadTeams> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/leads/existing-check?mobile=$encodedMobile'),
+            'https://dev.smartassistapp.in/api/leads/existing-check?mobile=$encodedMobile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

@@ -51,7 +51,7 @@ class CallHistory extends StatefulWidget {
 //   static Future<List<Map<String, dynamic>>> fetchCallLogs(
 //       String mobile, String category) async {
 //     final String apiUrl =
-//         "https://api.smartassistapp.in/api/leads/call-logs/all?mobile=${Uri.encodeComponent(mobile)}&category=$category";
+//         "https://dev.smartassistapp.in/api/leads/call-logs/all?mobile=${Uri.encodeComponent(mobile)}&category=$category";
 //     final token = await Storage.getToken();
 
 //     try {
@@ -415,7 +415,7 @@ class _CallHistoryState extends State<CallHistory> {
       String mobile, String category, String periodFilter) async {
     // If callDate is empty, omit the call_date query parameter from the URL
     String apiUrl =
-        "https://api.smartassistapp.in/api/leads/call-logs/all?category=$category&mobile=${Uri.encodeComponent(mobile)}";
+        "https://dev.smartassistapp.in/api/leads/call-logs/all?category=$category&mobile=${Uri.encodeComponent(mobile)}";
 
     // If callDate is not empty, include it in the URL
     // if (callDate.isNotEmpty) {

@@ -56,7 +56,7 @@ class _FTestdriveState extends State<FTestdrive> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/event/$eventId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -97,7 +97,7 @@ class _FTestdriveState extends State<FTestdrive> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/favourites/events/test-drives/all'),
+            'https://dev.smartassistapp.in/api/favourites/events/test-drives/all'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json'
@@ -237,7 +237,7 @@ class _TaskItemState extends State<TaskItem> {
   //   try {
   //     final response = await http.put(
   //       Uri.parse(
-  //         'https://api.smartassistapp.in/api/favourites/mark-fav/task/${widget.eventId}',
+  //         'https://dev.smartassistapp.in/api/favourites/mark-fav/task/${widget.eventId}',
   //       ),
   //       headers: {
   //         'Authorization': 'Bearer $token',

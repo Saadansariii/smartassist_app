@@ -150,7 +150,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -204,7 +204,7 @@ class _AppointmentTeamsState extends State<AppointmentTeams> {
           "Token retrieved: ${token != null ? 'Yes' : 'No'}"); // Debug token presence
 
       final apiUrl =
-          'https://api.smartassistapp.in/api/search/users?user=$query';
+          'https://dev.smartassistapp.in/api/search/users?user=$query';
       print("API URL: $apiUrl"); // Debug URL
 
       final response = await http.get(

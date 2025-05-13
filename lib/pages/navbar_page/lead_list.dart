@@ -27,7 +27,7 @@ class LeadsListState extends State<LeadsList> {
     final token = await Storage.getToken();
     try {
       final response = await http.get(
-        Uri.parse('https://api.smartassistapp.in/api/leads/all'),
+        Uri.parse('https://dev.smartassistapp.in/api/leads/all'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

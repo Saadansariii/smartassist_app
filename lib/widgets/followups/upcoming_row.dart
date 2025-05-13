@@ -65,7 +65,7 @@ class _FollowupsUpcomingState extends State<FollowupsUpcoming> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/task/$taskId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/task/$taskId',
         ),
         headers: {
           'Authorization': 'Bearer $token',

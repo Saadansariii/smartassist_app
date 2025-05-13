@@ -88,7 +88,7 @@
 
 //       final response = await http.get(
 //         Uri.parse(
-//             'https://api.smartassistapp.in/api/users/dashboard/analytics$periodParam'),
+//             'https://dev.smartassistapp.in/api/users/dashboard/analytics$periodParam'),
 //         headers: {
 //           'Authorization': 'Bearer $token',
 //           'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ class _BottomBtnSecondState extends State<BottomBtnSecond> {
       final token = await Storage.getToken();
 
       final uri = Uri.parse(
-          'https://api.smartassistapp.in/api/users/dashboard/analytics?type=$period');
+          'https://dev.smartassistapp.in/api/users/dashboard/analytics?type=$period');
 
       final response = await http.get(
         uri,
