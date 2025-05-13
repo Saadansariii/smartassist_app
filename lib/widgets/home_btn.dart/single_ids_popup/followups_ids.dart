@@ -306,12 +306,15 @@ class _FollowupsIdsState extends State<FollowupsIds> {
         await LeadsSrv.submitFollowups(newTaskForLead, widget.leadId);
 
     if (success) {
-      Navigator.pop(context, true);
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Follow-up submitted successfully!')),
       );
       widget.onFormSubmit(widget.leadId);
       widget.onSubmitStatus(widget.leadId);
+
+      Navigator.pop(context, true);
     } else {
       showErrorMessage(context, message: 'Submission failed. Try again.');
     }

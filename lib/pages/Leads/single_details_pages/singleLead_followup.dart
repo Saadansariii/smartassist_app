@@ -210,7 +210,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         email = leadData['data']['email'] ?? 'N/A';
         status = leadData['data']['status'] ?? 'N/A';
         company = leadData['data']['brand'] ?? 'N/A';
-        address = leadData['data']['address'] ?? 'N/A';
+        address = leadData['data']['location'] ?? 'N/A';
         leadSource = leadData['data']['lead_source'] ?? 'N/A';
         fuel_type = leadData['data']['fuel_type'] ?? 'N/A';
         lead_owner = leadData['data']['lead_owner'] ?? 'N/A';
@@ -1058,7 +1058,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                     child: _buildContactRow(
                                       icon: Icons.location_on,
                                       title: 'Location',
-                                      subtitle: pincode,
+                                      subtitle: address,
                                     ),
                                   ),
                                 ],

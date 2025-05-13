@@ -83,6 +83,7 @@ class LeadsSrv {
       // Log the response for debugging
       print('API Status Code: ${response.statusCode}');
       print('API Response Body: ${response.body}');
+      
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -415,9 +416,7 @@ class LeadsSrv {
     print('Request body: ${jsonEncode(followupsData)}');
 
     try {
-      final response = await http.post(
-        // Uri.parse(
-        //     'https://dev.smartassistapp.in/api/admin/leads/$leadId/create-appointment'),
+      final response = await http.post( 
         Uri.parse(
             'https://dev.smartassistapp.in/api/admin/records/$leadId/events/create-appointment'),
         headers: {
@@ -430,6 +429,8 @@ class LeadsSrv {
 
       print('API Response Status: ${response.statusCode}');
       print('API Response Body: ${response.body}');
+
+      
 
       if (response.statusCode == 201) {
         return true; // Task created successfully

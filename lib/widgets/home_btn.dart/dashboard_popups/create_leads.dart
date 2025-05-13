@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
@@ -16,7 +17,9 @@ import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/google_location.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:google_places_flutter/model/prediction.dart';
 
 class CreateLeads extends StatefulWidget {
   final Function onFormSubmit;
@@ -66,6 +69,13 @@ class _CreateLeadsState extends State<CreateLeads> {
   late RangeValues _rangeAmount;
   List<dynamic> vehicleName = [];
   String selectedSubType = 'Retail';
+  String? _locationErrorText;
+
+  // Your Google Maps API key
+  final String _googleApiKey =
+      "AIzaSyA_SWIvFPfChqL33bKtLyZ5YOFSXrsk1Qs"; // Replace with your actual API key
+
+  final TextEditingController _locationController = TextEditingController();
 
   TextEditingController startDateController = TextEditingController();
   TextEditingController endDateController = TextEditingController();
@@ -94,6 +104,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -529,6 +540,18 @@ class _CreateLeadsState extends State<CreateLeads> {
     }
   }
 
+  void _validateLocation() {
+    if (_locationController.text.trim().isEmpty) {
+      setState(() {
+        _locationErrorText = 'Location is required';
+      });
+    } else {
+      setState(() {
+        _locationErrorText = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 1;
@@ -758,6 +781,20 @@ class _CreateLeadsState extends State<CreateLeads> {
                         ],
                       ),
 
+                      _buildNumberWidget(
+                        label: 'Mobile No',
+                        controller: mobileController,
+                        errorText: _errors['mobile'],
+                        hintText: '+91',
+                        onChanged: (value) {
+                          if (_errors.containsKey('mobile')) {
+                            setState(() {
+                              _errors.remove('mobile');
+                            });
+                          }
+                          print("mobile: $value");
+                        },
+                      ),
                       //////////////////////////////////////////////////////////////
                       _buildTextField(
                           label: 'Email',
@@ -773,20 +810,6 @@ class _CreateLeadsState extends State<CreateLeads> {
                             print("email : $value");
                           }),
 
-                      _buildNumberWidget(
-                        label: 'Mobile No',
-                        controller: mobileController,
-                        errorText: _errors['mobile'],
-                        hintText: '+91',
-                        onChanged: (value) {
-                          if (_errors.containsKey('mobile')) {
-                            setState(() {
-                              _errors.remove('mobile');
-                            });
-                          }
-                          print("mobile: $value");
-                        },
-                      ),
                       const SizedBox(
                         height: 5,
                       ),
@@ -896,18 +919,42 @@ class _CreateLeadsState extends State<CreateLeads> {
                             });
                           }),
                       // const SizedBox(height: 5),
-                      _buildLocationTextField(
-                          label: 'Locations',
-                          controller: locationController,
-                          hintText: '',
-                          onChanged: (value) {
-                            if (_errors.containsKey('location')) {
-                              setState(() {
-                                // _errors.remove('pin');
-                              });
-                            }
-                            print("pin : $value");
-                          }),
+                      // buildGoogleLocationField(
+                      //   context: context,
+                      //   controller: _locationController,
+                      //   hintText: "Enter location",
+                      //   label: "Location",
+                      //   googleApiKey:
+                      //       _googleApiKey, // Replace with your actual API key
+                      //   isRequired: true,
+                      //   errorText: _locationErrorText,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       // Clear error if user is typing
+                      //       if (_locationErrorText != null &&
+                      //           value.isNotEmpty) {
+                      //         _locationErrorText = null;
+                      //       }
+                      //     });
+                      //   },
+                      // ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      CustomGooglePlacesField(
+                        controller: _locationController,
+                        hintText: 'Enter location',
+                        label: 'Location',
+                        onChanged: (value) {
+                          if (_locationErrorText != null) {
+                            _validateLocation();
+                          }
+                        },
+                        googleApiKey:
+                            _googleApiKey, // Replace with your actual API key
+                        isRequired: true,
+                        // errorText: _locationError,
+                      ),
                       // Align(
                       //   alignment: Alignment.centerLeft,
                       //   child: Padding(
@@ -1564,73 +1611,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  Widget _buildLocationTextField({
-    required TextEditingController controller,
-    required String hintText,
-    required String label,
-    required ValueChanged<String> onChanged,
-    bool isRequired = false,
-    String? errorText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(
-          height: 5,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 5),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.fontBlack,
-              ),
-              children: [
-                TextSpan(text: label),
-                if (isRequired)
-                  const TextSpan(
-                    text: " *",
-                    style: TextStyle(color: Colors.red),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(
-          height: 5,
-        ),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
-            color: const Color.fromARGB(255, 248, 247, 247),
-            border: errorText != null
-                ? Border.all(color: Colors.red, width: 1.0)
-                : null,
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: TextField(
-              controller: controller,
-              style: AppFont.dropDowmLabel(context),
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle:
-                    GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                border: InputBorder.none,
-              ),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildDatePicker({
     required String label,
     required TextEditingController controller,
@@ -2107,7 +2087,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'lead_source': _selectedType,
         'consent': consentValue,
         'budget': highestBudgetValue,
-        // 'location': ,
+        'location': _locationController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor
       };

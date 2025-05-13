@@ -421,6 +421,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (response['isSuccess'] == true) {
         // Extract the message from the nested data structure if available
         final responseData = response['data'];
+        print(response['data']);
         final successMessage =
             responseData?['message'] ?? 'Email verified successfully';
 
