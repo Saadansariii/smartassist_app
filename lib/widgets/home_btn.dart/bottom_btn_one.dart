@@ -56,7 +56,7 @@ class _BottomBtnOneState extends State<BottomBtnOne> {
 
                     // Orders Button
                     _buildResponsiveButton(
-                      label: 'Orderss',
+                      label: 'Orders',
                       index: 2,
                       onPressed: () {
                         setState(() {

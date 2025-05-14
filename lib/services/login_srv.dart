@@ -4,7 +4,7 @@
 
 // class LoginSrv {
 //   static Future<Map<String, dynamic>> onLogin(Map body) async {
-//     const url = 'https://api.smartassistapp.in/api/login';
+//     const url = 'https://dev.smartassistapp.in/api/login';
 //     final uri = Uri.parse(url);
 
 //     try {
@@ -58,7 +58,7 @@
 
 // class LoginSrv {
   // static Future<Map<String, dynamic>> onLogin(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login';
+  //   const url = 'https://dev.smartassistapp.in/api/login';
   //   final uri = Uri.parse(url);
 
   //   try {
@@ -125,7 +125,7 @@
 
 //  class LoginSrv {
 //   static Future<Map<String, dynamic>> onLogin(Map body) async {
-//     const url = 'https://api.smartassistapp.in/api/login';
+//     const url = 'https://dev.smartassistapp.in/api/login';
 //     final uri = Uri.parse(url);
 
 //     try {
@@ -158,7 +158,7 @@
 
 // class LoginSrv {
 //   static Future<Map<String, dynamic>> onLogin(Map body) async {
-//     const url = 'https://api.smartassistapp.in/api/login';
+//     const url = 'https://dev.smartassistapp.in/api/login';
 //     final uri = Uri.parse(url);
 
 //     try {

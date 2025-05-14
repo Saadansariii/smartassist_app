@@ -2,16 +2,23 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
+import 'package:smart_assist/pages/login_steps/biometric_screen.dart';
 import 'package:smart_assist/pages/login_steps/first_screen.dart';
+import 'package:smart_assist/pages/login_steps/forget_password.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:smart_assist/services/notifacation_srv.dart';
+import 'package:smart_assist/utils/biometric_prefrence.dart';
 import 'package:smart_assist/utils/bottom_navigation.dart';
+import 'package:smart_assist/utils/connection_service.dart';
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/style_text.dart';
 import 'package:smart_assist/utils/token_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:smart_assist/widgets/interneterror_screed.dart';
 
 class LoginPage extends StatefulWidget {
   final String email;
@@ -130,6 +137,12 @@ class _LoginPageState extends State<LoginPage>
                                 "Forgot Password ? ",
                                 "Reset Password",
                                 () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (cotext) => ForgetPassword(
+                                                text: '',
+                                              )));
                                   // TODO: Implement forgot password functionality
                                 },
                               ),
@@ -319,6 +332,100 @@ class _LoginPageState extends State<LoginPage>
   }
 
   // Update the login page's submitBtn method to handle successful login
+  // Future<void> submitBtn() async {
+  //   if (!mounted) return;
+  //   final email = newEmailController.text.trim();
+  //   final pwd = newPwdController.text.trim();
+
+  //   if (email.isEmpty || pwd.isEmpty) {
+  //     showErrorMessage(context, message: 'Email and Password cannot be empty.');
+  //     return;
+  //   }
+
+  //   setState(() => isLoading = true);
+
+  //   try {
+  //     final deviceToken = await FirebaseMessaging.instance.getToken();
+  //     if (deviceToken == null) {
+  //       throw Exception('Failed to retrieve device token.');
+  //     }
+
+  //     final response = await LeadsSrv.onLogin({
+  //       "email": email,
+  //       "password": pwd,
+  //       "device_token": deviceToken,
+  //     });
+
+  //     if (!mounted) return;
+
+  //     if (response['isSuccess'] == true && response['user'] != null) {
+  //       final user = response['user'];
+  //       final userId = user['user_id'];
+  //       // final teamRole = user['team_role'];
+  //       final authToken = response['token'];
+  //       final userRole = user['user_role'];
+
+  //       if (userId != null && authToken != null) {
+  //         // Save authentication data
+  //         await TokenManager.saveAuthData(authToken, userId, userRole);
+  //         String successMessage =
+  //             response['message']?.toString() ?? 'Login Successful';
+  //         Get.snackbar(
+  //           'Success',
+  //           successMessage,
+  //           backgroundColor: Colors.green,
+  //           colorText: Colors.white,
+  //         );
+  //         // showSuccessMessage(context, message: 'Login Successful!');
+
+  //         // Initialize FCM after successful login
+  //         await NotificationService.instance.initialize();
+
+  //         // Navigate directly to home page, no biometric needed on first login
+  //         Get.offAll(() => BottomNavigation());
+  //         widget.onLoginSuccess?.call();
+  //       } else {
+  //         String errorMessage = response['error'] ??
+  //             response['message'] ??
+  //             'Something went wrong';
+  //         Get.snackbar(
+  //           'Error',
+  //           errorMessage,
+  //           backgroundColor: Colors.red,
+  //           colorText: Colors.white,
+  //         );
+  //         // throw Exception('Invalid user data or token received');
+  //       }
+  //     } else {
+  //       String errorMessage =
+  //           response['error'] ?? response['message'] ?? 'Something went wrong';
+  //       Get.snackbar(
+  //         'Error',
+  //         errorMessage,
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //       // throw Exception(response['message'] ?? 'Login failed: Unknown error');
+  //     }
+  //   } catch (error) {
+  //     if (!mounted) return;
+  //     print('error');
+  //     // showErrorMessage(context, message: error.toString());
+
+  //     Get.snackbar(
+  //       'Error',
+  //       error.toString(),
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => isLoading = false);
+  //     }
+  //   }
+  // }
+
+// login page
   Future<void> submitBtn() async {
     if (!mounted) return;
     final email = newEmailController.text.trim();
@@ -326,6 +433,23 @@ class _LoginPageState extends State<LoginPage>
 
     if (email.isEmpty || pwd.isEmpty) {
       showErrorMessage(context, message: 'Email and Password cannot be empty.');
+      return;
+    }
+    await ConnectionService().checkConnection();
+    final isConnected = ConnectionService().isConnected;
+    print("Internet connection status: $isConnected");
+    if (!isConnected) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          content: InternetErrorWidget(
+            onRetry: () {
+              Navigator.pop(context);
+              submitBtn(); // retry login
+            },
+          ),
+        ),
+      );
       return;
     }
 
@@ -348,7 +472,6 @@ class _LoginPageState extends State<LoginPage>
       if (response['isSuccess'] == true && response['user'] != null) {
         final user = response['user'];
         final userId = user['user_id'];
-        // final teamRole = user['team_role'];
         final authToken = response['token'];
         final userRole = user['user_role'];
 
@@ -363,13 +486,33 @@ class _LoginPageState extends State<LoginPage>
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
-          // showSuccessMessage(context, message: 'Login Successful!');
 
-          // Initialize FCM after successful login
-          await NotificationService.instance.initialize();
+          // Reset all biometric preferences since this is a fresh login
+          await BiometricPreference.resetBiometricPreferences();
 
-          // Navigate directly to home page, no biometric needed on first login
-          Get.offAll(() => BottomNavigation());
+          // Check if device supports biometrics
+          final LocalAuthentication auth = LocalAuthentication();
+          bool canCheckBiometrics = false;
+
+          try {
+            canCheckBiometrics = await auth.canCheckBiometrics;
+            List<BiometricType> availableBiometrics =
+                await auth.getAvailableBiometrics();
+            print("Available biometrics: $availableBiometrics");
+          } catch (e) {
+            print("Error checking biometric capability: $e");
+          }
+
+          if (canCheckBiometrics) {
+            // Navigate to BiometricScreen with isFirstTime flag
+            Get.offAll(() => const BiometricScreen(isFirstTime: true));
+          } else {
+            // Device doesn't support biometrics, go directly to home
+            // Also set hasMadeBiometricChoice to avoid future checks
+            await BiometricPreference.setUseBiometric(false);
+            Get.offAll(() => BottomNavigation());
+          }
+
           widget.onLoginSuccess?.call();
         } else {
           String errorMessage = response['error'] ??
@@ -381,7 +524,6 @@ class _LoginPageState extends State<LoginPage>
             backgroundColor: Colors.red,
             colorText: Colors.white,
           );
-          // throw Exception('Invalid user data or token received');
         }
       } else {
         String errorMessage =
@@ -392,12 +534,10 @@ class _LoginPageState extends State<LoginPage>
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-        // throw Exception(response['message'] ?? 'Login failed: Unknown error');
       }
     } catch (error) {
       if (!mounted) return;
       print('error');
-      // showErrorMessage(context, message: error.toString());
 
       Get.snackbar(
         'Error',

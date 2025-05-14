@@ -210,7 +210,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
         email = leadData['data']['email'] ?? 'N/A';
         status = leadData['data']['status'] ?? 'N/A';
         company = leadData['data']['brand'] ?? 'N/A';
-        address = leadData['data']['address'] ?? 'N/A';
+        address = leadData['data']['location'] ?? 'N/A';
         leadSource = leadData['data']['lead_source'] ?? 'N/A';
         fuel_type = leadData['data']['fuel_type'] ?? 'N/A';
         lead_owner = leadData['data']['lead_owner'] ?? 'N/A';
@@ -230,7 +230,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
 
   static Future<Map<String, int>> fetchCallLogs(String mobile) async {
     const String apiUrl =
-        "https://api.smartassistapp.in/api/leads/call-logs/all";
+        "https://dev.smartassistapp.in/api/leads/call-logs/all";
     final token = await Storage.getToken();
 
     try {
@@ -630,7 +630,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? spId = prefs.getString('user_id');
       final url = Uri.parse(
-          'https://api.smartassistapp.in/api/leads/mark-lost/${widget.leadId}');
+          'https://dev.smartassistapp.in/api/leads/mark-lost/${widget.leadId}');
       final token = await Storage.getToken();
 
       // Create the request body
@@ -763,7 +763,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? spId = prefs.getString('user_id');
       final url = Uri.parse(
-          'https://api.smartassistapp.in/api/leads/convert-to-opp/${widget.leadId}');
+          'https://dev.smartassistapp.in/api/leads/convert-to-opp/${widget.leadId}');
       final token = await Storage.getToken();
 
       // Create the request body
@@ -1058,7 +1058,7 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
                                     child: _buildContactRow(
                                       icon: Icons.location_on,
                                       title: 'Location',
-                                      subtitle: pincode,
+                                      subtitle: address,
                                     ),
                                   ),
                                 ],
@@ -1457,7 +1457,10 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
   Widget _buildFloatingActionButton(BuildContext context) {
     return Obx(
       () => GestureDetector(
-        onTap: fabController.toggleFab,
+        // onTap: fabController.toggleFab,
+        onTap: fabController.isFabDisabled.value
+            ? null // Disable onTap if FAB is disabled
+            : fabController.toggleFab,
         child: AnimatedContainer(
           padding: EdgeInsets.zero,
           margin: EdgeInsets.zero,
@@ -1468,9 +1471,11 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               width: 1,
-              color: fabController.isFabExpanded.value
-                  ? Colors.red
-                  : AppColors.colorsBlue,
+              color: fabController.isFabDisabled.value
+                  ? Colors.grey // Grey when disabled
+                  : (fabController.isFabExpanded.value
+                      ? Colors.red
+                      : AppColors.colorsBlue),
             ),
             // color: fabController.isFabExpanded.value
             //     ? Colors.red
@@ -1483,9 +1488,11 @@ class _FollowupsDetailsState extends State<FollowupsDetails> {
               duration: const Duration(milliseconds: 300),
               child: Icon(
                 fabController.isFabExpanded.value ? Icons.close : Icons.add,
-                color: fabController.isFabExpanded.value
-                    ? Colors.red
-                    : AppColors.colorsBlue,
+                color: fabController.isFabDisabled.value
+                    ? Colors.grey // Grey when disabled
+                    : (fabController.isFabExpanded.value
+                        ? Colors.red
+                        : AppColors.colorsBlue),
                 size: 30,
               ),
             ),

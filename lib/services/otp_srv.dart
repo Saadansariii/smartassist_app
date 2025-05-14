@@ -3,7 +3,7 @@
 
 // class OtpSrv {
   // static Future<Map<String, dynamic>> verifyEmail(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login/verify-otp';
+  //   const url = 'https://dev.smartassistapp.in/api/login/verify-otp';
   //   final uri = Uri.parse(url);
 
   //   try {

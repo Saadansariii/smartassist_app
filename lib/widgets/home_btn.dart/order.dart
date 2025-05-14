@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 
@@ -18,21 +17,6 @@ class Order extends StatefulWidget {
 }
 
 class _OrderState extends State<Order> {
-  // int _childButtonIndex = 0;
-
-  // Map<String, dynamic> getSelectedData() {
-  //   switch (_childButtonIndex) {
-  //     case 0:
-  //       return widget.MtdData;
-  //     case 1:
-  //       return widget.QtdData;
-  //     case 2:
-  //       return widget.YtdData;
-  //     default:
-  //       return {};
-  //   }
-  // }
-
   int _childButtonIndex = 0;
   final PageController _pageController = PageController();
 
@@ -54,8 +38,8 @@ class _OrderState extends State<Order> {
         periodData = {};
     }
 
-    // Make sure allData exists, otherwise return empty map
-    return periodData['allData'] ?? {};
+    // Make sure data exists, otherwise return empty map
+    return periodData['data'] ?? {};
   }
 
   @override
@@ -67,7 +51,6 @@ class _OrderState extends State<Order> {
     return Column(
       children: [
         // Row with Buttons and Enquiry Bank
-
         const SizedBox(height: 15),
 
         IntrinsicHeight(
@@ -105,24 +88,26 @@ class _OrderState extends State<Order> {
                       margin: const EdgeInsets.only(left: 10),
                       child: _buildInfoCard(
                         context,
-                        _getLeftOneTitle(_childButtonIndex),
-                        _getLeftOneValue(_childButtonIndex),
-                        _getLeftTwoTitle(_childButtonIndex),
-                        _getLeftTwoValue(_childButtonIndex),
+                        'Orders with you',
+                        '${selectedData['orders'] ?? 0}',
+                        'Is your target',
+                        '${selectedData['orderTarget'] ?? 0}',
                         screenWidth,
-                        _getGreenCardColor(_childButtonIndex),
-                        _getRedCardColor(_childButtonIndex),
+                        Colors.green,
+                        Colors.red,
                       ),
                     ),
                     const SizedBox(height: 10),
                     Expanded(
-                        child: Container(
-                      margin: const EdgeInsets.only(left: 10),
-                      child: _buildInfoCardSecond(
-                        context,
-                        screenWidth,
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 10),
+                        child: _buildInfoCardSecond(
+                          context,
+                          screenWidth,
+                          selectedData,
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 ),
               ),
@@ -133,30 +118,32 @@ class _OrderState extends State<Order> {
                   mainAxisSize: MainAxisSize.max, // Use full height
                   children: [
                     Expanded(
-                        // 🔹 Make the right column stretch fully
-                        child: Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      child: _buildInfoCard2(
-                        context,
-                        _getRightOneCardTitle(_childButtonIndex),
-                        _getRightOneCardValue(_childButtonIndex),
-                        screenWidth,
-                        _getGreenCardColor1(_childButtonIndex),
+                      // 🔹 Make the right column stretch fully
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        child: _buildInfoCard2(
+                          context,
+                          '${selectedData['TestDriveToRetail'] ?? 0}%',
+                          'Test drive to retail ratio',
+                          screenWidth,
+                          Colors.red,
+                        ),
                       ),
-                    )),
+                    ),
                     const SizedBox(height: 10),
                     Expanded(
-                        // 🔹 Ensure both cards take equal space
-                        child: Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      child: _buildInfoCard2(
-                        context,
-                        _getRightTwoCardTitle(_childButtonIndex),
-                        _getRightTwoCardValue(_childButtonIndex),
-                        screenWidth,
-                        _getBlueCardColor(_childButtonIndex),
+                      // 🔹 Ensure both cards take equal space
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        child: _buildInfoCard2(
+                          context,
+                          '${selectedData['digitalEnquiryToOrderRatio'] ?? 0}%',
+                          'Digital enquiry to new order ratio',
+                          screenWidth,
+                          Colors.red,
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 ),
               ),
@@ -168,176 +155,6 @@ class _OrderState extends State<Order> {
         ),
       ],
     );
-  }
-
-  // Dynamic Titles and Values for Each Selected Button
-  String _getLeftOneTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Orders with you';
-      case 1:
-        return 'Orders with you';
-      case 2:
-        return 'Orders with you';
-      default:
-        return '';
-    }
-  }
-
-  String _getLeftOneValue(int index) {
-    switch (index) {
-      case 0:
-        return '3';
-      case 1:
-        return '50';
-      case 2:
-        return '120';
-      default:
-        return '';
-    }
-  }
-
-  String _getLeftTwoTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Is your target';
-      case 1:
-        return 'Is your target';
-      case 2:
-        return 'Is your target';
-      default:
-        return '';
-    }
-  }
-
-  String _getLeftTwoValue(int index) {
-    switch (index) {
-      case 0:
-        return '1';
-      case 1:
-        return '50';
-      case 2:
-        return '120';
-      default:
-        return '';
-    }
-  }
-
-  Color _getGreenCardColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.green; // Color for MTD
-      case 1:
-        return Colors.green; // Color for QTD
-      case 2:
-        return Colors.green; // Color for YTD
-      default:
-        return Colors.black; // Default color
-    }
-  }
-
-  Color _getGreenCardColor1(int index) {
-    switch (index) {
-      case 0:
-        return Colors.red; // Color for MTD
-      case 1:
-        return Colors.red; // Color for QTD
-      case 2:
-        return Colors.red; // Color for YTD
-      default:
-        return Colors.black; // Default color
-    }
-  }
-
-  Color _getRedCardColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.red; // Color for MTD
-      case 1:
-        return Colors.red; // Color for QTD
-      case 2:
-        return Colors.red; // Color for YTD
-      default:
-        return Colors.black; // Default color
-    }
-  }
-
-  Color _getBlueCardColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.red; // Color for MTD
-      case 1:
-        return Colors.red; // Color for QTD
-      case 2:
-        return Colors.red; // Color for YTD
-      default:
-        return Colors.black; // Default color
-    }
-  }
-
-  String _getMiddleCardValue(int index) {
-    switch (index) {
-      case 0:
-        return '8';
-      case 1:
-        return '40';
-      case 2:
-        return '100';
-      default:
-        return '';
-    }
-  }
-
-  String _getRightOneCardTitle(int index) {
-    switch (index) {
-      case 0:
-        return '45%';
-      case 1:
-        return '100';
-      case 2:
-        return '350';
-      default:
-        return '';
-    }
-  }
-
-  String _getRightTwoCardTitle(int index) {
-    switch (index) {
-      case 0:
-        return '25%';
-      case 1:
-        return '100';
-      case 2:
-        return '350';
-      default:
-        return '';
-    }
-  }
-
-  String _getRightOneCardValue(int index) {
-    switch (index) {
-      case 0:
-        return 'Test drive to retail ratio';
-      case 1:
-        return 'Test drive to retail ratio';
-      case 2:
-        return 'Test drive to retail ratio';
-      default:
-        return '';
-    }
-  }
-
-  String _getRightTwoCardValue(int index) {
-    switch (index) {
-      case 0:
-        return 'Digital enquiry to new order ratio';
-      case 1:
-        return 'Digital enquiry to new order ratio';
-      case 2:
-        return 'Digital enquiry to new order ratio';
-      default:
-        return '';
-    }
   }
 
   // Button Builder
@@ -462,6 +279,7 @@ class _OrderState extends State<Order> {
   Widget _buildInfoCardSecond(
     BuildContext context,
     double screenWidth,
+    Map<String, dynamic> selectedData,
   ) {
     return Container(
       width: double.infinity,
@@ -475,8 +293,7 @@ class _OrderState extends State<Order> {
         children: [
           Expanded(
             child: Text(
-              'Your contribution  to of dealership cancellations',
-              // 'Your contribution (dealerShipCancellation) to  //'${dealerShipCancellation}' of dealership cancellations', //this is the way for calling this api
+              'Your contribution to of dealership cancellations',
               softWrap: true,
               overflow: TextOverflow.ellipsis,
               maxLines: 4,
@@ -487,7 +304,7 @@ class _OrderState extends State<Order> {
           const SizedBox(height: 10),
           Expanded(
             child: Text(
-              '20%',
+              '${selectedData['contributionToDealershipmsg'] ?? 0}%',
               softWrap: true,
               overflow: TextOverflow.ellipsis,
               maxLines: 4,
@@ -519,7 +336,6 @@ class _OrderState extends State<Order> {
             style: GoogleFonts.inter(
                 fontSize: 30, fontWeight: FontWeight.w700, color: valueColor),
           ),
-          // const SizedBox(height: 2),
           Text(
             value,
             style: AppFont.smallText(context),

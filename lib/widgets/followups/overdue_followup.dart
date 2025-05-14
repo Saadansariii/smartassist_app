@@ -9,8 +9,8 @@ import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followu
 import 'package:smart_assist/pages/home/single_details_pages/singleLead_followup.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:smart_assist/utils/storage.dart'; 
-import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart'; 
+import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/followups.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OverdueFollowup extends StatefulWidget {
@@ -103,7 +103,7 @@ class _OverdueFollowupState extends State<OverdueFollowup> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/task/$taskId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/task/$taskId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -212,7 +212,39 @@ class overdueeFollowupsItem extends StatefulWidget {
   State<overdueeFollowupsItem> createState() => _overdueeFollowupsItemState();
 }
 
-class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
+class _overdueeFollowupsItemState extends State<overdueeFollowupsItem>
+    with WidgetsBindingObserver {
+  bool _wasCallingPhone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register this class as an observer to track app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remove observer when widget is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // This gets called when app lifecycle state changes
+    if (state == AppLifecycleState.resumed && _wasCallingPhone) {
+      // App is resumed and we marked that user was making a call
+      _wasCallingPhone = false;
+      // Show the mail action dialog after a short delay to ensure app is fully resumed
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _mailAction();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -228,18 +260,22 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
     return Slidable(
       key: ValueKey(widget.leadId), // Always good to set keys
       startActionPane: ActionPane(
+        extentRatio: 0.2,
         motion: const ScrollMotion(),
         children: [
           ReusableSlidableAction(
             onPressed: widget.onToggleFavorite, // handle fav toggle
             backgroundColor: Colors.amber,
-            icon: widget.isFavorite ? Icons.star : Icons.star_border,
+            icon: widget.isFavorite
+                ? Icons.star_rounded
+                : Icons.star_border_rounded,
             foregroundColor: Colors.white,
           ),
         ],
       ),
 
       endActionPane: ActionPane(
+        extentRatio: 0.4,
         motion: const StretchMotion(),
         children: [
           if (widget.subject == 'Call')
@@ -247,19 +283,21 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
               onPressed: _phoneAction,
               backgroundColor: Colors.blue,
               icon: Icons.phone,
+              foregroundColor: Colors.white,
             ),
           if (widget.subject == 'Send SMS')
             ReusableSlidableAction(
               onPressed: _messageAction,
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.blueGrey,
               icon: Icons.message_rounded,
+              foregroundColor: Colors.white,
             ),
           // Edit is always shown
           ReusableSlidableAction(
             onPressed: _mailAction,
             backgroundColor: const Color.fromARGB(255, 231, 225, 225),
             icon: Icons.edit,
-            foregroundColor: Colors.red,
+            foregroundColor: Colors.white,
           ),
         ],
       ),
@@ -510,6 +548,8 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
   void _phoneAction() {
     print("Call action triggered for ${widget.mobile}");
 
+// Set flag that we're making a phone call
+    _wasCallingPhone = true;
     // String mobile = item['mobile'] ?? '';
 
     if (widget.mobile.isNotEmpty) {
@@ -520,17 +560,19 @@ class _overdueeFollowupsItemState extends State<overdueeFollowupsItem> {
             mode: LaunchMode.externalNonBrowserApplication);
       } catch (e) {
         print('Error launching phone app: $e');
+        // Reset flag if there was an error
+        _wasCallingPhone = false;
         // Show error message to user
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not launch phone dialer')),
+            const SnackBar(content: Text('Could not launch phone dialer')),
           );
         }
       }
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No phone number available')),
+          const SnackBar(content: Text('No phone number available')),
         );
       }
     }
@@ -564,6 +606,7 @@ class ReusableSlidableAction extends StatelessWidget {
   final Color backgroundColor;
   final IconData icon;
   final Color? foregroundColor;
+  final double iconSize;
 
   const ReusableSlidableAction({
     Key? key,
@@ -571,16 +614,27 @@ class ReusableSlidableAction extends StatelessWidget {
     required this.backgroundColor,
     required this.icon,
     this.foregroundColor,
+    this.iconSize = 40.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SlidableAction(
+    // return SlidableAction(
+    //   onPressed: (context) => onPressed(),
+    //   backgroundColor: backgroundColor,
+    //   foregroundColor: foregroundColor ?? Colors.white,
+    //   icon: icon,
+    //   borderRadius: BorderRadius.circular(8),
+    // );
+    return CustomSlidableAction(
+      padding: EdgeInsets.zero,
       onPressed: (context) => onPressed(),
       backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor ?? Colors.white,
-      icon: icon,
-      borderRadius: BorderRadius.circular(8),
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: foregroundColor ?? Colors.white,
+      ),
     );
   }
 }

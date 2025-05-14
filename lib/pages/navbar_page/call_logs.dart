@@ -55,7 +55,7 @@ class _CallLogsState extends State<CallLogs> {
     print('Formated data from my side : ${jsonEncode(formattedLogs)}');
 
     // API endpoint URL - replace with your actual API endpoint
-    final apiUrl = 'https://api.smartassistapp.in/api/leads/create-call-logs';
+    final apiUrl = 'https://dev.smartassistapp.in/api/leads/create-call-logs';
 
     try {
       final response = await http.post(

@@ -159,7 +159,7 @@ class _LicenseVarificationState extends State<LicenseVarification> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? spId = prefs.getString('user_id');
       final url = Uri.parse(
-          'https://api.smartassistapp.in/api/events/update/${widget.eventId}');
+          'https://dev.smartassistapp.in/api/events/update/${widget.eventId}');
       final token = await Storage.getToken();
 
       // Update the skip reason
@@ -825,7 +825,7 @@ class InvertedRectangleClipper extends CustomClipper<Path> {
 //       SharedPreferences prefs = await SharedPreferences.getInstance();
 //       String? spId = prefs.getString('user_id');
 //       final url = Uri.parse(
-//           'https://api.smartassistapp.in/api/events/update/${widget.eventId}');
+//           'https://dev.smartassistapp.in/api/events/update/${widget.eventId}');
 //       final token = await Storage.getToken();
 
 //       // Update the skip reason

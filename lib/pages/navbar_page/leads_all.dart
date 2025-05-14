@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:smart_assist/utils/snackbar_helper.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/home_btn.dart/edit_dashboardpopup.dart/lead_update.dart';
 
 class AllLeads extends StatefulWidget {
   const AllLeads({super.key});
@@ -77,7 +79,7 @@ class _AllLeadsState extends State<AllLeads> {
 
       final response = await http.put(
         Uri.parse(
-          'https://api.smartassistapp.in/api/favourites/mark-fav/lead/$leadId',
+          'https://dev.smartassistapp.in/api/favourites/mark-fav/lead/$leadId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -119,7 +121,7 @@ class _AllLeadsState extends State<AllLeads> {
     final token = await Storage.getToken();
     try {
       final response = await http.get(
-        Uri.parse('https://api.smartassistapp.in/api/leads/fetch/all'),
+        Uri.parse('https://dev.smartassistapp.in/api/leads/fetch/all'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -159,7 +161,7 @@ class _AllLeadsState extends State<AllLeads> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -483,6 +485,9 @@ class _AllLeadsState extends State<AllLeads> {
                 upcomingTasks[index]['favourite'] = newStatus;
               });
             },
+            onToggleFavorite: () {
+              _toggleFavorite(leadId, index);
+            },
           ),
         );
       },
@@ -502,7 +507,7 @@ class TaskItem extends StatefulWidget {
   final VoidCallback fetchDashboardData;
   final VoidCallback onFavoriteToggled;
   final Function(bool) onFavoriteChanged;
-
+  final VoidCallback onToggleFavorite;
   const TaskItem({
     super.key,
     required this.name,
@@ -517,6 +522,7 @@ class TaskItem extends StatefulWidget {
     required this.swipeOffset,
     required this.fetchDashboardData,
     required this.onFavoriteChanged,
+    required this.onToggleFavorite,
   });
 
   @override
@@ -551,169 +557,220 @@ class _TaskItemState extends State<TaskItem> {
     bool isCallSwipe = widget.swipeOffset < -50;
 
     // Gradient background for swipe
-    LinearGradient _buildSwipeGradient() {
-      if (isFavoriteSwipe) {
-        return const LinearGradient(
-          colors: [
-            Color.fromRGBO(239, 206, 29, 0.67),
-            Color.fromRGBO(239, 206, 29, 0.67)
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+    // LinearGradient _buildSwipeGradient() {
+    //   if (isFavoriteSwipe) {
+    //     return const LinearGradient(
+    //       colors: [
+    //         Color.fromRGBO(239, 206, 29, 0.67),
+    //         Color.fromRGBO(239, 206, 29, 0.67)
+    //       ],
+    //       begin: Alignment.centerLeft,
+    //       end: Alignment.centerRight,
+    //     );
+    //   } else if (isCallSwipe) {
+    //     return LinearGradient(
+    //       colors: [
+    //         Colors.green.withOpacity(0.2),
+    //         Colors.green.withOpacity(0.8)
+    //       ],
+    //       begin: Alignment.centerRight,
+    //       end: Alignment.centerLeft,
+    //     );
+    //   }
+    //   return const LinearGradient(
+    //     colors: [AppColors.containerBg, AppColors.containerBg],
+    //     begin: Alignment.centerLeft,
+    //     end: Alignment.centerRight,
+    //   );
+    // }
+
+    return Slidable(
+      key: ValueKey(widget.leadId),
+      startActionPane: ActionPane(
+        extentRatio: 0.2,
+        motion: const ScrollMotion(),
+        children: [
+          ReusableSlidableAction(
+            onPressed: widget.onToggleFavorite, // handle fav toggle
+            backgroundColor: Colors.amber,
+            icon: widget.isFavorite
+                ? Icons.star_rounded
+                : Icons.star_border_rounded,
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ),
+      endActionPane: ActionPane(
+        motion: const StretchMotion(),
+        extentRatio: 0.2,
+        children: [
+          // Edit is always shown
+          ReusableSlidableAction(
+            onPressed: _mailAction,
+            backgroundColor: const Color.fromARGB(255, 231, 225, 225),
+            icon: Icons.edit,
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Favorite Swipe Overlay
+          if (isFavoriteSwipe)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.yellow.withOpacity(0.2),
+                      Colors.yellow.withOpacity(0.8)
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 15),
+                      Icon(
+                          isFav
+                              ? Icons.star_outline_rounded
+                              : Icons.star_rounded,
+                          color: const Color.fromRGBO(226, 195, 34, 1),
+                          size: 40),
+                      const SizedBox(width: 10),
+                      Text(isFav ? 'Unfavorite' : 'Favorite',
+                          style: GoogleFonts.poppins(
+                              color: const Color.fromRGBO(187, 158, 0, 1),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Call Swipe Overlay
+          if (isCallSwipe)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.green.withOpacity(0.2),
+                      Colors.green.withOpacity(0.8)
+                    ],
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      const Icon(Icons.phone_in_talk,
+                          color: Colors.white, size: 30),
+                      const SizedBox(width: 10),
+                      Text('Call',
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 5),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Main Container
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundLightGrey,
+              // gradient: _buildSwipeGradient(),
+              borderRadius: BorderRadius.circular(7),
+              border: Border(
+                left: BorderSide(
+                  width: 8.0,
+                  color: isFav
+                      ? (isCallSwipe
+                          ? Colors.green
+                              .withOpacity(0.9) // Green when swiping for a call
+                          : Colors.yellow.withOpacity(isFavoriteSwipe
+                              ? 0.1
+                              : 0.9)) // Keep yellow when favorite
+                      : (isFavoriteSwipe
+                          ? Colors.yellow.withOpacity(0.1)
+                          : (isCallSwipe
+                              ? Colors.green.withOpacity(0.1)
+                              : AppColors.sideGreen)),
+                ),
+              ),
+            ),
+            child: Opacity(
+              opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              _buildUserDetails(context),
+                              _buildVerticalDivider(15),
+                              _buildCarModel(context),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _buildSubjectDetails(context),
+                              // _date(context),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  _buildNavigationButton(context),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mailAction() {
+    print("Mail action triggered");
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 10),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: LeadUpdate(onFormSubmit: () {}, leadId: widget.leadId),
         );
-      } else if (isCallSwipe) {
-        return LinearGradient(
-          colors: [
-            Colors.green.withOpacity(0.2),
-            Colors.green.withOpacity(0.8)
-          ],
-          begin: Alignment.centerRight,
-          end: Alignment.centerLeft,
-        );
-      }
-      return const LinearGradient(
-        colors: [AppColors.containerBg, AppColors.containerBg],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      );
-    }
-
-    return Stack(
-      children: [
-        // Favorite Swipe Overlay
-        if (isFavoriteSwipe)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.yellow.withOpacity(0.2),
-                    Colors.yellow.withOpacity(0.8)
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const SizedBox(width: 15),
-                    Icon(
-                        isFav ? Icons.star_outline_rounded : Icons.star_rounded,
-                        color: const Color.fromRGBO(226, 195, 34, 1),
-                        size: 40),
-                    const SizedBox(width: 10),
-                    Text(isFav ? 'Unfavorite' : 'Favorite',
-                        style: GoogleFonts.poppins(
-                            color: const Color.fromRGBO(187, 158, 0, 1),
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-        // Call Swipe Overlay
-        if (isCallSwipe)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.withOpacity(0.2),
-                    Colors.green.withOpacity(0.8)
-                  ],
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Icon(Icons.phone_in_talk,
-                        color: Colors.white, size: 30),
-                    const SizedBox(width: 10),
-                    Text('Call',
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 5),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-        // Main Container
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-          decoration: BoxDecoration(
-            gradient: _buildSwipeGradient(),
-            borderRadius: BorderRadius.circular(7),
-            border: Border(
-              left: BorderSide(
-                width: 8.0,
-                color: isFav
-                    ? (isCallSwipe
-                        ? Colors.green
-                            .withOpacity(0.9) // Green when swiping for a call
-                        : Colors.yellow.withOpacity(isFavoriteSwipe
-                            ? 0.1
-                            : 0.9)) // Keep yellow when favorite
-                    : (isFavoriteSwipe
-                        ? Colors.yellow.withOpacity(0.1)
-                        : (isCallSwipe
-                            ? Colors.green.withOpacity(0.1)
-                            : AppColors.sideGreen)),
-              ),
-            ),
-          ),
-          child: Opacity(
-            opacity: (isFavoriteSwipe || isCallSwipe) ? 0 : 1.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildUserDetails(context),
-                            _buildVerticalDivider(15),
-                            _buildCarModel(context),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            _buildSubjectDetails(context),
-                            // _date(context),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                _buildNavigationButton(context),
-              ],
-            ),
-          ),
-        ),
-      ],
+      },
     );
   }
 
@@ -870,6 +927,38 @@ class FlexibleButton extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ReusableSlidableAction extends StatelessWidget {
+  final VoidCallback onPressed;
+  final Color backgroundColor;
+  final IconData icon;
+  final Color? foregroundColor;
+  final double iconSize;
+
+  const ReusableSlidableAction({
+    Key? key,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.icon,
+    this.foregroundColor,
+    this.iconSize = 40.0,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomSlidableAction(
+      borderRadius: BorderRadius.circular(10),
+      onPressed: (context) => onPressed(),
+      backgroundColor: backgroundColor,
+      padding: EdgeInsets.zero,
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: foregroundColor ?? Colors.white,
       ),
     );
   }

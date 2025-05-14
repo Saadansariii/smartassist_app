@@ -40,7 +40,7 @@ class _AllAppointmentState extends State<AllAppointment> {
     try {
       final token = await Storage.getToken();
       const String apiUrl =
-          "https://api.smartassistapp.in/api/events/all-events";
+          "https://dev.smartassistapp.in/api/events/all-events";
 
       final response = await http.get(
         Uri.parse(apiUrl),

@@ -171,7 +171,7 @@ class _MyteamState extends State<Myteam> {
       }
 
       Uri url = Uri.parse(
-          'https://api.smartassistapp.in/api/users/sm/dashboard/team-comparison$periodParam');
+          'https://dev.smartassistapp.in/api/users/sm/dashboard/team-comparison$periodParam');
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $token',
@@ -207,7 +207,7 @@ class _MyteamState extends State<Myteam> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/users/sm/dashboard/all-performance'),
+            'https://dev.smartassistapp.in/api/users/sm/dashboard/all-performance'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -246,7 +246,7 @@ class _MyteamState extends State<Myteam> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance'),
+            'https://dev.smartassistapp.in/api/users/sm/dashboard/individual-performance'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ class _MyteamState extends State<Myteam> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/users/sm/dashboard/individual-performance?user_id=$userId'),
+            'https://dev.smartassistapp.in/api/users/sm/dashboard/individual-performance?user_id=$userId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -1673,7 +1673,6 @@ class _MyteamState extends State<Myteam> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                 
                   children: [
                     for (int i = 0; i < teamProfiles.length; i++)
                       _buildProfileAvatar(

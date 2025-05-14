@@ -35,7 +35,7 @@ class _LicencePreviewState extends State<LicencePreview> {
 
     final token = await Storage.getToken();
     final uri = Uri.parse(
-        'https://api.smartassistapp.in/api/events/${widget.eventId}/upload-license');
+        'https://dev.smartassistapp.in/api/events/${widget.eventId}/upload-license');
 
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
@@ -202,7 +202,7 @@ class _LicencePreviewState extends State<LicencePreview> {
 
 //     final token = await Storage.getToken();
 //     final uri = Uri.parse(
-//         'https://api.smartassistapp.in/api/events/${widget.eventId}/upload-license');
+//         'https://dev.smartassistapp.in/api/events/${widget.eventId}/upload-license');
 
 //     final request = http.MultipartRequest('POST', uri)
 //       ..headers['Authorization'] = 'Bearer $token'
@@ -248,7 +248,7 @@ class _LicencePreviewState extends State<LicencePreview> {
 //   //   final token = await Storage.getToken();
 
 //   //   final uri =
-//   //       Uri.parse('https://api.smartassistapp.in/api/events/upload-license');
+//   //       Uri.parse('https://dev.smartassistapp.in/api/events/upload-license');
 
 //   //   final request = http.MultipartRequest('POST', uri)
 //   //     ..headers['Authorization'] = 'Bearer $token'

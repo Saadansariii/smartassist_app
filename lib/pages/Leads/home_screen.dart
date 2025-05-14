@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
@@ -193,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -388,218 +390,126 @@ class _HomeScreenState extends State<HomeScreen> {
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         child: Column(
                           children: [
-                            const SizedBox(height: 5),
+                            // const SizedBox(height: 5),
 
                             /// ✅ Row with Menu, Search Bar, and Microphone
                             Row(
                               children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 0, horizontal: 0),
-                                  margin: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                      // shape: BoxShape.circle,
-                                      color: AppColors.backgroundLightGrey,
-                                      borderRadius: BorderRadius.circular(30)),
-                                  child: TextButton(
-                                    style: const ButtonStyle(
-                                      minimumSize:
-                                          WidgetStatePropertyAll(Size.zero),
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      padding: WidgetStatePropertyAll(
-                                          EdgeInsets.zero),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const ProfileScreen()));
-                                    },
-                                    child: Text(
-                                      name.isNotEmpty ? name : 'NA',
-                                      style:
-                                          AppFont.mediumText14bluebold(context),
-                                    ),
-                                  ),
-                                  // child: IconButton(
-                                  //     style: ButtonStyle(),
-                                  //     onPressed: () {
-                                  //       Navigator.push(
-                                  //           context,
-                                  //           MaterialPageRoute(
-                                  //               builder: (context) =>
-                                  //                   ProfileScreen()));
-                                  //     },
-                                  //     icon: const Icon(
-                                  //       Icons.person,
-                                  //     )),
-                                ),
-                                // Then in your bottom sheet code:
-                                // IconButton(
-                                //   icon: const Icon(Icons.menu,
-                                //       color: AppColors.fontColor),
-                                //   onPressed: () async {
-                                //     // Get the team role before showing the sheet
-                                //     String? teamRole =
-                                //         await SharedPreferences.getInstance()
-                                //             .then((prefs) =>
-                                //                 prefs.getString('USER_ROLE'));
-
-                                //     Get.bottomSheet(
-                                //       Container(
-                                //         padding: const EdgeInsets.all(16),
-                                //         // Adjust height based on whether "My Team" is shown
-                                //         height: teamRole == "Owner" ? 440 : 370,
-                                //         decoration: const BoxDecoration(
-                                //           color: Colors.white,
-                                //           borderRadius: BorderRadius.vertical(
-                                //               top: Radius.circular(30)),
-                                //         ),
-                                //         child: Column(
-                                //           children: [
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.people_alt_outlined,
-                                //                   size: 28),
-                                //               title: Text('Enquiries',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(
-                                //                   () => const AllLeads()),
-                                //             ),
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.call_outlined,
-                                //                   size: 28),
-                                //               title: Text('Call logs',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(
-                                //                   () => const CallLogs()),
-                                //             ),
-                                //             if (teamRole == "Owner")
-                                //               ListTile(
-                                //                 leading: const Icon(Icons.group,
-                                //                     size: 28),
-                                //                 title: Text('My Team ',
-                                //                     style: GoogleFonts.poppins(
-                                //                         fontSize: 18)),
-                                //                 onTap: () => Get.to(
-                                //                     () => const MyTeams()),
-                                //               ),
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.star_border_rounded,
-                                //                   size: 28),
-                                //               title: Text('Favourite',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(() =>
-                                //                   const FavoritePage(
-                                //                       leadId: '')),
-                                //             ),
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.person_outline,
-                                //                   size: 28),
-                                //               title: Text('Profile',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(
-                                //                   () => const ProfileScreen()),
-                                //             ),
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.settings_outlined,
-                                //                   size: 28),
-                                //               title: Text('App Settings',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(
-                                //                   () => const AppSetting()),
-                                //             ),
-                                //             ListTile(
-                                //               leading: const Icon(
-                                //                   Icons.logout_outlined,
-                                //                   size: 28),
-                                //               title: Text('Logout',
-                                //                   style: GoogleFonts.poppins(
-                                //                       fontSize: 18)),
-                                //               onTap: () => Get.to(
-                                //                   () => const LogoutPage()),
-                                //             ),
-                                //           ],
-                                //         ),
-                                //       ),
-                                //     );
-                                //   },
+                                // Container(
+                                //   width: 40,
+                                //   height: 40,
+                                //   padding: const EdgeInsets.symmetric(
+                                //       vertical: 0, horizontal: 0),
+                                //   margin: const EdgeInsets.all(8),
+                                //   decoration: BoxDecoration(
+                                //       // shape: BoxShape.circle,
+                                //       color: AppColors.backgroundLightGrey,
+                                //       borderRadius: BorderRadius.circular(30)),
+                                //   child: TextButton(
+                                //     style: const ButtonStyle(
+                                //       minimumSize:
+                                //           WidgetStatePropertyAll(Size.zero),
+                                //       tapTargetSize:
+                                //           MaterialTapTargetSize.shrinkWrap,
+                                //       padding: WidgetStatePropertyAll(
+                                //           EdgeInsets.zero),
+                                //     ),
+                                //     onPressed: () {
+                                //       Navigator.push(
+                                //           context,
+                                //           MaterialPageRoute(
+                                //               builder: (context) =>
+                                //                   const ProfileScreen()));
+                                //     },
+                                //     child: Text(
+                                //       name.isNotEmpty ? name : 'NA',
+                                //       style:
+                                //           AppFont.mediumText14bluebold(context),
+                                //     ),
+                                //   ),
                                 // ),
 
                                 Expanded(
-                                  child: SizedBox(
-                                    height: 35,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        Get.to(() => const GlobalSearch());
-                                      },
-                                      child: AbsorbPointer(
-                                        child: TextField(
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          decoration: InputDecoration(
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                borderSide: BorderSide.none,
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 10),
+                                    child: SizedBox(
+                                      height: 35,
+                                      child: TextField(
+                                        readOnly: true,
+                                        onTap: () {
+                                          Get.to(() => const GlobalSearch());
+                                        },
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        decoration: InputDecoration(
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          contentPadding: EdgeInsets.zero,
+                                          filled: true,
+                                          fillColor: AppColors.containerBg,
+                                          hintText: 'Search',
+                                          hintStyle: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: AppColors.fontColor,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                          prefixIcon: const Icon(
+                                            FontAwesomeIcons.magnifyingGlass,
+                                            color: AppColors.iconGrey,
+                                            size: 15,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          suffixIcon: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 2),
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ProfileScreen(),
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors
+                                                      .backgroundLightGrey,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  name.isNotEmpty
+                                                      ? name.toUpperCase()
+                                                      : 'N',
+                                                  style: AppFont
+                                                      .mediumText14bluebold(
+                                                          context),
+                                                ),
                                               ),
-                                              contentPadding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      0, 0, 0, 0),
-                                              filled: true,
-                                              fillColor: AppColors.containerBg,
-                                              hintText: 'Search',
-                                              hintStyle: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                color: AppColors.fontColor,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                              prefixIcon: const Icon(
-                                                FontAwesomeIcons
-                                                    .magnifyingGlass,
-                                                color: AppColors.iconGrey,
-                                                size: 15,
-                                              ),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                borderSide: BorderSide.none,
-                                              ),
-                                              suffixIcon: const Icon(
-                                                  FontAwesomeIcons.microphone,
-                                                  size: 18,
-                                                  color: AppColors.iconGrey)),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                // IconButton(
-                                //   icon: const Icon(FontAwesomeIcons.microphone,
-                                //       size: 18, color: AppColors.fontColor),
-                                //   onPressed: () {},
-                                // ),
                               ],
                             ),
 
                             /// ✅ Other UI Components (Follow-ups, Buttons, etc.)
-                            const SizedBox(height: 3),
+                            // const SizedBox(height: 3),
                             Threebtn(
                               leadId: leadId ?? 'empty',
                               upcomingFollowups: upcomingFollowups,

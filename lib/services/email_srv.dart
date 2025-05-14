@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 // class EmailService {
 //   static Future<bool> verifyEmail(Map body) async {
-//     const url = 'https://api.smartassistapp.in/api/login/verify-email';
+//     const url = 'https://dev.smartassistapp.in/api/login/verify-email';
 //     final uri = Uri.parse(url);
 //     final response = await http.post(
 //       uri,
@@ -18,7 +18,7 @@ import 'package:http/http.dart' as http;
  
 // class EmailService {
   // static Future<Map<String, dynamic>> verifyEmail(Map body) async {
-  //   const url = 'https://api.smartassistapp.in/api/login/verify-email';
+  //   const url = 'https://dev.smartassistapp.in/api/login/verify-email';
   //   final uri = Uri.parse(url);
 
   //   try {

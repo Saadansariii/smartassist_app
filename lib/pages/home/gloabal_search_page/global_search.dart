@@ -46,7 +46,7 @@
 //     try {
 //       final response = await http.get(
 //         Uri.parse(
-//             'https://api.smartassistapp.in/api/search/global?query=$query'),
+//             'https://dev.smartassistapp.in/api/search/global?query=$query'),
 //         headers: {
 //           'Authorization': 'Bearer $token',
 //           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
       final token = await Storage.getToken();
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -27,6 +28,8 @@ class _AppointmentPopupState extends State<AppointmentPopup> {
   int _currentStep = 0;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+
+  bool isSubmitting = false;
 
   bool _isLoadingSearch = false;
   String _query = '';
@@ -123,7 +126,7 @@ class _AppointmentPopupState extends State<AppointmentPopup> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -460,7 +463,7 @@ class _AppointmentPopupState extends State<AppointmentPopup> {
                       backgroundColor: AppColors.colorsBlueButton,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5))),
-                  onPressed: submitForm,
+                  onPressed: _submitForms,
                   child: Text("Create", style: AppFont.buttons(context)),
                 ),
               ),
@@ -877,6 +880,26 @@ class _AppointmentPopupState extends State<AppointmentPopup> {
     );
   }
 
+  Future<void> _submitForms() async {
+    if (isSubmitting) return;
+
+    setState(() => isSubmitting = true);
+
+    try {
+      await submitForm(); // Your actual API call
+      // Optionally show a success snackbar or navigate
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Submission failed: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
+  }
+
   Future<void> submitForm() async {
     final prefs = await SharedPreferences.getInstance();
     final spId = prefs.getString('user_id');
@@ -917,7 +940,7 @@ class _AppointmentPopupState extends State<AppointmentPopup> {
         'priority': selectedPriority,
         'subject': _selectedSubject,
         'sp_id': spId,
-        'comments': descriptionController.text,
+        'remarks': descriptionController.text,
       };
 
       final success = await LeadsSrv.submitAppoinment(appointmentData, leadId);

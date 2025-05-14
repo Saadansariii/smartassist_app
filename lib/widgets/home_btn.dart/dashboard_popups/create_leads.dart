@@ -5,17 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
+import 'package:smart_assist/config/getX/fab.controller.dart';
 import 'package:smart_assist/pages/Leads/single_details_pages/singleLead_followup.dart';
 import 'package:smart_assist/pages/Leads/single_id_screens/single_leads.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_assist/services/leads_srv.dart';
 import 'package:smart_assist/utils/storage.dart';
+import 'package:smart_assist/widgets/google_location.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:google_places_flutter/model/prediction.dart';
 
 class CreateLeads extends StatefulWidget {
   final Function onFormSubmit;
@@ -65,6 +69,13 @@ class _CreateLeadsState extends State<CreateLeads> {
   late RangeValues _rangeAmount;
   List<dynamic> vehicleName = [];
   String selectedSubType = 'Retail';
+  String? _locationErrorText;
+
+  // Your Google Maps API key
+  final String _googleApiKey =
+      "AIzaSyA_SWIvFPfChqL33bKtLyZ5YOFSXrsk1Qs"; // Replace with your actual API key
+
+  final TextEditingController _locationController = TextEditingController();
 
   TextEditingController startDateController = TextEditingController();
   TextEditingController endDateController = TextEditingController();
@@ -72,7 +83,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController mobileController = TextEditingController();
-  TextEditingController pinController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
   TextEditingController modelInterestController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   bool consentValue = false;
@@ -93,6 +104,7 @@ class _CreateLeadsState extends State<CreateLeads> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -153,121 +165,6 @@ class _CreateLeadsState extends State<CreateLeads> {
     );
   }
 
-  // Modified _buildSearchField with speech recognition
-  // Widget _buildSearchField() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(height: 10),
-  //       Text('Primary Model Interest', style: AppFont.dropDowmLabel(context)),
-  //       const SizedBox(height: 5),
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * 0.055,
-  //         width: double.infinity,
-  //         decoration: BoxDecoration(
-  //           borderRadius: BorderRadius.circular(5),
-  //           color: AppColors.containerBg,
-  //         ),
-  //         child: Row(
-  //           children: [
-  //             Expanded(
-  //               child: TextField(
-  //                 controller: _searchController,
-  //                 decoration: InputDecoration(
-  //                   filled: true,
-  //                   fillColor: AppColors.containerBg,
-  //                   hintText: selectedVehicleName ?? 'Vehicle Name',
-  //                   hintStyle: TextStyle(
-  //                     color: selectedVehicleName != null
-  //                         ? Colors.black
-  //                         : Colors.grey,
-  //                   ),
-  //                   prefixIcon: const Icon(
-  //                     FontAwesomeIcons.magnifyingGlass,
-  //                     size: 15,
-  //                     color: AppColors.iconGrey,
-  //                   ),
-  //                   suffixIcon: IconButton(
-  //                     icon: Icon(
-  //                       _isListening
-  //                           ? FontAwesomeIcons.stop
-  //                           : FontAwesomeIcons.microphone,
-  //                       color: _isListening ? Colors.red : AppColors.iconGrey,
-  //                       size: 15,
-  //                     ),
-  //                     onPressed: _toggleListening,
-  //                   ),
-  //                   contentPadding:
-  //                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-  //                   border: OutlineInputBorder(
-  //                     borderRadius: BorderRadius.circular(5),
-  //                     borderSide: BorderSide.none,
-  //                   ),
-  //                 ),
-  //                 style: GoogleFonts.poppins(
-  //                   fontSize: 14,
-  //                   fontWeight: FontWeight.w500,
-  //                   color: Colors.black,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-
-  //       // Show loading indicator
-  //       if (_isLoadingSearch)
-  //         const Padding(
-  //           padding: EdgeInsets.only(top: 8.0),
-  //           child: Center(child: CircularProgressIndicator()),
-  //         ),
-
-  //       // Show search results
-  //       if (_searchResults.isNotEmpty)
-  //         Container(
-  //           margin: const EdgeInsets.only(top: 8),
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(5),
-  //             boxShadow: const [
-  //               BoxShadow(color: Colors.black12, blurRadius: 4)
-  //             ],
-  //           ),
-  //           child: ListView.builder(
-  //             shrinkWrap: true,
-  //             physics: const NeverScrollableScrollPhysics(),
-  //             itemCount: _searchResults.length,
-  //             itemBuilder: (context, index) {
-  //               final result = _searchResults[index];
-  //               return ListTile(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     FocusScope.of(context).unfocus();
-  //                     // selectedLeads = result['lead_id'];
-  //                     selectedVehicleName = result['vehicle_name'];
-  //                     _searchController.clear();
-  //                     _searchResults.clear();
-  //                   });
-  //                   // ✅ Call the color-fetching function here!
-  //                   fetchVehicleColors(result['vehicle_name']);
-  //                 },
-  //                 title: Text(
-  //                   result['vehicle_name'] ?? 'No Name',
-  //                   style: TextStyle(
-  //                     color: selectedVehicleName == result['vehicle_name']
-  //                         ? Colors.black
-  //                         : AppColors.fontBlack,
-  //                   ),
-  //                 ),
-  //                 leading: const Icon(Icons.directions_car),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
-
   Future<void> fetchVehicleData(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -286,7 +183,7 @@ class _CreateLeadsState extends State<CreateLeads> {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://api.smartassistapp.in/api/search/vehicles?vehicle=${Uri.encodeComponent(query)}',
+          'https://dev.smartassistapp.in/api/search/vehicles?vehicle=${Uri.encodeComponent(query)}',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -340,7 +237,7 @@ class _CreateLeadsState extends State<CreateLeads> {
     final encodedName = Uri.encodeComponent(vehicleName);
 
     final url =
-        'https://api.smartassistapp.in/api/users/vehicles/all?vehicle_name=$encodedName';
+        'https://dev.smartassistapp.in/api/users/vehicles/all?vehicle_name=$encodedName';
 
     try {
       final response = await http.get(
@@ -399,7 +296,7 @@ class _CreateLeadsState extends State<CreateLeads> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/leads/existing-check?mobile=$encodedMobile'),
+            'https://dev.smartassistapp.in/api/leads/existing-check?mobile=$encodedMobile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -643,6 +540,18 @@ class _CreateLeadsState extends State<CreateLeads> {
     }
   }
 
+  void _validateLocation() {
+    if (_locationController.text.trim().isEmpty) {
+      setState(() {
+        _locationErrorText = 'Location is required';
+      });
+    } else {
+      setState(() {
+        _locationErrorText = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 1;
@@ -872,35 +781,6 @@ class _CreateLeadsState extends State<CreateLeads> {
                         ],
                       ),
 
-                      //////////////////////////////////////////////////////////////
-                      _buildTextField(
-                          label: 'Email',
-                          controller: emailController,
-                          hintText: 'Email',
-                          errorText: _errors['email'],
-                          onChanged: (value) {
-                            if (_errors.containsKey('email')) {
-                              setState(() {
-                                _errors.remove('email');
-                              });
-                            }
-                            print("email : $value");
-                          }),
-                      // _buildNumberWidget(
-                      //   label: 'Mobile No',
-                      //   controller: mobileController,
-                      //   errorText: _errors['mobile'],
-                      //   hintText: '+91',
-                      //   onChanged: (value) {
-                      //     if (_errors.containsKey('mobile')) {
-                      //       setState(() {
-                      //         _errors.remove('mobile');
-                      //       });
-                      //     }
-                      //     print("mobile : $value");
-                      //   },
-                      // ),
-
                       _buildNumberWidget(
                         label: 'Mobile No',
                         controller: mobileController,
@@ -915,6 +795,21 @@ class _CreateLeadsState extends State<CreateLeads> {
                           print("mobile: $value");
                         },
                       ),
+                      //////////////////////////////////////////////////////////////
+                      _buildTextField(
+                          label: 'Email',
+                          controller: emailController,
+                          hintText: 'Email',
+                          errorText: _errors['email'],
+                          onChanged: (value) {
+                            if (_errors.containsKey('email')) {
+                              setState(() {
+                                _errors.remove('email');
+                              });
+                            }
+                            print("email : $value");
+                          }),
+
                       const SizedBox(
                         height: 5,
                       ),
@@ -1024,19 +919,42 @@ class _CreateLeadsState extends State<CreateLeads> {
                             });
                           }),
                       // const SizedBox(height: 5),
-                      // _buildNumberWidget(
-                      //     label: 'Pin Code',
-                      //     controller: pinController,
-                      //     // errorText: _errors['PIN Code'],
-                      //     hintText: '11220',
-                      //     onChanged: (value) {
-                      //       if (_errors.containsKey('pin')) {
-                      //         setState(() {
-                      //           // _errors.remove('pin');
-                      //         });
+                      // buildGoogleLocationField(
+                      //   context: context,
+                      //   controller: _locationController,
+                      //   hintText: "Enter location",
+                      //   label: "Location",
+                      //   googleApiKey:
+                      //       _googleApiKey, // Replace with your actual API key
+                      //   isRequired: true,
+                      //   errorText: _locationErrorText,
+                      //   onChanged: (value) {
+                      //     setState(() {
+                      //       // Clear error if user is typing
+                      //       if (_locationErrorText != null &&
+                      //           value.isNotEmpty) {
+                      //         _locationErrorText = null;
                       //       }
-                      //       print("pin : $value");
-                      //     }),
+                      //     });
+                      //   },
+                      // ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      CustomGooglePlacesField(
+                        controller: _locationController,
+                        hintText: 'Enter location',
+                        label: 'Location',
+                        onChanged: (value) {
+                          if (_locationErrorText != null) {
+                            _validateLocation();
+                          }
+                        },
+                        googleApiKey:
+                            _googleApiKey, // Replace with your actual API key
+                        isRequired: true,
+                        // errorText: _locationError,
+                      ),
                       // Align(
                       //   alignment: Alignment.centerLeft,
                       //   child: Padding(
@@ -2155,7 +2073,6 @@ class _CreateLeadsState extends State<CreateLeads> {
         'fname': firstNameController.text,
         'lname': lastNameController.text,
         'email': emailController.text,
-        // 'mobile': mobileController.text,
         'mobile': mobileNumber,
         'purchase_type': _selectedPurchaseType,
         'brand': _selectedBrand,
@@ -2170,7 +2087,7 @@ class _CreateLeadsState extends State<CreateLeads> {
         'lead_source': _selectedType,
         'consent': consentValue,
         'budget': highestBudgetValue,
-        // 'pincode': pinController.text,
+        'location': _locationController.text,
         'interior_color': selectedInteriorColor,
         'exterior_color': selectedExteriorColor
       };
@@ -2188,6 +2105,9 @@ class _CreateLeadsState extends State<CreateLeads> {
           String leadId = response['data']['lead_id'];
 
           if (context.mounted) {
+            // Disable the FAB
+            Get.find<FabController>().temporarilyDisableFab();
+
             Navigator.pop(context);
             Navigator.push(
               context,

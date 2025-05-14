@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,6 +37,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   TextEditingController modelInterestController = TextEditingController();
+  final TextEditingController statusController = TextEditingController();
 
   List<dynamic> _searchResults = [];
   bool _isLoadingSearch = false;
@@ -132,7 +134,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://api.smartassistapp.in/api/search/global?query=$query'),
+            'https://dev.smartassistapp.in/api/search/global?query=$query'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -162,7 +164,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://api.smartassistapp.in/api/tasks/${widget.taskId}'),
+        Uri.parse('https://dev.smartassistapp.in/api/tasks/${widget.taskId}'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -170,16 +172,14 @@ class _FollowupsEditState extends State<FollowupsEdit> {
       );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        // final rawStartDate =
-        //     DateFormat('dd MMM yyyy').parse(startDateController.text);
-
-        // var formattedStartDate = DateFormat('dd/MM/yyyy').format(rawStartDate);
-
-        // ✅ Extract comment from API and assign to the controller
         final String comment = data['data']['comments'] ?? '';
-        // final String date = data['data']['due_date'] ?? '';
+        final String status = data['data']['status'] ?? '';
         descriptionController.text = comment;
-        // formattedStartDate = date;
+        // statusController.text = status;
+        // Set dropdown selected value if it matches one of the items
+        if (items.contains(status)) {
+          selectedValue = status;
+        }
       }
     } catch (e) {
       showErrorMessage(context, message: 'Something went wrong..!');
@@ -255,6 +255,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
 
     final newTaskForLead = {
       'comments': descriptionController.text,
+      'status': selectedValue,
       'sp_id': spId,
     };
 
@@ -264,7 +265,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
     try {
       final response = await http.put(
         Uri.parse(
-            'https://api.smartassistapp.in/api/tasks/${widget.taskId}/update'),
+            'https://dev.smartassistapp.in/api/tasks/${widget.taskId}/update'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -297,28 +298,28 @@ class _FollowupsEditState extends State<FollowupsEdit> {
   }
 
   Widget _buildTextField({
-    required String label,
+    // required String label,
     required TextEditingController controller,
     required String hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.fontBlack,
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 5.0),
+        //   child: Text(
+        //     label,
+        //     style: GoogleFonts.poppins(
+        //       fontSize: 14,
+        //       fontWeight: FontWeight.w500,
+        //       color: AppColors.fontBlack,
+        //     ),
+        //   ),
+        // ),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(10),
             color: AppColors.containerBg,
           ),
           child: Row(
@@ -453,6 +454,51 @@ class _FollowupsEditState extends State<FollowupsEdit> {
     }
   }
 
+  final List<String> items = [
+    'Not Started',
+    'Completed',
+    'Deferred',
+  ];
+  String? selectedValue;
+
+  List<DropdownMenuItem<String>> _addDividersAfterItems(List<String> items) {
+    final List<DropdownMenuItem<String>> menuItems = [];
+    for (final String item in items) {
+      menuItems.addAll(
+        [
+          DropdownMenuItem<String>(
+            value: item,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(item, style: AppFont.dropDowmLabel(context)),
+            ),
+          ),
+          //If it's last item, we will not add Divider after it.
+          if (item != items.last)
+            const DropdownMenuItem<String>(
+              enabled: false,
+              child: Divider(),
+            ),
+        ],
+      );
+    }
+    return menuItems;
+  }
+
+  List<double> _getCustomItemsHeights() {
+    final List<double> itemsHeights = [];
+    for (int i = 0; i < (items.length * 2) - 1; i++) {
+      if (i.isEven) {
+        itemsHeights.add(40);
+      }
+      //Dividers indexes will be the odd indexes
+      if (i.isOdd) {
+        itemsHeights.add(4);
+      }
+    }
+    return itemsHeights;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -466,7 +512,7 @@ class _FollowupsEditState extends State<FollowupsEdit> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Plan a Followup',
+                Text('Update Follow-up',
                     style: AppFont.popupTitleBlack(context)),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -485,75 +531,109 @@ class _FollowupsEditState extends State<FollowupsEdit> {
             const SizedBox(
               height: 10,
             ),
-            // _buildSearchField(),
-            // const SizedBox(height: 10),
-            // _buildDatePicker(
-            //     label: 'Select date:',
-            //     controller: dateController,
-            //     // errorText: _errors['date'],
-            //     onTap: _pickDate),
-            // const SizedBox(height: 10),
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.start,
-            //   children: [
-            //     _selectedInput(
-            //       label: "Priority:",
-            //       options: ["High"],
-            //     ),
-            //   ],
-            // ),
-
-            // _buildButtons(
-            //   label: 'Action:',
-            //   // options: ['Call', 'Provide Quotation', 'Send Email'],
-            //   options: {
-            //     "Call": "Call",
-            //     // 'Provide quotation': "Provide Quotation",
-            //     // "Send Email": "Send Email",
-            //     "Send SMS": "Send SMS"
-            //   },
-            //   groupValue: _selectedSubject,
-            //   onChanged: (value) {
-            //     setState(() {
-            //       _selectedSubject = value;
-            //     });
-            //   },
-            // ),
-            // const SizedBox(
-            //   height: 15,
-            // ),
-            // Row(
-            //   children: [
-            //     Text(
-            //       'When?',
-            //       style: AppFont.dropDowmLabel(context),
-            //     ),
-            //     const SizedBox(
-            //       width: 10,
-            //     ),
-            //     Expanded(
-            //       child: _buildDatePicker(
-            //         controller: startDateController,
-            //         onTap: _pickStartDate,
-            //       ),
-            //     ),
-            //     const SizedBox(width: 10),
-            //     Expanded(
-            //       child: _buildDatePicker1(
-            //         controller: startTimeController,
-            //         onTap: _pickStartTime,
-            //       ),
-            //     ),
-            //   ],
-            // ),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 5,
+                      ),
+                      child: Text(
+                        'Status :',
+                        style: AppFont.dropDowmLabel(context),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                        color: AppColors.backgroundLightGrey,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton2<String>(
+                        style: const TextStyle(color: AppColors.fontColor),
+                        isExpanded: true,
+                        hint: Text(
+                          'Select Item',
+                          style: AppFont.dropDowmLabelLightcolors(context),
+                        ),
+                        items: _addDividersAfterItems(items),
+                        value: selectedValue,
+                        onChanged: (String? value) {
+                          setState(() {
+                            selectedValue = value;
+                          });
+                        },
+                        buttonStyleData: const ButtonStyleData(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          height: 40,
+                          width: double.infinity,
+                        ),
+                        dropdownStyleData: const DropdownStyleData(
+                          decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(2))),
+                          maxHeight: 200,
+                        ),
+                        menuItemStyleData: MenuItemStyleData(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          customHeights: _getCustomItemsHeights(),
+                        ),
+                        iconStyleData: const IconStyleData(
+                          openMenuIcon: Icon(Icons.arrow_drop_down),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(
               height: 10,
             ),
-            _buildTextField(
-                label: 'Comments:',
-                controller: descriptionController,
-                hint: 'Add Comments'),
-            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5.0),
+                    child: Text(
+                      'Remarks :',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.fontBlack,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Expanded(
+                  flex: 3,
+                  child: _buildTextField(
+                      // label: 'Remark :',
+                      controller: descriptionController,
+                      hint: 'Add Comments'),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 10,
+            ),
             Row(
               children: [
                 Expanded(

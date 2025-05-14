@@ -1,11 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
+import 'package:http_parser/http_parser.dart';
 import 'package:percent_indicator/percent_indicator.dart'; // For progress bars
 import 'package:get/get.dart';
 import 'package:smart_assist/config/component/color/colors.dart';
 import 'package:smart_assist/config/component/font/font.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:smart_assist/utils/storage.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -16,8 +20,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
+
   bool isLoading = true;
-  String? name, email, location, mobile, userRole;
+  String? name, email, location, mobile, userRole, profilePic;
   double rating = 0.0;
   double professionalism = 0.0;
   double efficiency = 0.0;
@@ -28,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> fetchProfileData() async {
     final token = await Storage.getToken();
     final response = await http.get(
-        Uri.parse('https://api.smartassistapp.in/api/users/show-profile'),
+        Uri.parse('https://dev.smartassistapp.in/api/users/show-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -41,12 +49,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         email = data['data']['email'];
         location = data['data']['dealer_location'];
         mobile = data['data']['phone'];
+        profilePic = data['data']['profile_pic'];
         userRole = data['data']['user_role'];
         rating = data['data']['rating'] != null
             ? data['data']['rating'].toDouble()
             : 0.0;
 
-        // Convert evaluation scores from 0-10 scale to 0.0-1.0 percentages
         final evaluation = data['data']['evaluation'];
         if (evaluation != null) {
           professionalism = evaluation['professionalism'] != null
@@ -71,6 +79,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
         isLoading = false;
       });
       print('Failed to fetch profile data');
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return;
+
+    File imageFile = File(pickedFile.path);
+
+    setState(() {
+      _profileImage = imageFile;
+      _isUploading = true;
+    });
+
+    final token = await Storage.getToken();
+    final uri =
+        Uri.parse('https://dev.smartassistapp.in/api/users/profile/set');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile(
+          'file', // ✅ Corrected key
+          imageFile.readAsBytes().asStream(),
+          imageFile.lengthSync(),
+          filename: path.basename(imageFile.path),
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final res = json.decode(response.body);
+        print("✅ Profile image uploaded successfully.");
+        print("Response: ${res}");
+
+        setState(() {
+          profilePic = res['data']; // ✅ Update profilePic from response
+          _profileImage = null; // Optional: clear File after successful upload
+        });
+
+        fetchProfileData();
+      } else {
+        print("❌ Upload failed: ${response.statusCode}");
+        print("Response: ${response.body}");
+      }
+    } catch (e) {
+      print("❌ Upload error: $e");
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
     }
   }
 
@@ -102,15 +167,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    const CircleAvatar(
-                      radius: 60,
-                      backgroundImage:
-                          NetworkImage('https://www.example.com/profile.jpg'),
-                      child: Icon(
-                        Icons.person,
-                        size: 80,
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundImage: _profileImage != null
+                                ? FileImage(_profileImage!)
+                                : (profilePic != null && profilePic!.isNotEmpty
+                                        ? NetworkImage(profilePic!)
+                                        : const Icon(Icons.person))
+                                    as ImageProvider,
+                          ), 
+                          if (_isUploading)
+                            const CircularProgressIndicator(), 
+                        ],
                       ),
                     ),
+
                     const SizedBox(height: 10),
                     Text(name ?? '', style: AppFont.popupTitleBlack(context)),
                     Text(userRole ?? 'User',
@@ -131,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }),
                     ),
                     const SizedBox(height: 10),
-                    Text('(45 reviews)', style: AppFont.mediumText14(context)),
+                    Text('(5 reviews)', style: AppFont.mediumText14(context)),
                     const SizedBox(height: 10),
                     // Profile details (Email, Location, Mobile)
                     Container(
