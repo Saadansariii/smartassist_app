@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:get/get_connect/http/src/request/request.dart';
+import 'package:flutter/material.dart'; 
 import 'package:http_parser/http_parser.dart';
 import 'package:percent_indicator/percent_indicator.dart'; // For progress bars
 import 'package:get/get.dart';
@@ -181,12 +180,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ? NetworkImage(profilePic!)
                                         : const Icon(Icons.person))
                                     as ImageProvider,
-                          ),
-                          // if (_profileImage == null)
-                          //   const Icon(Icons.camera_alt,
-                          //       size: 30, color: Colors.white70),
+                          ), 
                           if (_isUploading)
-                            const CircularProgressIndicator(), // Optional: show loader
+                            const CircularProgressIndicator(), 
                         ],
                       ),
                     ),

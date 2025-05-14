@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 alignment: Alignment.center,
                                                 child: Text(
                                                   name.isNotEmpty
-                                                      ? name[0].toUpperCase()
+                                                      ? name.toUpperCase()
                                                       : 'N',
                                                   style: AppFont
                                                       .mediumText14bluebold(

@@ -105,7 +105,7 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
   }
 
   // Get current data based on selected period
-  Map<String, dynamic> get currentDealershipRank {
+  Map<String, dynamic> get performanceCount {
     if (_dashboardData == null) {
       // Return empty data if API data isn't available yet
       return {};
@@ -125,14 +125,24 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     return _dashboardData!['allIndiaRank'] ?? {};
   }
 
+  Map<String, dynamic> get allIndiaBestPerformace {
+    if (_dashboardData == null) {
+      // Return empty data if API data isn't available yet
+      return {};
+    }
+
+    // Using allIndiaRank from API response - fixed key from 'allINDRank' to 'allIndiaRank'
+    return _dashboardData!['allIndiaBestPerformace'] ?? {};
+  }
+
   //new code remove us unused
 
-  // Map<String, dynamic> get dealerShip {
-  //   if (_dashboardData == null) {
-  //     return {};
-  //   }
-  //   return _dashboardData!['dealerShipRank'] ?? {};
-  // }
+  Map<String, dynamic> get dealershipRank {
+    if (_dashboardData == null) {
+      return {};
+    }
+    return _dashboardData!['dealerShipRank'] ?? {};
+  }
 
 // Generate dynamic table rows based on API data
   List<List<String>> get tableData {
@@ -145,77 +155,70 @@ class _BottomBtnThirdState extends State<BottomBtnThird> {
     // Add Enquiries row
     data.add([
       'Enquiries',
-      currentDealershipRank['enquiry']?.toString() ?? '0',
-      currentAllIndiaRank['enquiriesCount']?.toString() ?? '0',
-      currentDealershipRank['enquiriesRank']?.toString() ?? '0',
-      currentAllIndiaRank['enquiriesRank']?.toString() ?? '0',
+      performanceCount['enquiry']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['enquiriesCount']?.toString() ??
+          '0', //allIndiaRank
+      dealershipRank['enquiriesRank']?.toString() ?? '0', //
+      currentAllIndiaRank['enquiriesRank']?.toString() ?? '0', //dealershiprank
     ]);
 
     // Add Lost Enquiries row
     data.add([
       'Lost Enquiries',
-      currentDealershipRank['lostEnq']?.toString() ?? '0',
-      currentAllIndiaRank['lostEnquiriesCount']?.toString() ?? '0',
-      currentDealershipRank['lostEnquiriesRank']?.toString() ?? '0',
-      currentAllIndiaRank['lostEnquiriesRank']?.toString() ?? '0',
+      performanceCount['lostEnq']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['lostEnquiriesCount']?.toString() ??
+          '0', //allIndiaRank
+      dealershipRank['lostEnquiriesRank']?.toString() ?? '0', //
+      currentAllIndiaRank['lostEnquiriesRank']?.toString() ??
+          '0', //dealershiprank
     ]);
 
     // Add Test drives row
     data.add([
       'Test drives',
-      currentDealershipRank['testDriveData']?.toString() ?? '0',
-      currentAllIndiaRank['testDrivesCount']?.toString() ?? '0',
-      currentDealershipRank['testDrivesRank']?.toString() ?? '0',
-      currentAllIndiaRank['testDrivesRank']?.toString() ?? '0',
+      performanceCount['testDriveData']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['testDrivesCount']?.toString() ??
+          '0', //allIndiaRank
+      dealershipRank['testDrivesRank']?.toString() ?? '0', //
+      currentAllIndiaRank['testDrivesRank']?.toString() ?? '0', //dealershiprank
     ]);
 
     // Add New Orders row
     data.add([
       'New Orders',
-      currentDealershipRank['orders']?.toString() ?? '0',
-      currentAllIndiaRank['newOrdersCount']?.toString() ?? '0',
-      currentDealershipRank['newOrdersRank']?.toString() ?? '0',
-      currentAllIndiaRank['newOrdersRank']?.toString() ?? '0',
+      performanceCount['orders']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['newOrdersCount']?.toString() ??
+          '0', //allIndiaRank
+      dealershipRank['newOrdersRank']?.toString() ?? '0', //
+      currentAllIndiaRank['newOrdersRank']?.toString() ?? '0', //dealershiprank
     ]);
 
     // Add Cancellations row
     data.add([
       'Cancellations',
-      currentDealershipRank['dealerCancellation']?.toString() ?? '0',
-      currentAllIndiaRank['cancellationsCount']?.toString() ?? '0',
-      currentDealershipRank['cancellationsRank']?.toString() ?? '0',
-      currentAllIndiaRank['cancellationsRank']?.toString() ?? '0',
-    ]);
-
-    // Add Net Orders row
-    int myNetOrders = (int.tryParse(
-                currentDealershipRank['newOrdersCount']?.toString() ?? '0') ??
-            0) -
-        (int.tryParse(currentDealershipRank['cancellationsCount']?.toString() ??
-                '0') ??
-            0);
-    int allIndiaNetOrders = (int.tryParse(
-                currentAllIndiaRank['newOrdersCount']?.toString() ?? '0') ??
-            0) -
-        (int.tryParse(
-                currentAllIndiaRank['cancellationsCount']?.toString() ?? '0') ??
-            0);
-
-    data.add([
-      'Net Orders',
-      '0',
-      '0',
-      '0', // No specific rank data for net orders
-      '0', // No specific rank data for net orders
+      performanceCount['dealerCancellation']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['cancellationsCount']?.toString() ??
+          '0', //allIndiaRank
+      dealershipRank['cancellationsRank']?.toString() ?? '0', //
+      currentAllIndiaRank['cancellationsRank']?.toString() ??
+          '0', //dealershiprank
     ]);
 
     // Add Retail row
     data.add([
       'Retail',
-      currentDealershipRank['retailCount']?.toString() ?? '0',
-      currentAllIndiaRank['retailCount']?.toString() ?? '0',
-      currentDealershipRank['retailRank']?.toString() ?? '0',
-      currentAllIndiaRank['retailRank']?.toString() ?? '0',
+      performanceCount['retail']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['retailCount']?.toString() ?? '0', //allIndiaRank
+      dealershipRank['retailRank']?.toString() ?? '0', //
+      currentAllIndiaRank['retailRank']?.toString() ?? '0', //dealershiprank
+    ]);
+
+    data.add([
+      'Net orders',
+      performanceCount['']?.toString() ?? '0', //performance
+      allIndiaBestPerformace['']?.toString() ?? '0', //allIndiaRank
+      dealershipRank['']?.toString() ?? '0', //
+      currentAllIndiaRank['']?.toString() ?? '0', //dealershiprank
     ]);
 
     return data;
